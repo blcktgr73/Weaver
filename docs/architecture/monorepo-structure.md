@@ -30,6 +30,8 @@ Weaver/
 └─ package.json            # Workspace-level scripts only
 ```
 
+The initial repository is the product’s own dogfooding workspace. It should host Weaver’s product documents, schemas, prototype code, and development evidence. Other PALab repositories remain independently owned and are connected through the Server/workspace layer when adoption begins.
+
 ## Boundary rules
 
 - `packages/domain` must not depend on VS Code, Electron, a database, or a provider SDK.

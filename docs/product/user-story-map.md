@@ -66,6 +66,22 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - As a team, I can record decisions and unresolved gaps.
 - As a contributor, I can understand how a change moved from requirement to code.
 
+### Self-development loop
+
+- As a Weaver contributor, I can use Weaver’s own repository to manage Weaver’s requirements and tasks.
+- As a contributor, I can edit Weaver requirements through OpenClaw Agent or VS Code/SlashMD.
+- As a contributor, I can turn document concepts into durable tasks.
+- As a human or agent, I can implement Weaver while preserving the link to the originating requirement.
+- As a reviewer, I can verify Weaver changes using the same evidence model Weaver provides to other projects.
+- As a contributor, I can record development friction as a product story.
+
+### PALab project adoption
+
+- As a PALab maintainer, I can register another project repository without moving it first.
+- As a contributor, I can map an existing project’s requirements and tasks to Weaver concepts.
+- As a project owner, I can review the mapping before artifacts are migrated or absorbed.
+- As a company, we can gradually build one connected development fabric without erasing repository ownership.
+
 ## Release 1 — VS Code requirement experience
 
 ### Discover intent

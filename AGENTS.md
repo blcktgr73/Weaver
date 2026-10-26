@@ -22,6 +22,19 @@ Keep requirements, tasks, and implementation evidence connected across the repos
 6. Record blockers and human decisions explicitly.
 7. Verify the result and update the requirement status.
 
+## Dogfooding workflow
+
+Weaver is initially developed using its own workflow.
+
+- Use OpenClaw Agent or VS Code with SlashMD to write and refine requirement documents.
+- Keep concepts, decisions, and acceptance criteria in the repository.
+- Convert document sections into tracked Weaver tasks.
+- Let an agent or human implement the task in this repository or a linked PALab repository.
+- Bring branch, commit, pull request, and test evidence back to the task.
+- Record friction in the User Story Map as a product requirement, not as an informal workaround.
+
+When adopting another PALab project, connect it first as an external repository and preserve its history. Migrate or absorb artifacts only after requirement and task mapping has been verified.
+
 ## Contribution rules
 
 - Keep changes small and reviewable.

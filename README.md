@@ -53,6 +53,21 @@ This repository contains the product foundation and onboarding documents. The fi
 - Human and AI contributors are visible participants in the same execution flow.
 - The product is a development fabric, not a generic issue tracker.
 
+## We develop Weaver with Weaver
+
+The initial development loop is intentionally self-hosted:
+
+```text
+Weaver requirement docs
+  → OpenClaw or VS Code/SlashMD editing
+  → Weaver tasks
+  → agent or human implementation
+  → repository evidence
+  → Weaver verification
+```
+
+Weaver will first manage its own development artifacts. Other PALab projects can then be connected and adopted incrementally using the same requirement, task, repository, and evidence model.
+
 ## License
 
 License and contribution terms are not finalized yet. Do not assume that this repository is ready for external redistribution until those files are added.

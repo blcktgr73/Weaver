@@ -10,7 +10,8 @@ Read these documents in order:
 2. [User Story Map](../product/user-story-map.md)
 3. [Product Requirements v0.1](../product/requirements-v0.1.md)
 4. [Monorepo Structure](../architecture/monorepo-structure.md)
-5. [Glossary](../product/glossary.md)
+5. [Self-development loop](../architecture/self-development-loop.md)
+6. [Glossary](../product/glossary.md)
 
 The current product hypothesis is that the missing layer is not another board. It is a visible connection between requirement intent and execution evidence.
 
@@ -76,7 +77,21 @@ Before requesting review:
 
 The work is complete only when the implementation and its evidence are visible from the requirement.
 
-## 7. Current prototype scope
+## 7. Develop Weaver with Weaver
+
+For Weaver’s own work, use this loop:
+
+1. Write or refine the requirement in the repository using OpenClaw Agent or VS Code/SlashMD.
+2. Record the concept, acceptance criteria, and open decisions.
+3. Create a task linked to the requirement.
+4. Assign the task to a human or agent.
+5. Implement and test the change.
+6. Link the evidence back to the task and requirement.
+7. Turn friction discovered during development into a new Weaver story.
+
+This loop is the first product validation, not just a documentation exercise.
+
+## 8. Current prototype scope
 
 The first prototype is a VS Code experience that can:
 
