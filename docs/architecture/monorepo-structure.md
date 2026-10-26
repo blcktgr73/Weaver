@@ -32,6 +32,15 @@ Weaver/
 
 The initial repository is the product’s own dogfooding workspace. It should host Weaver’s product documents, schemas, prototype code, and development evidence. Other PALab repositories remain independently owned and are connected through the Server/workspace layer when adoption begins.
 
+## Current implementation slice
+
+The repository starts with two active areas:
+
+- `docs/`: product requirements, concepts, onboarding, decisions, and the User Story Map
+- `apps/vscode-extension/`: the first local-first VS Code prototype
+
+The Desktop and Server directories are architectural targets, not placeholders that must be implemented immediately. They should reuse the domain and Markdown packages once the VS Code prototype validates the model.
+
 ## Boundary rules
 
 - `packages/domain` must not depend on VS Code, Electron, a database, or a provider SDK.

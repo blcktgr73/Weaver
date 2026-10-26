@@ -37,6 +37,8 @@ The product language is intentionally fabric-oriented:
 
 This repository contains the product foundation and onboarding documents. The first implementation target is a VS Code-based UX prototype for a requirement detail view.
 
+The repository layout keeps product documents under `docs/` and implementation code under root-level application/package directories. The first code project is `apps/vscode-extension/`.
+
 ## Start here
 
 1. Read [Development Onboarding](docs/onboarding/development-onboarding.md).

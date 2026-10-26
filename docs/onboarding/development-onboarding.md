@@ -103,3 +103,12 @@ The first prototype is a VS Code experience that can:
 - show blocked and human-decision-needed states
 
 Not included in the first prototype: a full project-management replacement, real-time Notion synchronization, or a new coding agent.
+
+The initial implementation lives in `apps/vscode-extension/`. Run its local checks with:
+
+```bash
+cd apps/vscode-extension
+npm install
+npm run check
+npm run compile
+```
