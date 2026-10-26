@@ -42,10 +42,12 @@ The repository layout keeps product documents under `docs/` and implementation c
 ## Start here
 
 1. Read [Development Onboarding](docs/onboarding/development-onboarding.md).
-2. Read the [User Story Map](docs/product/user-story-map.md).
-3. Review the [Product Requirements v0.1](docs/product/requirements-v0.1.md).
-4. Read the [Monorepo Structure](docs/architecture/monorepo-structure.md).
-5. Check the open issues before creating new work.
+2. Read the [PALab Development Bootstrap](docs/onboarding/palab-development-bootstrap.md).
+3. Read the [User Story Map](docs/product/user-story-map.md).
+4. Review [REQ-001: Weaver self-hosting](docs/requirements/REQ-001-weaver-self-hosting.md).
+5. Review the [Product Requirements v0.1](docs/product/requirements-v0.1.md).
+6. Read the [Monorepo Structure](docs/architecture/monorepo-structure.md).
+7. Check the open issues before creating new work.
 
 ## Design principles
 

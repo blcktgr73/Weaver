@@ -7,11 +7,13 @@ This document is the starting procedure for a human developer or AI agent joinin
 Read these documents in order:
 
 1. [README](../../README.md)
-2. [User Story Map](../product/user-story-map.md)
-3. [Product Requirements v0.1](../product/requirements-v0.1.md)
-4. [Monorepo Structure](../architecture/monorepo-structure.md)
-5. [Self-development loop](../architecture/self-development-loop.md)
-6. [Glossary](../product/glossary.md)
+2. [PALab Development Bootstrap](./palab-development-bootstrap.md)
+3. [User Story Map](../product/user-story-map.md)
+4. [REQ-001: Weaver self-hosting](../requirements/REQ-001-weaver-self-hosting.md)
+5. [Product Requirements v0.1](../product/requirements-v0.1.md)
+6. [Monorepo Structure](../architecture/monorepo-structure.md)
+7. [Self-development loop](../architecture/self-development-loop.md)
+8. [Glossary](../product/glossary.md)
 
 The current product hypothesis is that the missing layer is not another board. It is a visible connection between requirement intent and execution evidence.
 
