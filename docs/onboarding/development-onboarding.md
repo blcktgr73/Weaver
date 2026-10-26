@@ -9,7 +9,8 @@ Read these documents in order:
 1. [README](../../README.md)
 2. [User Story Map](../product/user-story-map.md)
 3. [Product Requirements v0.1](../product/requirements-v0.1.md)
-4. [Glossary](../product/glossary.md)
+4. [Monorepo Structure](../architecture/monorepo-structure.md)
+5. [Glossary](../product/glossary.md)
 
 The current product hypothesis is that the missing layer is not another board. It is a visible connection between requirement intent and execution evidence.
 

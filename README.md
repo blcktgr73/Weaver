@@ -24,7 +24,7 @@ Requirements often live in Notion or documents, tasks live in a project tracker,
 
 ## Product direction
 
-Weaver treats **Requirement and Task artifacts as the source of truth**. Code remains authoritative in its repository; pull requests and CI results are execution evidence. Plane, Linear, Notion, GitHub, and agent tools are integration or collaboration surfaces.
+Weaver treats **Requirement and Task artifacts as the source of truth**. Code remains authoritative in its repository; pull requests and CI results are execution evidence. External document, project-management, Git, and agent tools are integration or collaboration surfaces.
 
 The product language is intentionally fabric-oriented:
 
@@ -42,17 +42,16 @@ This repository contains the product foundation and onboarding documents. The fi
 1. Read [Development Onboarding](docs/onboarding/development-onboarding.md).
 2. Read the [User Story Map](docs/product/user-story-map.md).
 3. Review the [Product Requirements v0.1](docs/product/requirements-v0.1.md).
-4. Check the open issues before creating new work.
+4. Read the [Monorepo Structure](docs/architecture/monorepo-structure.md).
+5. Check the open issues before creating new work.
 
-## Reference products
+## Design principles
 
-Weaver takes inspiration from:
-
-- Plane: structured work management, work items, integrations, and self-hosting
-- Linear: project overview → issue → human/agent execution experience
-- GitHub: repository, pull request, and CI evidence
-
-Weaver is not intended to be another generic issue tracker. Its initial focus is traceability across repository-native requirements and execution.
+- Requirement and Task artifacts remain inspectable in Git.
+- The same domain model must work in a VS Code extension, a Desktop app, and a Server-backed workspace.
+- Local-first development is the starting point; collaboration and server synchronization are later surfaces.
+- Human and AI contributors are visible participants in the same execution flow.
+- The product is a development fabric, not a generic issue tracker.
 
 ## License
 

@@ -4,6 +4,26 @@
 
 Help a company see how product intent becomes verified software across multiple repositories, with humans and AI agents working in the same visible flow.
 
+## UX and concept foundation
+
+The User Story Map is also the product UX contract. Every story should be expressible through the following surfaces:
+
+- **Fabric Home:** a company-level view of repositories, projects, active requirements, task movement, blockers, and recent evidence.
+- **Requirement Canvas:** a Notion-like Markdown document with stable ID, metadata, acceptance criteria, linked tasks, decisions, and evidence.
+- **Task Rail:** a requirement-scoped list or board showing status, owner, repository, branch, agent session, PR, tests, and human decisions.
+- **Agent Workspace:** the context, plan, progress, questions, artifacts, and handoff state of an AI contributor.
+- **Repository Graph:** the relationship between requirements, tasks, packages, files, commits, PRs, and tests across repositories.
+- **Verification View:** the evidence and gaps needed to accept a requirement.
+
+The visual metaphor is:
+
+```text
+Thread = Requirement / Project / Task / Decision / Evidence
+Fabric = connected company development context
+Weave = create and maintain relationships
+Weaver = humans and agents coordinating the work
+```
+
 ## Backbone
 
 ```text
@@ -79,6 +99,31 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - Record a decision or blocker in the requirement context.
 - Show an activity trail of requirement and task changes.
 
+## Product surfaces and architecture slices
+
+The product is one domain model with several surfaces, not three separate products.
+
+### Slice A — VS Code extension, local-first
+
+- Open the current repository and index Requirement/Task artifacts.
+- Provide the Requirement Canvas and Task Rail inside the editor.
+- Link local branches, commits, tests, and external PRs.
+- Validate frontmatter and missing traceability links.
+
+### Slice B — Desktop app, workspace-first
+
+- Manage multiple repositories in one company workspace.
+- Provide Fabric Home, Repository Graph, and Agent Workspace views.
+- Keep local repositories available offline and synchronize explicitly.
+- Make the same Requirement/Task artifacts available outside VS Code.
+
+### Slice C — Server, collaboration and project context
+
+- Store workspace membership, project metadata, permissions, activity, and integration state.
+- Index repository projections without silently replacing repository truth.
+- Support shared views, comments, handoffs, and agent session history.
+- Preserve an auditable link back to repository artifacts and execution evidence.
+
 ## Release 2 — Company development fabric
 
 ### Discover intent
@@ -113,7 +158,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 
 ## Explicitly out of scope for the first release
 
-- Replacing Plane, Linear, Jira, or GitHub Projects as a general work-management product
+- Replacing existing work-management products as a general-purpose tracker
 - Building a proprietary coding agent
 - Real-time bidirectional synchronization with every external tool
 - Automatically making final product acceptance decisions without a human policy
