@@ -2,6 +2,8 @@
 
 GitHub Issues is Weaver's first execution system. Weaver does not create a second task database in v0.1. It reads and writes GitHub Issues, while repository Markdown remains the source of requirement intent and acceptance criteria.
 
+The initial shared Kanban projection is the existing [PALab Ops Kanban](https://github.com/users/blcktgr73/projects/1). Weaver issues are added to that board; Weaver does not create a project-specific board until a future product decision requires one.
+
 ## Authority boundaries
 
 ```text
