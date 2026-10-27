@@ -4,6 +4,7 @@ type: requirement
 title: Weaver manages its own development flow
 status: in-progress
 owner: PALab
+story_ids: [US-001, US-004, US-007, US-010, US-012]
 ---
 
 # Weaver manages its own development flow
@@ -27,10 +28,10 @@ PALab contributors can move from a Weaver requirement to an assigned task, imple
 
 ## Tasks
 
-- `TASK-001` Define and validate the repository-native requirement/task shape.
-- `TASK-002` Implement the VS Code workspace scan and requirement opener.
-- `TASK-003` Design the Requirement Canvas and Task Rail interaction.
-- `TASK-004` Link implementation and test evidence back to a task.
+- `TASK-001` Define and validate the repository-native requirement/task shape — [GitHub Issue #1](https://github.com/blcktgr73/Weaver/issues/1)
+- `TASK-002` Implement the VS Code workspace scan and requirement opener — [GitHub Issue #2](https://github.com/blcktgr73/Weaver/issues/2)
+- `TASK-003` Design the Requirement Canvas and Task Rail interaction — [GitHub Issue #3](https://github.com/blcktgr73/Weaver/issues/3)
+- `TASK-004` Link implementation and test evidence back to a task — [GitHub Issue #4](https://github.com/blcktgr73/Weaver/issues/4)
 
 ## Evidence policy
 

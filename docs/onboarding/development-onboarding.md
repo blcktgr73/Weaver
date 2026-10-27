@@ -14,6 +14,8 @@ Read these documents in order:
 6. [Monorepo Structure](../architecture/monorepo-structure.md)
 7. [Self-development loop](../architecture/self-development-loop.md)
 8. [Glossary](../product/glossary.md)
+9. [GitHub Issues Integration](../architecture/github-issues-integration.md)
+10. [Verification v0.1](../product/verification-v0.1.md)
 
 The current product hypothesis is that the missing layer is not another board. It is a visible connection between requirement intent and execution evidence.
 
@@ -53,6 +55,8 @@ Select an issue linked to a story in the User Story Map. Before coding, write or
 - affected repository or package
 - expected evidence
 - human decisions still required
+
+GitHub Issues is the execution system for v0.1. Do not create a parallel task record in an external service or an untracked local database.
 
 ## 5. Implement with evidence
 

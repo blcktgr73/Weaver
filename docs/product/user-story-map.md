@@ -39,27 +39,27 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 
 ### Shape requirements
 
-- As a product person, I can write a requirement as a Markdown document.
-- As a developer, I can see acceptance criteria and constraints.
-- As a team, we can give each requirement a stable ID.
+- `US-001` — As a product person, I can write a requirement as a Markdown document.
+- `US-002` — As a developer, I can see acceptance criteria and constraints.
+- `US-003` — As a team, we can give each requirement a stable ID.
 
 ### Plan work
 
-- As a developer, I can split a requirement into tasks.
-- As a lead, I can see task status and ownership.
-- As a team, I can mark a task as blocked or needing human judgment.
+- `US-004` — As a developer, I can split a requirement into tasks.
+- `US-005` — As a lead, I can see task status and ownership.
+- `US-006` — As a team, I can mark a task as blocked or needing human judgment.
 
 ### Execute work
 
-- As a human or agent, I can claim a task.
-- As a developer, I can link a task to a repository and branch.
-- As an agent, I can receive the requirement context needed to work.
+- `US-007` — As a human or agent, I can claim a task.
+- `US-008` — As a developer, I can link a task to a repository and branch.
+- `US-009` — As an agent, I can receive the requirement context needed to work.
 
 ### Verify outcome
 
-- As a reviewer, I can see the pull request and test evidence from the task.
-- As a product person, I can see which acceptance criteria are still uncovered.
-- As a team, we can distinguish reported completion from verified completion.
+- `US-010` — As a reviewer, I can see the pull request and test evidence from the task.
+- `US-011` — As a product person, I can see which acceptance criteria are still uncovered.
+- `US-012` — As a team, we can distinguish reported completion from verified completion.
 
 ### Learn and evolve
 
@@ -118,6 +118,10 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 ## Product surfaces and architecture slices
 
 The product is one domain model with several surfaces, not three separate products.
+
+## Issue-backed execution model
+
+In the first release, the story map is connected to GitHub Issues rather than a separate task database. A story becomes executable when it has one or more linked Issues, and a story becomes verifiable when those Issues expose implementation and test evidence. See [GitHub Issues Integration](../architecture/github-issues-integration.md) and [Verification v0.1](./verification-v0.1.md).
 
 ### Slice A — VS Code extension, local-first
 
@@ -178,3 +182,4 @@ The product is one domain model with several surfaces, not three separate produc
 - Building a proprietary coding agent
 - Real-time bidirectional synchronization with every external tool
 - Automatically making final product acceptance decisions without a human policy
+- A private task database that duplicates GitHub Issues
