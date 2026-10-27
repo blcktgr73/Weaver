@@ -41,6 +41,8 @@ The repository starts with two active areas:
 
 The Desktop and Server directories are architectural targets, not placeholders that must be implemented immediately. They should reuse the domain and Markdown packages once the VS Code prototype validates the model.
 
+The first UX contract is documented in [Repository Connection and Kanban v0.1](./repository-connection-and-kanban-v0.1.md). It defines the shared boundary between repository files, GitHub Issues, GitHub Project status, and Weaver projections.
+
 ## Boundary rules
 
 - `packages/domain` must not depend on VS Code, Electron, a database, or a provider SDK.

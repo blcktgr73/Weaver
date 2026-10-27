@@ -119,6 +119,8 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 
 The product is one domain model with several surfaces, not three separate products.
 
+The first end-to-end slice is `Connect → Trace → Visualize → Verify`: connect the open repository, link Markdown requirements to GitHub Issues, render their Project status in Weaver, and expose execution evidence. The detailed interaction contract is in [Repository Connection and Kanban v0.1](../architecture/repository-connection-and-kanban-v0.1.md).
+
 ## Issue-backed execution model
 
 In the first release, the story map is connected to GitHub Issues rather than a separate task database. A story becomes executable when it has one or more linked Issues, and a story becomes verifiable when those Issues expose implementation and test evidence. See [GitHub Issues Integration](../architecture/github-issues-integration.md) and [Verification v0.1](./verification-v0.1.md).

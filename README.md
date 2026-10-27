@@ -48,7 +48,8 @@ The repository layout keeps product documents under `docs/` and implementation c
 5. Review the [GitHub Issues Integration](docs/architecture/github-issues-integration.md) and [Verification v0.1](docs/product/verification-v0.1.md).
 6. Review the [Product Requirements v0.1](docs/product/requirements-v0.1.md).
 7. Read the [Monorepo Structure](docs/architecture/monorepo-structure.md).
-8. Check the open issues before creating new work.
+8. Read the [Repository Connection and Kanban v0.1](docs/architecture/repository-connection-and-kanban-v0.1.md).
+9. Check the open issues before creating new work.
 
 ## Design principles
 
