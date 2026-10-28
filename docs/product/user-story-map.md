@@ -74,6 +74,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - As a human or agent, I can implement Weaver while preserving the link to the originating requirement.
 - As a reviewer, I can verify Weaver changes using the same evidence model Weaver provides to other projects.
 - As a contributor, I can record development friction as a product story.
+- `US-013` — As a reviewer, I can see commits that are not linked to any task, so work does not land outside the requirement flow.
 
 ### PALab project adoption
 

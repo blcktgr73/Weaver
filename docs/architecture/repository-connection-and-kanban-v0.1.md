@@ -64,9 +64,9 @@ github_project: PALab Ops Kanban
 Task references remain inspectable in Markdown:
 
 ```markdown
-- `TASK-002` Build the first VS Code Kanban projection
-  - Issue: https://github.com/blcktgr73/Weaver/issues/2
-  - Status: Todo
+- `TASK-005` Build the first VS Code Kanban projection
+  - Issue: https://github.com/blcktgr73/Weaver/issues/5
+  - Status: backlog
   - Owner: Unassigned
   - Evidence: pending
 ```

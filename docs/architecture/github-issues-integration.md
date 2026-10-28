@@ -35,7 +35,7 @@ Use stable IDs in the Issue title or body:
 
 ## Status mapping
 
-Weaver normalizes GitHub Issue state and labels into a small Kanban model:
+Weaver normalizes GitHub Issue state and labels into a small Kanban model. The full mapping from lifecycle status to these columns is in [Product Requirements v0.1](../product/requirements-v0.1.md#status-mapping):
 
 ```text
 Backlog    → open + status:backlog

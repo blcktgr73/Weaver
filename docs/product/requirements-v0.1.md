@@ -20,7 +20,7 @@ PALab Weaver connects the requirements and tasks of multiple company repositorie
 type: requirement
 id: REQ-001
 title: Example requirement
-status: in_progress
+status: in-progress
 repository: product-repo
 acceptance:
   - The requirement can be viewed as a document.
@@ -36,7 +36,7 @@ requirement: REQ-001
 title: Implement requirement detail view
 assignee_type: agent
 assignee: codex
-status: in_progress
+status: in-progress
 repository: product-repo
 branch: feat/req-001-detail-view
 pull_request: null
@@ -46,9 +46,31 @@ blockers: []
 
 ## Initial states
 
-`draft → ready → assigned → in_progress → review → verified → accepted`
+Status values are lowercase and hyphenated (see [DEC-001](../decisions/DEC-001-status-vocabulary.md)).
 
-Side states: `blocked`, `needs_human_decision`, `cancelled`.
+`draft → ready → assigned → in-progress → review → verified → accepted`
+
+Side states: `blocked`, `needs-human-decision`, `cancelled`.
+
+## Status mapping
+
+The lifecycle status lives in Markdown frontmatter. The Kanban column is a GitHub Issue projection of it. This table is the single reference; other documents link here.
+
+| Lifecycle status (frontmatter) | Kanban column | GitHub Issue state + label |
+| --- | --- | --- |
+| `draft` | Backlog | open + `status:backlog` |
+| `ready`, `assigned` | Ready | open + `status:ready` |
+| `in-progress` | In progress | open + `status:in-progress` |
+| `blocked`, `needs-human-decision` | Blocked | open + `status:blocked` |
+| `review` | Review | open + `status:review` |
+| `verified`, `accepted` | Verified | closed + `status:verified` |
+| `cancelled` | not shown | closed |
+
+Notes:
+
+- `assigned` and `needs-human-decision` have no column of their own. The card shows the owner or the pending decision instead.
+- `accepted` is a human decision recorded in the requirement or verification record. The Issue only reaches `verified`.
+- A closed Issue without verification evidence is a verification gap, whatever its label says.
 
 ## Definition of done
 
