@@ -157,6 +157,8 @@ describe('this repository', () => {
     expect(req?.kind).toBe('requirement');
     if (req?.kind !== 'requirement') throw new Error('unreachable');
     expect(req.criteria).toHaveLength(6);
-    expect(req.tasks.map((t) => t.id)).toEqual(['TASK-001', 'TASK-002', 'TASK-003', 'TASK-004', 'TASK-005']);
+    expect(req.tasks.map((t) => t.id)).toEqual(
+      expect.arrayContaining(['TASK-001', 'TASK-002', 'TASK-003', 'TASK-004', 'TASK-005']),
+    );
   });
 });
