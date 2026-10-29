@@ -4,10 +4,10 @@ This is the first implementation slice of Weaver.
 
 ## Current scope
 
-- Scan Markdown artifacts in the current workspace.
-- Identify `type: requirement` and `type: task` frontmatter.
+- Read every Markdown file in the workspace and validate Weaver artifacts with `@palab/weaver-markdown` (see [Artifact Schema v0.1](../../docs/product/artifact-schema-v0.1.md)).
+- Show validation errors and warnings in the Problems panel, refreshed on startup and on save.
 - Open a requirement from a quick-pick command.
-- Report the current requirement/task artifact count.
+- Report requirement/task counts and validation totals.
 
 ## Commands
 
@@ -16,14 +16,13 @@ This is the first implementation slice of Weaver.
 
 ## Development
 
+From the repository root:
+
 ```bash
 npm install
 npm run check
-npm run compile
+npm run build
+npm test
 ```
 
-Press `F5` from this directory in VS Code to launch an Extension Development Host after adding the standard launch configuration.
-
-## Next slice
-
-The next implementation should add a Requirement Canvas and Task Rail while preserving Markdown readability and Git-native artifacts. SlashMD integration is a product/technical spike, not a dependency of this minimal scanner.
+Press `F5` in VS Code with the repository root open and choose **Weaver: Run Extension**. It builds first and opens an Extension Development Host on this repository.

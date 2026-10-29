@@ -1,27 +1,18 @@
 import * as vscode from 'vscode';
-
-type ArtifactKind = 'requirement' | 'task' | 'other';
-
-function artifactKind(contents: string): ArtifactKind {
-  const match = contents.match(/^type:\s*(requirement|task)\s*$/m);
-  return match?.[1] === 'requirement' || match?.[1] === 'task' ? match[1] : 'other';
-}
+import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
-  const openRequirement = vscode.commands.registerCommand('weaver.openRequirement', async () => {
-    const files = await vscode.workspace.findFiles(
-      '**/*.md',
-      '**/{node_modules,.git,dist}/**',
-      200,
-    );
-    const requirements: vscode.Uri[] = [];
+  const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
 
-    for (const file of files) {
-      const document = await vscode.workspace.openTextDocument(file);
-      if (artifactKind(document.getText()) === 'requirement') {
-        requirements.push(file);
-      }
-    }
+  const refresh = async (): Promise<Loaded> => {
+    const loaded = await loadWorkspaceArtifacts();
+    publishDiagnostics(diagnostics, loaded);
+    return loaded;
+  };
+
+  const openRequirement = vscode.commands.registerCommand('weaver.openRequirement', async () => {
+    const loaded = await refresh();
+    const requirements = requirementsOf(loaded);
 
     if (requirements.length === 0) {
       void vscode.window.showInformationMessage('Weaver: no requirement artifacts found in this workspace.');
@@ -29,39 +20,45 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const selected = await vscode.window.showQuickPick(
-      requirements.map((uri) => ({ label: vscode.workspace.asRelativePath(uri), uri })),
+      requirements.map((requirement) => ({
+        label: `${requirement.id}  ${requirement.title}`,
+        description: requirement.status,
+        detail: requirement.path,
+        uri: loaded.uris.get(requirement.path),
+      })),
       { placeHolder: 'Select a Weaver requirement' },
     );
 
-    if (selected) {
+    if (selected?.uri) {
       await vscode.window.showTextDocument(selected.uri);
     }
   });
 
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
-    const files = await vscode.workspace.findFiles(
-      '**/*.md',
-      '**/{node_modules,.git,dist}/**',
-      500,
-    );
-    let requirements = 0;
-    let tasks = 0;
+    const loaded = await refresh();
+    const { errors, warnings } = publishDiagnostics(diagnostics, loaded);
+    const requirements = requirementsOf(loaded).length;
+    const tasks = loaded.artifacts.length - requirements;
+    const summary =
+      `Weaver scan: ${requirements} requirement(s), ${tasks} task file(s), ` +
+      `${loaded.markdownFileCount} Markdown file(s); ${errors} error(s), ${warnings} warning(s).`;
 
-    for (const file of files) {
-      const document = await vscode.workspace.openTextDocument(file);
-      const kind = artifactKind(document.getText());
-      if (kind === 'requirement') requirements += 1;
-      if (kind === 'task') tasks += 1;
+    if (errors > 0) {
+      const choice = await vscode.window.showWarningMessage(summary, 'Show Problems');
+      if (choice) await vscode.commands.executeCommand('workbench.actions.view.problems');
+    } else {
+      void vscode.window.showInformationMessage(summary);
     }
-
-    void vscode.window.showInformationMessage(
-      `Weaver scan: ${requirements} requirement(s), ${tasks} task(s), ${files.length} Markdown file(s).`,
-    );
   });
 
-  context.subscriptions.push(openRequirement, scanWorkspace);
+  const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
+    if (document.languageId === 'markdown') void refresh();
+  });
+
+  context.subscriptions.push(diagnostics, openRequirement, scanWorkspace, onSave);
+  void refresh();
 }
 
 export function deactivate(): void {
-  // Reserved for future workspace/index cleanup.
+  // Diagnostics are disposed through context.subscriptions.
 }

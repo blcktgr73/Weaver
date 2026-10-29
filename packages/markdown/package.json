@@ -1,0 +1,21 @@
+{
+  "name": "@palab/weaver-markdown",
+  "version": "0.0.1",
+  "description": "Repository artifact format: frontmatter schema, parser, and validation for Weaver.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ./",
+    "check": "tsc -p ./ --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

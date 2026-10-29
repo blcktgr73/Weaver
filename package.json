@@ -1,0 +1,14 @@
+{
+  "name": "weaver",
+  "private": true,
+  "description": "PALab Weaver monorepo. Workspace-level scripts only.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @palab/weaver-markdown && npm run compile -w @palab/weaver-vscode-extension",
+    "check": "npm run build -w @palab/weaver-markdown && npm run check -w @palab/weaver-vscode-extension",
+    "test": "npm run test -w @palab/weaver-markdown"
+  }
+}
