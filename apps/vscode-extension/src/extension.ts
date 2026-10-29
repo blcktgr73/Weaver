@@ -31,15 +31,25 @@ export function activate(context: vscode.ExtensionContext): void {
     return selected?.requirement;
   };
 
-  const openRequirement = vscode.commands.registerCommand('weaver.openRequirement', async () => {
+  const openSource = vscode.commands.registerCommand('weaver.openRequirementSource', async () => {
     const loaded = await refresh();
     const requirement = await pickRequirement(loaded);
     const uri = requirement && loaded.uris.get(requirement.path);
     if (uri) await vscode.window.showTextDocument(uri);
   });
 
-  const showRequirement = vscode.commands.registerCommand('weaver.showRequirement', async () => {
+  // From the editor title button the file is known; from the command palette the user picks one.
+  const openView = vscode.commands.registerCommand('weaver.openRequirementView', async (resource?: vscode.Uri) => {
     const loaded = await refresh();
+    if (resource instanceof vscode.Uri) {
+      const requirement = requirementsOf(loaded).find((r) => loaded.uris.get(r.path)?.toString() === resource.toString());
+      if (requirement) {
+        view.show(loaded, requirement);
+      } else {
+        void vscode.window.showInformationMessage('Weaver: this file is not a valid requirement. Check the Problems panel.');
+      }
+      return;
+    }
     const requirement = await pickRequirement(loaded);
     if (requirement) view.show(loaded, requirement);
   });
@@ -65,7 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (document.languageId === 'markdown') void refresh();
   });
 
-  context.subscriptions.push(diagnostics, openRequirement, showRequirement, scanWorkspace, onSave);
+  context.subscriptions.push(diagnostics, openSource, openView, scanWorkspace, onSave);
   void refresh();
 }
 
