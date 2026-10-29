@@ -1,37 +1,47 @@
 import * as vscode from 'vscode';
+import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
+  const view = new RequirementView();
 
   const refresh = async (): Promise<Loaded> => {
     const loaded = await loadWorkspaceArtifacts();
     publishDiagnostics(diagnostics, loaded);
+    view.update(loaded);
     return loaded;
   };
 
-  const openRequirement = vscode.commands.registerCommand('weaver.openRequirement', async () => {
-    const loaded = await refresh();
+  const pickRequirement = async (loaded: Loaded) => {
     const requirements = requirementsOf(loaded);
-
     if (requirements.length === 0) {
-      void vscode.window.showInformationMessage('Weaver: no requirement artifacts found in this workspace.');
-      return;
+      void vscode.window.showInformationMessage('Weaver: no valid requirement artifacts found. Check the Problems panel.');
+      return undefined;
     }
-
     const selected = await vscode.window.showQuickPick(
       requirements.map((requirement) => ({
         label: `${requirement.id}  ${requirement.title}`,
         description: requirement.status,
         detail: requirement.path,
-        uri: loaded.uris.get(requirement.path),
+        requirement,
       })),
       { placeHolder: 'Select a Weaver requirement' },
     );
+    return selected?.requirement;
+  };
 
-    if (selected?.uri) {
-      await vscode.window.showTextDocument(selected.uri);
-    }
+  const openRequirement = vscode.commands.registerCommand('weaver.openRequirement', async () => {
+    const loaded = await refresh();
+    const requirement = await pickRequirement(loaded);
+    const uri = requirement && loaded.uris.get(requirement.path);
+    if (uri) await vscode.window.showTextDocument(uri);
+  });
+
+  const showRequirement = vscode.commands.registerCommand('weaver.showRequirement', async () => {
+    const loaded = await refresh();
+    const requirement = await pickRequirement(loaded);
+    if (requirement) view.show(loaded, requirement);
   });
 
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
@@ -55,7 +65,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (document.languageId === 'markdown') void refresh();
   });
 
-  context.subscriptions.push(diagnostics, openRequirement, scanWorkspace, onSave);
+  context.subscriptions.push(diagnostics, openRequirement, showRequirement, scanWorkspace, onSave);
   void refresh();
 }
 

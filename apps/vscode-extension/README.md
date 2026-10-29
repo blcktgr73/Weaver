@@ -6,11 +6,13 @@ This is the first implementation slice of Weaver.
 
 - Read every Markdown file in the workspace and validate Weaver artifacts with `@palab/weaver-markdown` (see [Artifact Schema v0.1](../../docs/product/artifact-schema-v0.1.md)).
 - Show validation errors and warnings in the Problems panel, refreshed on startup and on save.
-- Open a requirement from a quick-pick command.
+- Show a read-only Requirement view: metadata, acceptance criteria, tasks with Issue links, validation gaps. It refreshes on save.
+- Open a requirement's Markdown from a quick-pick command.
 - Report requirement/task counts and validation totals.
 
 ## Commands
 
+- `Weaver: Show Requirement`
 - `Weaver: Open Requirement`
 - `Weaver: Scan Workspace`
 

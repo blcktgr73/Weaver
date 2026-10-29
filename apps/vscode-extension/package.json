@@ -22,6 +22,10 @@
         "title": "Weaver: Open Requirement"
       },
       {
+        "command": "weaver.showRequirement",
+        "title": "Weaver: Show Requirement"
+      },
+      {
         "command": "weaver.scanWorkspace",
         "title": "Weaver: Scan Workspace"
       }
