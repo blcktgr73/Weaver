@@ -7,7 +7,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/apps/vscode-extension",
-        "${workspaceFolder}"
+        "${workspaceFolder}/examples/sample-workspace"
       ],
       "outFiles": ["${workspaceFolder}/apps/vscode-extension/dist/**/*.js"],
       "preLaunchTask": "weaver: build"

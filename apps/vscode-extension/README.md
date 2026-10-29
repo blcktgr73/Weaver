@@ -27,6 +27,6 @@ npm run build
 npm test
 ```
 
-To launch without the debugger, run `npm run dev` from the repository root. It builds and opens an Extension Development Host on this repository.
+To launch without the debugger, run `npm run dev` from the repository root. It builds and opens an Extension Development Host on `examples/sample-workspace`. (VS Code redirects to the existing window if the same folder is already open, so the host cannot open the repository root itself.)
 
-Or press `F5` in VS Code with the repository root open and choose **Weaver: Run Extension**. It builds first and opens an Extension Development Host on this repository.
+Or press `F5` in VS Code with the repository root open and choose **Weaver: Run Extension**. It builds first and opens an Extension Development Host on `examples/sample-workspace`.
