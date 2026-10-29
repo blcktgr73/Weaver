@@ -36,6 +36,7 @@ PALab contributors can move from a Weaver requirement to an assigned task, imple
 - `TASK-004` Link implementation and test evidence back to a task — [GitHub Issue #4](https://github.com/blcktgr73/Weaver/issues/4)
 - `TASK-005` Build the first VS Code Kanban projection — [GitHub Issue #5](https://github.com/blcktgr73/Weaver/issues/5)
 - `TASK-006` Minimal read-only Requirement view — [GitHub Issue #8](https://github.com/blcktgr73/Weaver/issues/8)
+- `TASK-007` Move a task between Kanban columns with explicit confirmation — [GitHub Issue #12](https://github.com/blcktgr73/Weaver/issues/12)
 
 `TASK-005` was split from `TASK-002`; see [DEC-002](../decisions/DEC-002-split-task-002.md).
 

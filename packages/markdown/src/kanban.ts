@@ -62,3 +62,49 @@ export function parseIssueUrl(url: string): { owner: string; repo: string; numbe
   const match = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/issues\/(\d+)\/?$/.exec(url);
   return match ? { owner: match[1], repo: match[2], number: Number(match[3]) } : undefined;
 }
+
+export type ProjectStatus = 'Todo' | 'In Progress' | 'Done';
+
+/** The shared board Status is derived from the column (DEC-003). */
+export const PROJECT_STATUS_FOR_COLUMN: Record<KanbanColumn, ProjectStatus> = {
+  Backlog: 'Todo',
+  Ready: 'Todo',
+  'In progress': 'In Progress',
+  Blocked: 'In Progress',
+  Review: 'In Progress',
+  Verified: 'Done',
+};
+
+export const LABEL_FOR_COLUMN = Object.fromEntries(
+  Object.entries(LABEL_TO_COLUMN).map(([label, column]) => [column, label]),
+) as Record<KanbanColumn, string>;
+
+export interface MovePlan {
+  column: KanbanColumn;
+  addLabel: string;
+  /** Existing status labels that differ from the target. */
+  removeLabels: string[];
+  state: 'open' | 'closed';
+  projectStatus: ProjectStatus;
+  /** True when the Issue already matches the target; nothing to write. */
+  noop: boolean;
+}
+
+/** Computes every GitHub change needed to place an Issue in `target`. */
+export function planMove(issue: Pick<IssueSnapshot, 'state' | 'labels'>, target: KanbanColumn): MovePlan {
+  const addLabel = LABEL_FOR_COLUMN[target];
+  const removeLabels = issue.labels.filter((label) => label in LABEL_TO_COLUMN && label !== addLabel);
+  const state = target === 'Verified' ? 'closed' : 'open';
+  const noop = removeLabels.length === 0 && issue.labels.includes(addLabel) && issue.state === state;
+  return { column: target, addLabel, removeLabels, state, projectStatus: PROJECT_STATUS_FOR_COLUMN[target], noop };
+}
+
+/** Human-readable list of what a move will change, for the confirmation dialog. */
+export function describeMove(plan: MovePlan, issue: Pick<IssueSnapshot, 'state' | 'labels'>): string[] {
+  const lines: string[] = [];
+  if (plan.removeLabels.length) lines.push(`Remove label${plan.removeLabels.length > 1 ? 's' : ''}: ${plan.removeLabels.join(', ')}`);
+  if (!issue.labels.includes(plan.addLabel)) lines.push(`Add label: ${plan.addLabel}`);
+  if (issue.state !== plan.state) lines.push(`${plan.state === 'closed' ? 'Close' : 'Reopen'} the Issue`);
+  lines.push(`Set board Status: ${plan.projectStatus}`);
+  return lines;
+}

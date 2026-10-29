@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupByColumn, parseIssueUrl, placeIssue } from '../src';
+import { describeMove, groupByColumn, parseIssueUrl, placeIssue, planMove } from '../src';
 
 describe('placeIssue', () => {
   it('maps each status label to its column', () => {
@@ -49,5 +49,58 @@ describe('parseIssueUrl', () => {
     });
     expect(parseIssueUrl('https://github.com/blcktgr73/Weaver/pull/5')).toBeUndefined();
     expect(parseIssueUrl('https://evil.example/blcktgr73/Weaver/issues/5')).toBeUndefined();
+  });
+});
+
+describe('planMove', () => {
+  it('moves an open Ready issue to In progress', () => {
+    const plan = planMove({ state: 'open', labels: ['task', 'status:ready'] }, 'In progress');
+    expect(plan).toEqual({
+      column: 'In progress',
+      addLabel: 'status:in-progress',
+      removeLabels: ['status:ready'],
+      state: 'open',
+      projectStatus: 'In Progress',
+      noop: false,
+    });
+  });
+
+  it('closing for Verified sets state closed and board Done', () => {
+    const plan = planMove({ state: 'open', labels: ['status:review'] }, 'Verified');
+    expect(plan).toMatchObject({ state: 'closed', projectStatus: 'Done', removeLabels: ['status:review'] });
+  });
+
+  it('reopens when moving a closed issue back', () => {
+    const plan = planMove({ state: 'closed', labels: ['status:verified'] }, 'Review');
+    expect(plan).toMatchObject({ state: 'open', addLabel: 'status:review', removeLabels: ['status:verified'] });
+  });
+
+  it('never removes non-status labels', () => {
+    const plan = planMove({ state: 'open', labels: ['task', 'area:vscode', 'status:backlog'] }, 'Ready');
+    expect(plan.removeLabels).toEqual(['status:backlog']);
+  });
+
+  it('is a no-op when already in place', () => {
+    expect(planMove({ state: 'open', labels: ['status:blocked'] }, 'Blocked').noop).toBe(true);
+    expect(planMove({ state: 'open', labels: ['status:verified'] }, 'Verified').noop).toBe(false);
+  });
+
+  it('collapses six columns onto the three board values', () => {
+    const statuses = ['Backlog', 'Ready', 'In progress', 'Blocked', 'Review', 'Verified'].map(
+      (c) => planMove({ state: 'open', labels: [] }, c as never).projectStatus,
+    );
+    expect(statuses).toEqual(['Todo', 'Todo', 'In Progress', 'In Progress', 'In Progress', 'Done']);
+  });
+});
+
+describe('describeMove', () => {
+  it('lists each change', () => {
+    const issue = { state: 'open' as const, labels: ['status:review'] };
+    expect(describeMove(planMove(issue, 'Verified'), issue)).toEqual([
+      'Remove label: status:review',
+      'Add label: status:verified',
+      'Close the Issue',
+      'Set board Status: Done',
+    ]);
   });
 });

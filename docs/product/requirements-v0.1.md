@@ -53,15 +53,17 @@ Side states: `blocked`, `needs-human-decision`, `cancelled`.
 
 The lifecycle status lives in Markdown frontmatter. The Kanban column is a GitHub Issue projection of it. This table is the single reference; other documents link here.
 
-| Lifecycle status (frontmatter) | Kanban column | GitHub Issue state + label |
-| --- | --- | --- |
-| `draft` | Backlog | open + `status:backlog` |
-| `ready`, `assigned` | Ready | open + `status:ready` |
-| `in-progress` | In progress | open + `status:in-progress` |
-| `blocked`, `needs-human-decision` | Blocked | open + `status:blocked` |
-| `review` | Review | open + `status:review` |
-| `verified`, `accepted` | Verified | closed + `status:verified` |
-| `cancelled` | not shown | closed |
+| Lifecycle status (frontmatter) | Kanban column | GitHub Issue state + label | Shared board Status |
+| --- | --- | --- | --- |
+| `draft` | Backlog | open + `status:backlog` | Todo |
+| `ready`, `assigned` | Ready | open + `status:ready` | Todo |
+| `in-progress` | In progress | open + `status:in-progress` | In Progress |
+| `blocked`, `needs-human-decision` | Blocked | open + `status:blocked` | In Progress |
+| `review` | Review | open + `status:review` | In Progress |
+| `verified`, `accepted` | Verified | closed + `status:verified` | Done |
+| `cancelled` | not shown | closed | Done |
+
+The board `Status` column is derived from the labels and Issue state ([DEC-003](../decisions/DEC-003-board-status-mapping.md)).
 
 Notes:
 
