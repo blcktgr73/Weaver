@@ -8,6 +8,8 @@ export interface PullEvidence {
   url: string;
   state: 'open' | 'closed' | 'merged';
   checks: ChecksState;
+  /** `closes` when the PR text says it closes the Issue; otherwise it only mentions it. */
+  link: 'closes' | 'mentions';
 }
 
 export interface TaskEvidence {
@@ -64,5 +66,20 @@ function groupedPullGap(pulls: PullEvidence[], state: ChecksState, one: string, 
 
 export function describePull(pull: PullEvidence): string {
   const checks = pull.checks === 'none' ? 'no checks' : `checks ${pull.checks}`;
-  return `PR #${pull.number} ${pull.state} · ${checks}`;
+  const link = pull.link === 'closes' ? 'closes Issue' : 'mentions Issue';
+  return `PR #${pull.number} ${pull.state} · ${checks} · ${link}`;
+}
+
+const CLOSING_WORD = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+(?:[\w.-]+\/[\w.-]+)?#(\d+)\b/gi;
+
+/**
+ * Whether PR text uses GitHub's closing keywords for this Issue ("Closes #5").
+ * A plain "#5" or "TASK-005" is only a mention.
+ */
+export function closesIssue(text: string | null | undefined, issueNumber: number): boolean {
+  if (!text) return false;
+  for (const match of text.matchAll(CLOSING_WORD)) {
+    if (Number(match[1]) === issueNumber) return true;
+  }
+  return false;
 }

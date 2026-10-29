@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { describePull, evidenceGaps, summarizeChecks } from '../src';
+import { closesIssue, describePull, evidenceGaps, summarizeChecks } from '../src';
 
 const pull = (over: Partial<Parameters<typeof describePull>[0]> = {}) => ({
-  number: 7, title: 't', url: 'u', state: 'merged' as const, checks: 'passing' as const, ...over,
+  number: 7, title: 't', url: 'u', state: 'merged' as const, checks: 'passing' as const, link: 'closes' as const, ...over,
 });
 
 describe('summarizeChecks', () => {
@@ -53,7 +53,23 @@ describe('evidenceGaps', () => {
 
 describe('describePull', () => {
   it('summarizes state and checks', () => {
-    expect(describePull(pull())).toBe('PR #7 merged · checks passing');
-    expect(describePull(pull({ checks: 'none', state: 'open' }))).toBe('PR #8 open · no checks'.replace('#8', '#7'));
+    expect(describePull(pull())).toBe('PR #7 merged · checks passing · closes Issue');
+    expect(describePull(pull({ checks: 'none', state: 'open' }))).toBe('PR #7 open · no checks · closes Issue');
+    expect(describePull(pull({ link: 'mentions' }))).toBe('PR #7 merged · checks passing · mentions Issue');
+  });
+});
+
+describe('closesIssue', () => {
+  it('accepts GitHub closing keywords for the same Issue', () => {
+    expect(closesIssue('Closes #5', 5)).toBe(true);
+    expect(closesIssue('fixed #5 and more', 5)).toBe(true);
+    expect(closesIssue('Resolves: blcktgr73/Weaver#5', 5)).toBe(true);
+  });
+  it('treats a bare reference or another Issue as a mention', () => {
+    expect(closesIssue('See #5 for context', 5)).toBe(false);
+    expect(closesIssue('Closes #50', 5)).toBe(false);
+    expect(closesIssue('Closes #6', 5)).toBe(false);
+    expect(closesIssue('TASK-005 relates', 5)).toBe(false);
+    expect(closesIssue(null, 5)).toBe(false);
   });
 });

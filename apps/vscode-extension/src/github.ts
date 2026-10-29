@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   CheckRunLike,
+  closesIssue,
   IssueSnapshot,
   MovePlan,
   parseIssueUrl,
@@ -231,7 +232,7 @@ export async function fetchEvidence(token: string, issueUrl: string): Promise<Ev
 
     const pulls = await Promise.all(
       [...sources.values()].map(async (source): Promise<PullEvidence> => {
-        const pr = await getJson<{ state: string; merged_at: string | null; head: { sha: string } }>(
+        const pr = await getJson<{ state: string; merged_at: string | null; body: string | null; head: { sha: string } }>(
           token,
           `${source.repository_url}/pulls/${source.number}`,
         );
@@ -245,6 +246,8 @@ export async function fetchEvidence(token: string, issueUrl: string): Promise<Ev
           url: source.html_url,
           state: pr.merged_at ? 'merged' : pr.state === 'open' ? 'open' : 'closed',
           checks: summarizeChecks(runs.check_runs),
+          link: closesIssue(`${source.title}
+${pr.body ?? ''}`, ref.number) ? 'closes' : 'mentions',
         };
       }),
     );

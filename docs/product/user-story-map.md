@@ -75,7 +75,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - As a reviewer, I can verify Weaver changes using the same evidence model Weaver provides to other projects.
 - As a contributor, I can record development friction as a product story.
 - `US-013` — As a reviewer, I can see commits that are not linked to any task, so work does not land outside the requirement flow.
-- `US-014` — As a reviewer, I can tell which pull request actually implements a task, not only which pull requests mention its Issue.
+- `US-014` — As a reviewer, I can tell which pull request actually implements a task, not only which pull requests mention its Issue. (Partly met: the view labels each PR "closes Issue" or "mentions Issue" from GitHub closing keywords such as `Closes #5`. Gap rules do not use the label yet.)
 - `US-015` — As a first-time user, I can reach the Requirement view from the requirement file itself, without knowing which of two similarly named commands opens it. (Friction found when trying the first build: `Open Requirement` opened the source, `Show Requirement` opened the view.)
 
 ### PALab project adoption
