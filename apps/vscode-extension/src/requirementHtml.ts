@@ -1,4 +1,22 @@
-import type { RequirementArtifact, ValidationIssue } from '@palab/weaver-markdown';
+import {
+  groupByColumn,
+  IssueSnapshot,
+  KANBAN_COLUMNS,
+  KanbanPlacement,
+  placeIssue,
+  RequirementArtifact,
+  ValidationIssue,
+} from '@palab/weaver-markdown';
+
+export type TaskStatus =
+  | { ok: true; issue: IssueSnapshot }
+  | { ok: false; error: string };
+
+export interface StatusState {
+  /** Task ID to the result of reading its Issue. */
+  byTask: Record<string, TaskStatus>;
+  loading: boolean;
+}
 
 export function escapeHtml(value: string): string {
   return value
@@ -23,6 +41,7 @@ export function renderRequirementHtml(
   issues: ValidationIssue[],
   nonce: string,
   cspSource: string,
+  status?: StatusState,
 ): string {
   const e = escapeHtml;
   const meta: [string, string | undefined][] = [
@@ -44,17 +63,61 @@ export function renderRequirementHtml(
        <p class="muted">Criteria are not yet mapped to tasks or evidence.</p>`
     : '<p class="empty">No acceptance criteria found under “## Acceptance criteria”.</p>';
 
+  const loaded = status !== undefined && Object.keys(status.byTask).length > 0;
+  const placed = new Map<string, { issue: IssueSnapshot; placement: KanbanPlacement }>();
+  for (const task of requirement.tasks) {
+    const result = status?.byTask[task.id];
+    if (result?.ok) placed.set(task.id, { issue: result.issue, placement: placeIssue(result.issue) });
+  }
+
+  const statusCell = (taskId: string): string => {
+    const result = status?.byTask[taskId];
+    if (!result) return '<span class="muted">—</span>';
+    if (!result.ok) return `<span class="warn">${e(result.error)}</span>`;
+    const entry = placed.get(taskId);
+    if (!entry) return '<span class="muted">—</span>';
+    const gaps = entry.placement.gaps.map((g) => `<div class="warn small">${e(g)}</div>`).join('');
+    return `<span class="col-badge">${e(entry.placement.column)}</span>${gaps}`;
+  };
+
   const tasksHtml = requirement.tasks.length
-    ? `<table><thead><tr><th>Task</th><th>Title</th><th>Issue</th></tr></thead><tbody>${requirement.tasks
+    ? `<table><thead><tr><th>Task</th><th>Title</th><th>Issue</th><th>Status</th><th>Owner</th></tr></thead><tbody>${requirement.tasks
         .map((t) => {
           const link =
             t.issueUrl && isOpenableUrl(t.issueUrl)
               ? `<a href="#" data-url="${e(t.issueUrl)}">#${t.issueNumber ?? 'open'}</a>`
               : '<span class="warn">not linked</span>';
-          return `<tr><td><span class="tag">${e(t.id)}</span></td><td>${e(t.title)}</td><td>${link}</td></tr>`;
+          const owners = placed.get(t.id)?.issue.assignees ?? [];
+          const owner = status?.byTask[t.id] ? (owners.length ? e(owners.join(', ')) : '<span class="muted">unassigned</span>') : '<span class="muted">—</span>';
+          return `<tr><td><span class="tag">${e(t.id)}</span></td><td>${e(t.title)}</td><td>${link}</td><td>${statusCell(t.id)}</td><td>${owner}</td></tr>`;
         })
-        .join('')}</tbody></table>`
+        .join('')}</tbody></table>
+       <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
+         status?.loading ? 'Loading…' : loaded ? 'Refresh issue status' : 'Load issue status'
+       }</button></div>
+       <p class="muted small">Read-only. Uses your VS Code GitHub sign-in to read Issue state and labels.</p>`
     : '<p class="empty">No tasks found under “## Tasks”.</p>';
+
+  let boardHtml = '';
+  if (loaded) {
+    const cards = requirement.tasks.flatMap((t) => {
+      const entry = placed.get(t.id);
+      return entry ? [{ task: t, issue: entry.issue, placement: entry.placement }] : [];
+    });
+    const grouped = groupByColumn(cards);
+    const off = requirement.tasks.filter((t) => !placed.has(t.id));
+    boardHtml = `<h2>Board</h2>
+      <div class="board">${KANBAN_COLUMNS.map(
+        (column) => `<div class="lane"><h3>${e(column)} <span class="muted">${grouped[column].length}</span></h3>${grouped[column]
+          .map(
+            (c) => `<div class="card"><span class="tag">${e(c.task.id)}</span> ${e(c.task.title)}
+              <div class="muted small">${c.issue.assignees.length ? e(c.issue.assignees.join(', ')) : 'unassigned'}</div>
+              ${c.placement.gaps.map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
+          )
+          .join('')}</div>`,
+      ).join('')}</div>
+      ${off.length ? `<p class="muted small">Not on the board: ${off.map((t) => e(t.id)).join(', ')} (no readable Issue).</p>` : ''}`;
+  }
 
   const gapsHtml = issues.length
     ? `<ul class="plain">${issues
@@ -72,7 +135,7 @@ export function renderRequirementHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${e(requirement.id)}</title>
 <style nonce="${nonce}">
-  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 24px 48px; line-height: 1.5; max-width: 880px; }
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 24px 48px; line-height: 1.5; max-width: 1100px; }
   h1 { font-size: 1.6em; margin: 4px 0 12px; }
   h2 { font-size: 1.1em; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--vscode-panel-border); }
   .idline { margin-top: 20px; font-weight: 600; color: var(--vscode-descriptionForeground); }
@@ -90,6 +153,13 @@ export function renderRequirementHtml(
   .warn, li.warning strong { color: var(--vscode-editorWarning-foreground); }
   li.error strong { color: var(--vscode-editorError-foreground); }
   .ok { color: var(--vscode-testing-iconPassed, var(--vscode-foreground)); }
+  .small { font-size: 0.85em; }
+  .col-badge { padding: 1px 8px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-size: 0.85em; white-space: nowrap; }
+  .board { display: grid; grid-template-columns: repeat(6, minmax(130px, 1fr)); gap: 8px; overflow-x: auto; }
+  .lane { background: var(--vscode-sideBar-background, transparent); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 8px; min-height: 60px; }
+  .lane h3 { font-size: 0.9em; margin: 0 0 6px; }
+  .card { border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
+  button:disabled { opacity: 0.6; cursor: default; }
   .actions { margin-top: 14px; display: flex; gap: 8px; }
   button { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 0; padding: 5px 12px; border-radius: 2px; cursor: pointer; }
   button:hover { background: var(--vscode-button-secondaryHoverBackground); }
@@ -111,6 +181,8 @@ export function renderRequirementHtml(
 
   <h2>Tasks (${requirement.tasks.length})</h2>
   ${tasksHtml}
+
+  ${boardHtml}
 
   <h2>Gaps and checks (${issues.length})</h2>
   ${gapsHtml}
