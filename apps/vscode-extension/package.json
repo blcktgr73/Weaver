@@ -12,8 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:weaver.openRequirement",
-    "onCommand:weaver.scanWorkspace"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -36,5 +35,8 @@
   "devDependencies": {
     "@types/vscode": "^1.90.0",
     "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@palab/weaver-markdown": "0.0.1"
   }
 }

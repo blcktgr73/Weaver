@@ -16,17 +16,14 @@ PALab Weaver connects the requirements and tasks of multiple company repositorie
 
 ## Initial data shape
 
+The authoritative field list and validation rules are in [Artifact Schema v0.1](./artifact-schema-v0.1.md). The examples below are illustrative. In the schema, acceptance criteria and the task list live in the Markdown body, not in frontmatter.
+
 ```yaml
 type: requirement
 id: REQ-001
 title: Example requirement
 status: in-progress
 repository: product-repo
-acceptance:
-  - The requirement can be viewed as a document.
-  - Tasks and execution evidence are visible from the requirement.
-tasks:
-  - TASK-001
 ```
 
 ```yaml

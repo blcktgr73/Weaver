@@ -94,3 +94,4 @@ Warnings (shown, but not invalid):
 10. A requirement has no `## Acceptance criteria` items.
 11. A requirement has no `## Tasks` items.
 12. A task listed under `## Tasks` has no Issue link.
+13. A `## Tasks` list item does not start with a `TASK-###` ID.

@@ -111,11 +111,11 @@ The first prototype is a VS Code experience that can:
 
 Not included in the first prototype: a full project-management replacement, real-time Notion synchronization, or a new coding agent.
 
-The initial implementation lives in `apps/vscode-extension/`. Run its local checks with:
+The initial implementation lives in `apps/vscode-extension/`. Run the checks from the repository root:
 
 ```bash
-cd apps/vscode-extension
 npm install
 npm run check
-npm run compile
+npm run build
+npm test
 ```
