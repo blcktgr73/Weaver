@@ -16,6 +16,7 @@ Read these documents in order:
 8. [Glossary](../product/glossary.md)
 9. [GitHub Issues Integration](../architecture/github-issues-integration.md)
 10. [Verification v0.1](../product/verification-v0.1.md)
+11. [Artifact Schema v0.1](../product/artifact-schema-v0.1.md)
 
 The current product hypothesis is that the missing layer is not another board. It is a visible connection between requirement intent and execution evidence.
 
