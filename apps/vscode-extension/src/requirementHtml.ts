@@ -77,7 +77,11 @@ export function renderRequirementHtml(
     const entry = placed.get(taskId);
     if (!entry) return '<span class="muted">—</span>';
     const gaps = entry.placement.gaps.map((g) => `<div class="warn small">${e(g)}</div>`).join('');
-    return `<span class="col-badge">${e(entry.placement.column)}</span>${gaps}`;
+    const options = KANBAN_COLUMNS.map(
+      (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(c)}</option>`,
+    ).join('');
+    return `<span class="col-badge">${e(entry.placement.column)}</span>${gaps}
+      <div><select data-move="${e(taskId)}" title="Move to another column (asks for confirmation)" aria-label="Move ${e(taskId)}">${options}</select></div>`;
   };
 
   const tasksHtml = requirement.tasks.length
@@ -95,7 +99,7 @@ export function renderRequirementHtml(
        <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
          status?.loading ? 'Loading…' : loaded ? 'Refresh issue status' : 'Load issue status'
        }</button></div>
-       <p class="muted small">Read-only. Uses your VS Code GitHub sign-in to read Issue state and labels.</p>`
+       <p class="muted small">Reading uses your VS Code GitHub sign-in. Changing a column edits GitHub (labels, Issue state, board Status) and always asks first.</p>`
     : '<p class="empty">No tasks found under “## Tasks”.</p>';
 
   let boardHtml = '';
@@ -159,6 +163,7 @@ export function renderRequirementHtml(
   .lane { background: var(--vscode-sideBar-background, transparent); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 8px; min-height: 60px; }
   .lane h3 { font-size: 0.9em; margin: 0 0 6px; }
   .card { border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
+  select { background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border); margin-top: 4px; }
   button:disabled { opacity: 0.6; cursor: default; }
   .actions { margin-top: 14px; display: flex; gap: 8px; }
   button { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: 0; padding: 5px 12px; border-radius: 2px; cursor: pointer; }
@@ -192,6 +197,10 @@ export function renderRequirementHtml(
 
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
+  document.addEventListener('change', (event) => {
+    const select = event.target.closest('select[data-move]');
+    if (select) vscode.postMessage({ type: 'moveTask', taskId: select.dataset.move, column: select.value });
+  });
   document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-cmd],[data-url]');
     if (!target) return;

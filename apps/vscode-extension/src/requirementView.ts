@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
-import { RequirementArtifact } from '@palab/weaver-markdown';
-import { fetchIssue, getGitHubToken } from './github';
+import { describeMove, KANBAN_COLUMNS, KanbanColumn, planMove, RequirementArtifact } from '@palab/weaver-markdown';
+import { applyMove, fetchIssue, getGitHubToken } from './github';
 import { isOpenableUrl, renderRequirementHtml, StatusState } from './requirementHtml';
 import { Loaded } from './workspace';
 
@@ -41,7 +41,7 @@ export class RequirementView {
     this.panels.set(requirement.id, entry);
 
     panel.onDidDispose(() => this.panels.delete(requirement.id));
-    panel.webview.onDidReceiveMessage(async (message: { type: string; url?: string }) => {
+    panel.webview.onDidReceiveMessage(async (message: { type: string; url?: string; taskId?: string; column?: string }) => {
       if (message.type === 'openSource' && entry.uri) {
         await vscode.window.showTextDocument(entry.uri, { viewColumn: vscode.ViewColumn.One });
       } else if (message.type === 'openPreview' && entry.uri) {
@@ -50,6 +50,8 @@ export class RequirementView {
         await vscode.env.openExternal(vscode.Uri.parse(message.url));
       } else if (message.type === 'loadStatus') {
         await this.loadStatus(entry, true);
+      } else if (message.type === 'moveTask' && message.taskId && message.column) {
+        await this.moveTask(entry, message.taskId, message.column);
       }
     });
     this.render(entry);
@@ -102,6 +104,52 @@ export class RequirementView {
     } finally {
       if (this.panels.get(entry.requirement.id) === entry) this.render(entry);
     }
+  }
+
+  private async moveTask(entry: Panel, taskId: string, columnName: string): Promise<void> {
+    const column = KANBAN_COLUMNS.find((c) => c === columnName) as KanbanColumn | undefined;
+    const task = entry.requirement.tasks.find((t) => t.id === taskId);
+    const current = entry.status.byTask[taskId];
+    if (!column || !task?.issueUrl || !current?.ok) return;
+
+    const plan = planMove(current.issue, column);
+    if (plan.noop) {
+      this.render(entry);
+      return;
+    }
+
+    const lines = describeMove(plan, current.issue);
+    const warning =
+      column === 'Verified'
+        ? '\n\nVerified means the acceptance evidence has been checked. Weaver does not check it for you.'
+        : '';
+    const detail = `This edits GitHub issue #${current.issue.number}:\n- ${lines.join('\n- ')}${warning}`;
+    const choice = await vscode.window.showWarningMessage(
+      `Move ${taskId} to "${column}"?`,
+      { modal: true, detail },
+      'Move',
+    );
+    if (choice !== 'Move') {
+      this.render(entry); // put the selector back
+      return;
+    }
+
+    const token = await getGitHubToken(true, ['repo', 'project']);
+    if (!token) {
+      this.render(entry);
+      return;
+    }
+    const steps = await applyMove(token, task.issueUrl, plan);
+    const failed = steps.find((s) => !s.ok);
+    if (failed) {
+      void vscode.window.showErrorMessage(
+        `Weaver: stopped at "${failed.name}" (${failed.detail ?? 'failed'}). Done so far: ${steps.filter((s) => s.ok).map((s) => s.name).join('; ') || 'nothing'}.`,
+      );
+    } else {
+      const note = steps.map((s) => s.detail).filter((d) => d?.startsWith('skipped')).join(' ');
+      void vscode.window.showInformationMessage(`Weaver: moved ${taskId} to ${column}.${note ? ' ' + note : ''}`);
+    }
+    await this.loadStatus(entry, false);
   }
 
   private render(entry: Panel): void {
