@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
+  acceptanceGaps,
   describeMove,
   evidenceGaps,
   formatNotice,
@@ -10,9 +11,11 @@ import {
   MessageKey,
   Notice,
   planMove,
+  recordAcceptance,
   RequirementArtifact,
 } from '@palab/weaver-markdown';
 import { applyMove, fetchBoardItems, fetchEvidence, fetchIssue, getGitHubToken } from './github';
+import { coverageOf } from './coverage';
 import { currentLocale, message } from './locale';
 import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
@@ -64,6 +67,8 @@ export class RequirementView {
         await this.loadStatus(entry, true);
       } else if (message.type === 'moveTask' && message.taskId && message.column) {
         await this.moveTask(entry, message.taskId, message.column);
+      } else if (message.type === 'acceptRequirement') {
+        await this.acceptRequirement(entry);
       }
     });
     this.render(entry);
@@ -194,6 +199,56 @@ export class RequirementView {
       );
     }
     await this.loadStatus(entry, false);
+  }
+
+  /**
+   * Records acceptance in the requirement file after showing what is still open.
+   * Acceptance is a human decision: Weaver lists the open items and asks.
+   */
+  private async acceptRequirement(entry: Panel): Promise<void> {
+    const { requirement } = entry;
+    if (requirement.status === 'accepted') {
+      void vscode.window.showInformationMessage(message('ui.msg.accept-already', { id: requirement.id }));
+      return;
+    }
+    if (Object.keys(entry.status.byTask).length === 0 || !entry.uri) {
+      void vscode.window.showInformationMessage(message('ui.msg.accept-load-first'));
+      return;
+    }
+
+    const locale = currentLocale();
+    const tasks = this.tasksOf(entry);
+    const open = acceptanceGaps(coverageOf(requirement, tasks, entry.status), tasks, locale);
+    const detail = [
+      message('ui.dialog.accept-edit', { path: requirement.path }),
+      open.length > 0
+        ? [message('ui.dialog.accept-open'), ...open.map((line) => `- ${line}`)].join('\n')
+        : message('ui.dialog.accept-none'),
+      message('ui.dialog.accept-note'),
+    ].join('\n\n');
+    const acceptLabel = message('ui.dialog.accept-button');
+    const choice = await vscode.window.showWarningMessage(
+      message('ui.dialog.accept-title', { id: requirement.id }),
+      { modal: true, detail },
+      acceptLabel,
+    );
+    if (choice !== acceptLabel) return;
+
+    const session = await vscode.authentication.getSession('github', ['repo'], { silent: true });
+    const by = session?.account.label ?? (await vscode.window.showInputBox({ prompt: message('ui.prompt.accepted-by') }));
+    if (!by) return;
+
+    const document = await vscode.workspace.openTextDocument(entry.uri);
+    const updated = recordAcceptance(document.getText(), by, new Date().toISOString().slice(0, 10));
+    if (updated === undefined) {
+      void vscode.window.showErrorMessage(message('ui.msg.accept-failed', { path: requirement.path }));
+      return;
+    }
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(entry.uri, new vscode.Range(0, 0, document.lineCount, 0), updated);
+    await vscode.workspace.applyEdit(edit);
+    await document.save();
+    void vscode.window.showInformationMessage(message('ui.msg.accepted', { id: requirement.id, by }));
   }
 
   private render(entry: Panel): void {

@@ -25,6 +25,7 @@ const PATTERNS = {
 
 const KNOWN_REQUIREMENT_FIELDS = [
   'id', 'type', 'title', 'status', 'owner', 'story_ids', 'repository', 'github_project',
+  'accepted_by', 'accepted_on',
 ];
 const KNOWN_TASK_FIELDS = [
   'id', 'type', 'title', 'requirement', 'status', 'assignee_type', 'assignee', 'repository',
@@ -123,6 +124,8 @@ export function parseArtifact(path: string, text: string): ParseResult {
       ...(str(fm.owner) ? { owner: str(fm.owner) } : {}),
       ...(repository ? { repository } : {}),
       ...(str(fm.github_project) ? { githubProject: str(fm.github_project) } : {}),
+      ...(str(fm.accepted_by) ? { acceptedBy: str(fm.accepted_by) } : {}),
+      ...(str(fm.accepted_on) ? { acceptedOn: str(fm.accepted_on) } : {}),
       frontmatter: fm,
     };
     return { isArtifact: true, artifact, issues };
