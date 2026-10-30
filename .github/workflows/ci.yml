@@ -20,3 +20,9 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weaver-vsix
+          path: dist/weaver-*.vsix
+          if-no-files-found: error
