@@ -6,12 +6,14 @@ import {
   formatNotice,
   KANBAN_COLUMNS,
   KanbanColumn,
+  MessageKey,
+  Notice,
   planMove,
   RequirementArtifact,
 } from '@palab/weaver-markdown';
 import { applyMove, fetchEvidence, fetchIssue, getGitHubToken } from './github';
-import { currentLocale } from './locale';
-import { isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
+import { currentLocale, message } from './locale';
+import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
 
 interface Panel {
@@ -75,7 +77,7 @@ export class RequirementView {
       if (requirement?.kind === 'requirement') {
         this.apply(entry, loaded, requirement);
       } else {
-        entry.panel.webview.html = `<body style="padding:24px;font-family:var(--vscode-font-family);color:var(--vscode-foreground)">${id} is no longer a valid requirement. Check the Problems panel.</body>`;
+        entry.panel.webview.html = `<body style="padding:24px;font-family:var(--vscode-font-family);color:var(--vscode-foreground)">${escapeHtml(message('ui.panel.invalid', { id }))}</body>`;
       }
     }
   }
@@ -116,7 +118,7 @@ export class RequirementView {
       entry.status = { byTask, loading: false };
     } catch (error) {
       entry.status = { byTask: entry.status.byTask, loading: false };
-      void vscode.window.showWarningMessage(`Weaver: could not read Issue status (${(error as Error).message}).`);
+      void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
     } finally {
       if (this.panels.get(entry.requirement.id) === entry) this.render(entry);
     }
@@ -140,17 +142,19 @@ export class RequirementView {
       column === 'Verified' ? evidenceGaps('Verified', current.evidence).map((gap) => formatNotice(gap, locale)) : [];
     const warning =
       column === 'Verified'
-        ? `\n\nVerified means the acceptance evidence has been checked. Weaver does not check it for you.${
-            missing.length ? `\nEvidence gaps right now: ${missing.join('; ')}.` : ''
+        ? `\n\n${message('ui.dialog.verified-warning')}${
+            missing.length ? `\n${message('ui.dialog.evidence-gaps', { gaps: missing.join('; ') })}` : ''
           }`
         : '';
-    const detail = `This edits GitHub issue #${current.issue.number}:\n- ${lines.join('\n- ')}${warning}`;
+    const detail = `${message('ui.dialog.move-detail', { number: current.issue.number })}\n- ${lines.join('\n- ')}${warning}`;
+    const columnLabel = message(`column.${column}` as MessageKey);
+    const moveLabel = message('ui.dialog.move-button');
     const choice = await vscode.window.showWarningMessage(
-      `Move ${taskId} to "${column}"?`,
+      message('ui.dialog.move-title', { task: taskId, column: columnLabel }),
       { modal: true, detail },
-      'Move',
+      moveLabel,
     );
-    if (choice !== 'Move') {
+    if (choice !== moveLabel) {
       this.render(entry); // put the selector back
       return;
     }
@@ -161,14 +165,21 @@ export class RequirementView {
       return;
     }
     const steps = await applyMove(token, task.issueUrl, plan);
+    const text = (notice: Notice | undefined): string => (notice ? formatNotice(notice, locale) : '');
     const failed = steps.find((s) => !s.ok);
     if (failed) {
+      const done =steps.filter((s) => s.ok).map((s) => text(s.name)).join('; ') || message('ui.msg.move-nothing');
       void vscode.window.showErrorMessage(
-        `Weaver: stopped at "${failed.name}" (${failed.detail ?? 'failed'}). Done so far: ${steps.filter((s) => s.ok).map((s) => s.name).join('; ') || 'nothing'}.`,
+        message('ui.msg.move-stopped', { step: text(failed.name), detail: text(failed.detail), done }),
       );
     } else {
-      const note = steps.map((s) => s.detail).filter((d) => d?.startsWith('skipped')).join(' ');
-      void vscode.window.showInformationMessage(`Weaver: moved ${taskId} to ${column}.${note ? ' ' + note : ''}`);
+      const note = steps
+        .filter((s) => s.skipped)
+        .map((s) => text(s.detail))
+        .join(' ');
+      void vscode.window.showInformationMessage(
+        `${message('ui.msg.move-done', { task: taskId, column: columnLabel })}${note ? ' ' + note : ''}`,
+      );
     }
     await this.loadStatus(entry, false);
   }

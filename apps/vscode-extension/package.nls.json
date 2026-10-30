@@ -1,0 +1,9 @@
+{
+  "weaver.command.openRequirementView.title": "Weaver: Open Requirement View",
+  "weaver.command.openRequirementSource.title": "Weaver: Open Requirement Source",
+  "weaver.command.scanWorkspace.title": "Weaver: Scan Workspace",
+  "weaver.config.language.description": "Language of Weaver messages inside the extension. Command titles follow the VS Code display language.",
+  "weaver.config.language.auto": "Follow the VS Code display language; English if it is not supported.",
+  "weaver.config.language.en": "English",
+  "weaver.config.language.ko": "Korean (한국어)"
+}

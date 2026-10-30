@@ -24,4 +24,4 @@ Weaver will be used by people who read English and Korean. Its messages come fro
 
 - New user-facing text starts as a catalog key. Literal sentences in logic or views are a review finding.
 - Kanban column names have catalog keys; the GitHub labels and board values they map to do not change.
-- Extension command titles and settings descriptions are translated through VS Code's `package.nls` files in a follow-up change.
+- Command titles and setting descriptions use VS Code's `package.nls` files, so they follow the VS Code display language, not `weaver.language` (a VS Code limit). Everything the extension draws itself follows `weaver.language`.
