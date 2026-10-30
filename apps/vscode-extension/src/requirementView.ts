@@ -6,6 +6,7 @@ import {
   formatNotice,
   KANBAN_COLUMNS,
   KanbanColumn,
+  mergeTasks,
   MessageKey,
   Notice,
   planMove,
@@ -82,6 +83,11 @@ export class RequirementView {
     }
   }
 
+  /** The requirement's task list joined with its task files (DEC-005). */
+  private tasksOf(entry: Panel) {
+    return mergeTasks(entry.requirement, entry.loaded.artifacts);
+  }
+
   private apply(entry: Panel, loaded: Loaded, requirement: RequirementArtifact): void {
     entry.requirement = requirement;
     entry.loaded = loaded;
@@ -101,7 +107,7 @@ export class RequirementView {
         return;
       }
       const results = await Promise.all(
-        entry.requirement.tasks.map(async (task) => {
+        this.tasksOf(entry).map(async (task) => {
           if (!task.issueUrl) return undefined;
           const [issue, evidence] = await Promise.all([
             fetchIssue(token, task.issueUrl),
@@ -126,7 +132,7 @@ export class RequirementView {
 
   private async moveTask(entry: Panel, taskId: string, columnName: string): Promise<void> {
     const column = KANBAN_COLUMNS.find((c) => c === columnName) as KanbanColumn | undefined;
-    const task = entry.requirement.tasks.find((t) => t.id === taskId);
+    const task = this.tasksOf(entry).find((t) => t.id === taskId);
     const current = entry.status.byTask[taskId];
     if (!column || !task?.issueUrl || !current?.ok) return;
 
@@ -189,6 +195,6 @@ export class RequirementView {
     const nonce = randomBytes(16).toString('hex');
     const issues = loaded.issues.filter((issue) => issue.path === requirement.path);
     panel.title = `${requirement.id} ${requirement.title}`;
-    panel.webview.html = renderRequirementHtml(requirement, issues, nonce, panel.webview.cspSource, entry.status, currentLocale());
+    panel.webview.html = renderRequirementHtml(requirement, this.tasksOf(entry), issues, nonce, panel.webview.cspSource, entry.status, currentLocale());
   }
 }

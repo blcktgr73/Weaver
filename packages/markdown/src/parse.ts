@@ -20,6 +20,7 @@ const PATTERNS = {
   task: /^TASK-\d{3,}$/,
   story: /^US-\d{3,}$/,
   repository: /^[\w.-]+\/[\w.-]+$/,
+  criterion: /^AC-\d{3,}$/,
 };
 
 const KNOWN_REQUIREMENT_FIELDS = [
@@ -27,7 +28,7 @@ const KNOWN_REQUIREMENT_FIELDS = [
 ];
 const KNOWN_TASK_FIELDS = [
   'id', 'type', 'title', 'requirement', 'status', 'assignee_type', 'assignee', 'repository',
-  'branch', 'pull_request', 'issue', 'tests', 'blockers',
+  'branch', 'pull_request', 'issue', 'tests', 'blockers', 'criteria',
 ];
 
 function str(value: unknown): string | undefined {
@@ -72,7 +73,9 @@ export function parseArtifact(path: string, text: string): ParseResult {
     add('error', 'invalid-id', { id, pattern: type === 'requirement' ? 'REQ-###' : 'TASK-###' });
   }
   const title = required('title');
-  const statusRaw = required('status');
+  // A task file with an Issue link takes its status from the Issue (DEC-005).
+  const statusFromIssue = type === 'task' && Boolean(str(fm.issue));
+  const statusRaw = statusFromIssue ? str(fm.status) : required('status');
   if (statusRaw && !(LIFECYCLE_STATUSES as readonly string[]).includes(statusRaw)) {
     add('error', 'invalid-status', { status: statusRaw, allowed: LIFECYCLE_STATUSES.join(', ') });
   }
@@ -86,7 +89,7 @@ export function parseArtifact(path: string, text: string): ParseResult {
     if (!known.includes(key)) add('warning', 'unknown-field', { field: key });
   }
 
-  const status = statusRaw as LifecycleStatus;
+  const status = statusRaw as LifecycleStatus | undefined;
 
   if (type === 'requirement') {
     const rawStories = fm.story_ids ?? [];
@@ -112,7 +115,7 @@ export function parseArtifact(path: string, text: string): ParseResult {
     }
 
     const hasErrors = issues.some((i) => i.severity === 'error');
-    if (hasErrors || !id || !title || !statusRaw) return { isArtifact: true, issues };
+    if (hasErrors || !id || !title || !status) return { isArtifact: true, issues };
     const artifact: RequirementArtifact = {
       kind: 'requirement',
       path, id, title, status, storyIds, criteria, tasks,
@@ -132,17 +135,28 @@ export function parseArtifact(path: string, text: string): ParseResult {
   if (assigneeType && !(ASSIGNEE_TYPES as readonly string[]).includes(assigneeType)) {
     add('error', 'invalid-assignee-type', { value: assigneeType });
   }
+  const rawCriteria = fm.criteria ?? [];
+  const criteria: string[] = [];
+  if (!Array.isArray(rawCriteria)) {
+    add('error', 'criteria-not-list');
+  } else {
+    for (const criterion of rawCriteria) {
+      if (typeof criterion === 'string' && PATTERNS.criterion.test(criterion)) criteria.push(criterion);
+      else add('error', 'invalid-criterion', { id: String(criterion) });
+    }
+  }
   const blockers = Array.isArray(fm.blockers) ? fm.blockers.map(String) : [];
   if (fm.blockers !== undefined && !Array.isArray(fm.blockers)) {
     add('error', 'invalid-blockers');
   }
 
   const hasErrors = issues.some((i) => i.severity === 'error');
-  if (hasErrors || !id || !title || !statusRaw || !requirement) return { isArtifact: true, issues };
+  if (hasErrors || !id || !title || !requirement || (!status && !statusFromIssue)) return { isArtifact: true, issues };
   const pullRequest = fm.pull_request === null ? null : str(fm.pull_request);
   const artifact: TaskArtifact = {
     kind: 'task',
-    path, id, title, requirement, status, blockers,
+    path, id, title, requirement, blockers, criteria,
+    ...(status ? { status } : {}),
     ...(assigneeType ? { assigneeType: assigneeType as AssigneeType } : {}),
     ...(str(fm.assignee) ? { assignee: str(fm.assignee) } : {}),
     ...(repository ? { repository } : {}),

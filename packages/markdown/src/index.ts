@@ -5,4 +5,5 @@ export { loadWorkspace, validateWorkspace } from './validate';
 export type { SourceFile } from './validate';
 export * from './kanban';
 export * from './evidence';
+export * from './tasks';
 export * from './i18n';

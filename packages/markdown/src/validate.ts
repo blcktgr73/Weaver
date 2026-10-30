@@ -10,8 +10,8 @@ export interface SourceFile {
 /** Cross-artifact rules: unique IDs, resolvable requirement references, single task owner. */
 export function validateWorkspace(artifacts: Artifact[]): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const add = (a: Artifact, code: string, args: MessageArgs) =>
-    issues.push({ severity: 'error', code, args, path: a.path });
+  const add = (a: Artifact, code: string, args: MessageArgs, severity: 'error' | 'warning' = 'error') =>
+    issues.push({ severity, code, args, path: a.path });
 
   const byId = new Map<string, Artifact>();
   for (const artifact of artifacts) {
@@ -26,6 +26,15 @@ export function validateWorkspace(artifacts: Artifact[]): ValidationIssue[] {
       const target = byId.get(artifact.requirement);
       if (!target || target.kind !== 'requirement') {
         add(artifact, 'unknown-requirement', { task: artifact.id, requirement: artifact.requirement });
+      } else {
+        if (!target.tasks.some((task) => task.id === artifact.id)) {
+          add(artifact, 'task-not-listed', { task: artifact.id, requirement: target.id }, 'warning');
+        }
+        for (const criterion of artifact.criteria) {
+          if (!target.criteria.some((c) => c.id === criterion)) {
+            add(artifact, 'unknown-criterion', { task: artifact.id, criterion, requirement: target.id }, 'warning');
+          }
+        }
       }
     } else {
       for (const task of artifact.tasks) {

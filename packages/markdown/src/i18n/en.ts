@@ -55,6 +55,14 @@ export const en = {
   'pull.checks.none': 'no checks',
   'pull.link.closes': 'closes Issue',
   'pull.link.mentions': 'mentions Issue',
+  'validation.criteria-not-list': '"criteria" must be a list.',
+  'validation.invalid-criterion': 'Criterion ID "{id}" does not match AC-###.',
+  'validation.task-not-listed': '{task} is not listed under ## Tasks of {requirement}.',
+  'validation.unknown-criterion': '{task} refers to {criterion}, which {requirement} does not have.',
+  'gap.no-owner': 'no owner recorded',
+  'ui.owner.agent': 'agent',
+  'ui.owner.human': 'human',
+  'ui.owner.from-issue': 'from the Issue',
 
   // Kanban column names (labels and board values stay in English)
   'column.Backlog': 'Backlog',

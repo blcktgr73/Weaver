@@ -7,9 +7,12 @@ import {
   KANBAN_COLUMNS,
   KanbanPlacement,
   Locale,
+  MergedTask,
   MessageArgs,
   MessageKey,
   Notice,
+  ownerGaps,
+  ownerOf,
   placeIssue,
   RequirementArtifact,
   t,
@@ -48,6 +51,7 @@ const STATUS_NOTE: Record<string, MessageKey> = {
 
 export function renderRequirementHtml(
   requirement: RequirementArtifact,
+  tasks: MergedTask[],
   issues: ValidationIssue[],
   nonce: string,
   cspSource: string,
@@ -78,7 +82,7 @@ export function renderRequirementHtml(
 
   const loaded = status !== undefined && Object.keys(status.byTask).length > 0;
   const placed = new Map<string, { issue: IssueSnapshot; placement: KanbanPlacement }>();
-  for (const task of requirement.tasks) {
+  for (const task of tasks) {
     const result = status?.byTask[task.id];
     if (result?.ok) placed.set(task.id, { issue: result.issue, placement: placeIssue(result.issue) });
   }
@@ -91,7 +95,19 @@ export function renderRequirementHtml(
     const evidence = result.evidenceError
       ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
       : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
-    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...evidence];
+    const task = tasks.find((candidate) => candidate.id === taskId);
+    const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
+    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...evidence];
+  };
+
+  /** The recorded owner (task file), or the Issue assignee as a hint. */
+  const ownerHtml = (task: MergedTask): string => {
+    const owner = ownerOf(task, placed.get(task.id)?.issue.assignees);
+    if (!owner) {
+      return status?.byTask[task.id] ? `<span class="muted">${e(tt('ui.owner.unassigned'))}</span>` : '<span class="muted">—</span>';
+    }
+    const note = owner.type ? tt(`ui.owner.${owner.type}`) : owner.source === 'issue' ? tt('ui.owner.from-issue') : '';
+    return `${e(owner.name)}${note ? ` <span class="muted small">· ${e(note)}</span>` : ''}`;
   };
 
   const evidenceCell = (taskId: string): string => {
@@ -119,19 +135,14 @@ export function renderRequirementHtml(
       <div><select data-move="${e(taskId)}" title="${e(tt('ui.move.tooltip'))}" aria-label="${e(tt('ui.move.aria', { task: taskId }))}">${options}</select></div>`;
   };
 
-  const tasksHtml = requirement.tasks.length
-    ? `<table><thead><tr><th>${e(tt('ui.table.task'))}</th><th>${e(tt('ui.table.title'))}</th><th>${e(tt('ui.table.issue'))}</th><th>${e(tt('ui.table.status'))}</th><th>${e(tt('ui.table.evidence'))}</th><th>${e(tt('ui.table.owner'))}</th></tr></thead><tbody>${requirement.tasks
+  const tasksHtml = tasks.length
+    ? `<table><thead><tr><th>${e(tt('ui.table.task'))}</th><th>${e(tt('ui.table.title'))}</th><th>${e(tt('ui.table.issue'))}</th><th>${e(tt('ui.table.status'))}</th><th>${e(tt('ui.table.evidence'))}</th><th>${e(tt('ui.table.owner'))}</th></tr></thead><tbody>${tasks
         .map((task) => {
           const link =
             task.issueUrl && isOpenableUrl(task.issueUrl)
               ? `<a href="#" data-url="${e(task.issueUrl)}">#${task.issueNumber ?? 'open'}</a>`
               : `<span class="warn">${e(tt('ui.issue.not-linked'))}</span>`;
-          const owners = placed.get(task.id)?.issue.assignees ?? [];
-          const owner = status?.byTask[task.id]
-            ? owners.length
-              ? e(owners.join(', '))
-              : `<span class="muted">${e(tt('ui.owner.unassigned'))}</span>`
-            : '<span class="muted">—</span>';
+          const owner = ownerHtml(task);
           return `<tr><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
         })
         .join('')}</tbody></table>
@@ -143,18 +154,18 @@ export function renderRequirementHtml(
 
   let boardHtml = '';
   if (loaded) {
-    const cards = requirement.tasks.flatMap((task) => {
+    const cards = tasks.flatMap((task) => {
       const entry = placed.get(task.id);
       return entry ? [{ task, issue: entry.issue, placement: entry.placement }] : [];
     });
     const grouped = groupByColumn(cards);
-    const off = requirement.tasks.filter((task) => !placed.has(task.id));
+    const off = tasks.filter((task) => !placed.has(task.id));
     boardHtml = `<h2>${e(tt('ui.board.title'))}</h2>
       <div class="board">${KANBAN_COLUMNS.map(
         (name) => `<div class="lane"><h3>${e(column(name))} <span class="muted">${grouped[name].length}</span></h3>${grouped[name]
           .map(
             (c) => `<div class="card"><span class="tag">${e(c.task.id)}</span> ${e(c.task.title)}
-              <div class="muted small">${c.issue.assignees.length ? e(c.issue.assignees.join(', ')) : e(tt('ui.owner.unassigned'))}</div>
+              <div class="muted small">${ownerHtml(c.task)}</div>
               ${allGaps(c.task.id).map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
           )
           .join('')}</div>`,
@@ -164,7 +175,7 @@ export function renderRequirementHtml(
 
   let evidenceHtml = `<p class="muted">${e(tt('ui.evidence.hint-load'))}</p>`;
   if (loaded) {
-    const withGaps = requirement.tasks
+    const withGaps = tasks
       .map((task) => ({ task, gaps: allGaps(task.id) }))
       .filter((x) => status?.byTask[x.task.id]?.ok && x.gaps.length > 0);
     evidenceHtml = withGaps.length
@@ -236,7 +247,7 @@ export function renderRequirementHtml(
   <h2>${e(tt('ui.criteria.title', { count: requirement.criteria.length }))}</h2>
   ${criteriaHtml}
 
-  <h2>${e(tt('ui.tasks.title', { count: requirement.tasks.length }))}</h2>
+  <h2>${e(tt('ui.tasks.title', { count: tasks.length }))}</h2>
   ${tasksHtml}
 
   ${boardHtml}
