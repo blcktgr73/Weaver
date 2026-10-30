@@ -48,7 +48,7 @@ Body sections (heading text is matched case-insensitively):
 
 ## Task artifact
 
-A task normally lives as a GitHub Issue plus a line in the requirement's `## Tasks` list. A standalone task file is optional and uses frontmatter `type: task`.
+A task normally lives as a GitHub Issue plus a line in the requirement's `## Tasks` list. A task file is optional and uses frontmatter `type: task`. It carries what the list cannot: the owner, the acceptance criteria the task satisfies, and blockers ([DEC-005](../decisions/DEC-005-task-files.md)). Task files live under `docs/tasks/`.
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ A task normally lives as a GitHub Issue plus a line in the requirement's `## Tas
 | `type` | yes | `task` | |
 | `title` | yes | string | |
 | `requirement` | yes | `REQ-###` | must exist in the workspace |
-| `status` | yes | lifecycle status | |
+| `status` | yes, unless `issue` is set | lifecycle status | with an `issue` link the Issue decides the column ([DEC-003](../decisions/DEC-003-board-status-mapping.md)) |
 | `assignee_type` | no | `human` or `agent` | |
 | `assignee` | no | string | |
 | `repository` | no | `owner/name` | |
@@ -65,6 +65,7 @@ A task normally lives as a GitHub Issue plus a line in the requirement's `## Tas
 | `issue` | no | URL | |
 | `tests` | no | string | e.g. `pending`, a command, or a check URL |
 | `blockers` | no | list of strings | |
+| `criteria` | no | list of `AC-###` | acceptance criteria of the requirement that this task satisfies |
 
 ## Lifecycle status
 
@@ -79,7 +80,7 @@ Errors (the artifact is invalid):
 1. Frontmatter is present and parses as YAML.
 2. `type` is `requirement` or `task`.
 3. Required fields are present and non-empty.
-4. `id`, `story_ids`, `requirement`, and `repository` match their patterns.
+4. `id`, `story_ids`, `requirement`, `criteria`, and `repository` match their patterns.
 5. `status` and `assignee_type` use allowed values.
 6. The ID prefix matches the type (`REQ-` for requirements, `TASK-` for tasks).
 
@@ -95,3 +96,5 @@ Warnings (shown, but not invalid):
 11. A requirement has no `## Tasks` items.
 12. A task listed under `## Tasks` has no Issue link.
 13. A `## Tasks` list item does not start with a `TASK-###` ID.
+14. A task file is not listed under its requirement's `## Tasks`.
+15. A task file's `criteria` names a criterion the requirement does not have.

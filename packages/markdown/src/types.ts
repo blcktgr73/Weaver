@@ -62,7 +62,8 @@ export interface TaskArtifact {
   id: string;
   title: string;
   requirement: string;
-  status: LifecycleStatus;
+  /** Optional when the task has an Issue link: the Issue is the source (DEC-005). */
+  status?: LifecycleStatus;
   assigneeType?: AssigneeType;
   assignee?: string;
   repository?: string;
@@ -70,6 +71,8 @@ export interface TaskArtifact {
   pullRequest?: string | null;
   issue?: string;
   tests?: string;
+  /** Acceptance criteria IDs (`AC-001`) this task satisfies. */
+  criteria: string[];
   blockers: string[];
   frontmatter: Record<string, unknown>;
 }
