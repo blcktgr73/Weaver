@@ -51,6 +51,9 @@ export interface RequirementArtifact {
   storyIds: string[];
   repository?: string;
   githubProject?: string;
+  /** Who recorded acceptance and when (a human decision). */
+  acceptedBy?: string;
+  acceptedOn?: string;
   criteria: Criterion[];
   tasks: TaskRef[];
   frontmatter: Record<string, unknown>;

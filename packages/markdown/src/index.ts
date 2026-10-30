@@ -6,4 +6,5 @@ export type { SourceFile } from './validate';
 export * from './kanban';
 export * from './evidence';
 export * from './tasks';
+export * from './acceptance';
 export * from './i18n';

@@ -34,6 +34,8 @@ A Markdown file with frontmatter `type: requirement`.
 | `story_ids` | no | list of `US-###` | |
 | `repository` | no | `owner/name` | owning repository |
 | `github_project` | no | string | project used for the Kanban projection |
+| `accepted_by` | no | string | who recorded acceptance; written by the view's **Record acceptance** action |
+| `accepted_on` | no | date string | when acceptance was recorded |
 
 Body sections (heading text is matched case-insensitively):
 

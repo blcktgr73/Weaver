@@ -7,7 +7,6 @@ import {
   groupByColumn,
   IssueSnapshot,
   KANBAN_COLUMNS,
-  criteriaCoverage,
   hasCriteriaMapping,
   KanbanPlacement,
   Locale,
@@ -21,11 +20,12 @@ import {
   RequirementArtifact,
   t,
   TaskEvidence,
-  TaskProgress,
   uncoveredCriteria,
   ValidationIssue,
   validationKey,
 } from '@palab/weaver-markdown';
+
+import { coverageOf } from './coverage';
 
 export type TaskStatus =
   | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[] }
@@ -74,6 +74,9 @@ export function renderRequirementHtml(
     [tt('ui.meta.stories'), requirement.storyIds.join(', ') || undefined],
     [tt('ui.meta.source'), requirement.path],
   ];
+  if (requirement.acceptedBy) {
+    meta.push([tt('ui.meta.accepted'), tt('ui.meta.accepted-value', { by: requirement.acceptedBy, on: requirement.acceptedOn ?? '' })]);
+  }
 
   const metaHtml = meta
     .map(([label, value]) => `<dt>${e(label)}</dt><dd>${value ? e(value) : `<span class="muted">${e(tt('ui.not-set'))}</span>`}</dd>`)
@@ -99,7 +102,9 @@ export function renderRequirementHtml(
         : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
     const board = boardGaps(entry.placement.column, result.board, requirement.githubProject).map((gap) => formatNotice(gap, locale));
     const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
-    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...board, ...evidence];
+    const blockers = (task?.file?.blockers ?? []).map((text) => tt('gap.blocker', { text }));
+    const decision = task?.file?.status === 'needs-human-decision' ? [tt('gap.needs-decision')] : [];
+    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...board, ...blockers, ...decision, ...evidence];
   };
 
   /** The recorded owner (task file), or the Issue assignee as a hint. */
@@ -139,16 +144,8 @@ export function renderRequirementHtml(
       <div><select data-move="${e(taskId)}" title="${e(tt('ui.move.tooltip'))}" aria-label="${e(tt('ui.move.aria', { task: taskId }))}">${options}</select></div>`;
   };
 
-  const progress = (taskId: string): TaskProgress | undefined => {
-    const result = status?.byTask[taskId];
-    const entry = placed.get(taskId);
-    if (!result?.ok || !entry) return undefined;
-    const excepted = tasks.find((task) => task.id === taskId)?.file?.evidenceException;
-    const gapCount = excepted ? 0 : result.evidenceError ? 1 : evidenceGaps(entry.placement.column, result.evidence).length;
-    return { column: entry.placement.column, evidenceGapCount: gapCount };
-  };
   const mapped = hasCriteriaMapping(tasks);
-  const coverage = criteriaCoverage(requirement.criteria, tasks, progress);
+  const coverage = coverageOf(requirement, tasks, status);
   const uncovered = uncoveredCriteria(coverage, tasks);
 
   const stateClass = (state: string): string =>
@@ -279,6 +276,7 @@ export function renderRequirementHtml(
   <div class="actions">
     <button data-cmd="openSource">${e(tt('ui.button.open-source'))}</button>
     <button data-cmd="openPreview">${e(tt('ui.button.open-preview'))}</button>
+    ${requirement.status === 'accepted' ? '' : `<button data-cmd="acceptRequirement">${e(tt('ui.button.accept'))}</button>`}
   </div>
 
   <h2>${e(tt('ui.criteria.title', { count: requirement.criteria.length }))}</h2>
