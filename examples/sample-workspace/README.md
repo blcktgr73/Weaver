@@ -4,6 +4,6 @@ A small workspace for trying the Weaver VS Code extension without touching the r
 
 Try:
 
-- `Weaver: Show Requirement` → REQ-100. It has one task with an Issue link and one without, so a gap is shown.
+- `Weaver: Open Requirement View` → REQ-100 (or the preview button at the top right of the Markdown editor). It has one task with an Issue link and one without, so a gap is shown.
 - `Weaver: Scan Workspace`.
 - Change `status: in-progress` in `requirements/REQ-100-sample.md` to `in_progress`, save, and watch the Problems panel and the open Requirement view update.

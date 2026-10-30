@@ -18,18 +18,28 @@
   "contributes": {
     "commands": [
       {
-        "command": "weaver.openRequirement",
-        "title": "Weaver: Open Requirement"
+        "command": "weaver.openRequirementView",
+        "title": "Weaver: Open Requirement View",
+        "icon": "$(preview)"
       },
       {
-        "command": "weaver.showRequirement",
-        "title": "Weaver: Show Requirement"
+        "command": "weaver.openRequirementSource",
+        "title": "Weaver: Open Requirement Source"
       },
       {
         "command": "weaver.scanWorkspace",
         "title": "Weaver: Scan Workspace"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "weaver.openRequirementView",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

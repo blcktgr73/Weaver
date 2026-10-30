@@ -39,6 +39,10 @@ describe('evidenceGaps', () => {
     expect(evidenceGaps('Review', { pulls: [pull({ checks: 'pending' })] })).toEqual(['PR #7 checks are still running']);
     expect(evidenceGaps('Review', { pulls: [pull({ checks: 'none' })] })).toEqual(['PR #7 has no check results']);
   });
+  it('groups pull requests that share a check state into one line', () => {
+    const pulls = [pull({ number: 6, checks: 'none' }), pull({ number: 7, checks: 'none' }), pull({ number: 9, checks: 'failing' })];
+    expect(evidenceGaps('Verified', { pulls })).toEqual(['PR #9 has failing checks', 'PRs #6, #7 have no check results']);
+  });
   it('ignores pull requests closed without merging', () => {
     expect(evidenceGaps('Review', { pulls: [pull({ state: 'closed', checks: 'none' }), pull({ number: 9 })] })).toEqual([]);
   });

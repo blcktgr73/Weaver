@@ -47,13 +47,19 @@ export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | unde
   if (column === 'Verified' && !evidence.pulls.some((pull) => pull.state === 'merged')) {
     gaps.push('no merged pull request');
   }
-  for (const pull of evidence.pulls) {
-    if (pull.state === 'closed') continue; // closed without merge is not evidence either way
-    if (pull.checks === 'failing') gaps.push(`PR #${pull.number} has failing checks`);
-    else if (pull.checks === 'pending') gaps.push(`PR #${pull.number} checks are still running`);
-    else if (pull.checks === 'none') gaps.push(`PR #${pull.number} has no check results`);
-  }
+  // closed without merge is not evidence either way
+  const live = evidence.pulls.filter((pull) => pull.state !== 'closed');
+  gaps.push(...groupedPullGap(live, 'failing', 'has failing checks', 'have failing checks'));
+  gaps.push(...groupedPullGap(live, 'pending', 'checks are still running', 'checks are still running'));
+  gaps.push(...groupedPullGap(live, 'none', 'has no check results', 'have no check results'));
   return gaps;
+}
+
+/** One line per check state, so four old PRs do not produce four warnings. */
+function groupedPullGap(pulls: PullEvidence[], state: ChecksState, one: string, many: string): string[] {
+  const matching = pulls.filter((pull) => pull.checks === state).map((pull) => `#${pull.number}`);
+  if (matching.length === 0) return [];
+  return matching.length === 1 ? [`PR ${matching[0]} ${one}`] : [`PRs ${matching.join(', ')} ${many}`];
 }
 
 export function describePull(pull: PullEvidence): string {

@@ -198,10 +198,10 @@ export function renderRequirementHtml(
   .ok { color: var(--vscode-testing-iconPassed, var(--vscode-foreground)); }
   .small { font-size: 0.85em; }
   .col-badge { padding: 1px 8px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-size: 0.85em; white-space: nowrap; }
-  .board { display: grid; grid-template-columns: repeat(6, minmax(130px, 1fr)); gap: 8px; overflow-x: auto; }
+  .board { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 8px; overflow-x: auto; }
   .lane { background: var(--vscode-sideBar-background, transparent); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 8px; min-height: 60px; }
   .lane h3 { font-size: 0.9em; margin: 0 0 6px; }
-  .card { border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
+  .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
   select { background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border); margin-top: 4px; }
   button:disabled { opacity: 0.6; cursor: default; }
   .actions { margin-top: 14px; display: flex; gap: 8px; }
