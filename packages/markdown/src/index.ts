@@ -8,3 +8,4 @@ export * from './evidence';
 export * from './tasks';
 export * from './acceptance';
 export * from './i18n';
+export * from './target';

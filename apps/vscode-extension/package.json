@@ -55,7 +55,7 @@
       "editor/title": [
         {
           "command": "weaver.openRequirementView",
-          "when": "resourceExtname == .md",
+          "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
           "group": "navigation"
         }
       ]
