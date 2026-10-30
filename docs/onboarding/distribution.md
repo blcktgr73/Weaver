@@ -6,7 +6,7 @@ This page lists the ways to get the Weaver VS Code extension to other people, wh
 |---|---|---|
 | VSIX file | Works today | A built `.vsix` file |
 | GitHub Release | Planned | A tag and a CI step that attaches the VSIX |
-| VS Code Marketplace | Planned | A LICENSE file, a publisher account, a token |
+| VS Code Marketplace | Planned | A publisher account and a token |
 | Open VSX | Planned | Same as Marketplace, plus an Open VSX account |
 
 Start with the VSIX file while the user base is small. Publish to a registry only after the first feedback has been handled.
@@ -32,7 +32,7 @@ Start with the VSIX file while the user base is small. Publish to a registry onl
 
 Send the same file to anyone who should try it. They need VS Code 1.90 or later.
 
-The VSIX is built with `--skip-license` because the repository has no LICENSE file yet. Choose a license before sharing the file outside the team.
+The repository is licensed under MIT (`LICENSE`), and the VSIX includes it.
 
 ## GitHub Release (planned)
 
@@ -48,7 +48,7 @@ The planned CI step builds the VSIX on a `v*` tag and attaches it automatically.
 
 Needs, in order:
 
-1. A LICENSE file, so the package can drop `--skip-license`.
+1. The LICENSE file (done, MIT); the VSIX already includes it.
 2. A Marketplace publisher whose ID matches the `palab` part of `palab.weaver`, and a personal access token for it.
 3. A version bump in `apps/vscode-extension/package.json` for every release. A registry refuses a version it has already seen.
 
