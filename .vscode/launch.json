@@ -11,6 +11,17 @@
       ],
       "outFiles": ["${workspaceFolder}/apps/vscode-extension/dist/**/*.js"],
       "preLaunchTask": "weaver: build"
+    },
+    {
+      "name": "Weaver: Run Extension on docs",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/apps/vscode-extension",
+        "${workspaceFolder}/docs"
+      ],
+      "outFiles": ["${workspaceFolder}/apps/vscode-extension/dist/**/*.js"],
+      "preLaunchTask": "weaver: build"
     }
   ]
 }

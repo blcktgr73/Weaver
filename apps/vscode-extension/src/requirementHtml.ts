@@ -183,7 +183,7 @@ export function renderRequirementHtml(
   h2 { font-size: 1.1em; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--vscode-panel-border); }
   .idline { margin-top: 20px; font-weight: 600; color: var(--vscode-descriptionForeground); }
   .badge { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 0.85em; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
-  .tag { font-family: var(--vscode-editor-font-family); font-size: 0.9em; color: var(--vscode-textLink-foreground); }
+  .tag { white-space: nowrap; font-family: var(--vscode-editor-font-family); font-size: 0.9em; color: var(--vscode-textLink-foreground); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 0; }
   dt { color: var(--vscode-descriptionForeground); }
   dd { margin: 0; }
@@ -198,7 +198,7 @@ export function renderRequirementHtml(
   .ok { color: var(--vscode-testing-iconPassed, var(--vscode-foreground)); }
   .small { font-size: 0.85em; }
   .col-badge { padding: 1px 8px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-size: 0.85em; white-space: nowrap; }
-  .board { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 8px; overflow-x: auto; }
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
   .lane { background: var(--vscode-sideBar-background, transparent); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 8px; min-height: 60px; }
   .lane h3 { font-size: 0.9em; margin: 0 0 6px; }
   .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
