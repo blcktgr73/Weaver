@@ -1,15 +1,18 @@
 import {
+  describePull,
+  evidenceGaps,
   groupByColumn,
   IssueSnapshot,
   KANBAN_COLUMNS,
   KanbanPlacement,
   placeIssue,
   RequirementArtifact,
+  TaskEvidence,
   ValidationIssue,
 } from '@palab/weaver-markdown';
 
 export type TaskStatus =
-  | { ok: true; issue: IssueSnapshot }
+  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: string }
   | { ok: false; error: string };
 
 export interface StatusState {
@@ -70,13 +73,35 @@ export function renderRequirementHtml(
     if (result?.ok) placed.set(task.id, { issue: result.issue, placement: placeIssue(result.issue) });
   }
 
+  /** Placement gaps plus evidence gaps for a task whose Issue was read. */
+  const allGaps = (taskId: string): string[] => {
+    const result = status?.byTask[taskId];
+    const entry = placed.get(taskId);
+    if (!result?.ok || !entry) return [];
+    const evidence = result.evidenceError
+      ? [`evidence: ${result.evidenceError}`]
+      : evidenceGaps(entry.placement.column, result.evidence);
+    return [...entry.placement.gaps, ...evidence];
+  };
+
+  const evidenceCell = (taskId: string): string => {
+    const result = status?.byTask[taskId];
+    if (!result?.ok) return '<span class="muted">—</span>';
+    if (result.evidenceError) return `<span class="warn small">${e(result.evidenceError)}</span>`;
+    const pulls = result.evidence?.pulls ?? [];
+    if (pulls.length === 0) return '<span class="muted">no PR</span>';
+    return pulls
+      .map((p) => `<div class="small"><a href="#" data-url="${e(p.url)}" title="${e(p.title)}">${e(describePull(p))}</a></div>`)
+      .join('');
+  };
+
   const statusCell = (taskId: string): string => {
     const result = status?.byTask[taskId];
     if (!result) return '<span class="muted">—</span>';
     if (!result.ok) return `<span class="warn">${e(result.error)}</span>`;
     const entry = placed.get(taskId);
     if (!entry) return '<span class="muted">—</span>';
-    const gaps = entry.placement.gaps.map((g) => `<div class="warn small">${e(g)}</div>`).join('');
+    const gaps = allGaps(taskId).map((g) => `<div class="warn small">${e(g)}</div>`).join('');
     const options = KANBAN_COLUMNS.map(
       (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(c)}</option>`,
     ).join('');
@@ -85,7 +110,7 @@ export function renderRequirementHtml(
   };
 
   const tasksHtml = requirement.tasks.length
-    ? `<table><thead><tr><th>Task</th><th>Title</th><th>Issue</th><th>Status</th><th>Owner</th></tr></thead><tbody>${requirement.tasks
+    ? `<table><thead><tr><th>Task</th><th>Title</th><th>Issue</th><th>Status</th><th>Evidence</th><th>Owner</th></tr></thead><tbody>${requirement.tasks
         .map((t) => {
           const link =
             t.issueUrl && isOpenableUrl(t.issueUrl)
@@ -93,7 +118,7 @@ export function renderRequirementHtml(
               : '<span class="warn">not linked</span>';
           const owners = placed.get(t.id)?.issue.assignees ?? [];
           const owner = status?.byTask[t.id] ? (owners.length ? e(owners.join(', ')) : '<span class="muted">unassigned</span>') : '<span class="muted">—</span>';
-          return `<tr><td><span class="tag">${e(t.id)}</span></td><td>${e(t.title)}</td><td>${link}</td><td>${statusCell(t.id)}</td><td>${owner}</td></tr>`;
+          return `<tr><td><span class="tag">${e(t.id)}</span></td><td>${e(t.title)}</td><td>${link}</td><td>${statusCell(t.id)}</td><td>${evidenceCell(t.id)}</td><td>${owner}</td></tr>`;
         })
         .join('')}</tbody></table>
        <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
@@ -116,11 +141,25 @@ export function renderRequirementHtml(
           .map(
             (c) => `<div class="card"><span class="tag">${e(c.task.id)}</span> ${e(c.task.title)}
               <div class="muted small">${c.issue.assignees.length ? e(c.issue.assignees.join(', ')) : 'unassigned'}</div>
-              ${c.placement.gaps.map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
+              ${allGaps(c.task.id).map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
           )
           .join('')}</div>`,
       ).join('')}</div>
       ${off.length ? `<p class="muted small">Not on the board: ${off.map((t) => e(t.id)).join(', ')} (no readable Issue).</p>` : ''}`;
+  }
+
+  let evidenceHtml =
+    '<p class="muted">Load issue status to see the pull requests and checks linked to each task.</p>';
+  if (loaded) {
+    const withGaps = requirement.tasks
+      .map((t) => ({ t, gaps: allGaps(t.id) }))
+      .filter((x) => status?.byTask[x.t.id]?.ok && x.gaps.length > 0);
+    evidenceHtml = withGaps.length
+      ? `<ul class="plain">${withGaps
+          .map((x) => `<li><span class="tag">${e(x.t.id)}</span> <span class="warn">${x.gaps.map(e).join('; ')}</span></li>`)
+          .join('')}</ul>`
+      : '<p class="ok">No evidence gaps among the tasks that were read.</p>';
+    evidenceHtml += `<p class="muted small">Pull requests are found by references to the Issue. A reference is a link, not proof the change implements the task. Weaver reports gaps; acceptance stays a human decision.</p>`;
   }
 
   const gapsHtml = issues.length
@@ -193,7 +232,7 @@ export function renderRequirementHtml(
   ${gapsHtml}
 
   <h2>Evidence</h2>
-  <p class="muted">Branch, pull request, and test evidence is not linked yet. It arrives with TASK-004.</p>
+  ${evidenceHtml}
 
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();

@@ -75,6 +75,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - As a reviewer, I can verify Weaver changes using the same evidence model Weaver provides to other projects.
 - As a contributor, I can record development friction as a product story.
 - `US-013` — As a reviewer, I can see commits that are not linked to any task, so work does not land outside the requirement flow.
+- `US-014` — As a reviewer, I can tell which pull request actually implements a task, not only which pull requests mention its Issue.
 
 ### PALab project adoption
 

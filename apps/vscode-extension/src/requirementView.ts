@@ -1,8 +1,15 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
-import { describeMove, KANBAN_COLUMNS, KanbanColumn, planMove, RequirementArtifact } from '@palab/weaver-markdown';
-import { applyMove, fetchIssue, getGitHubToken } from './github';
-import { isOpenableUrl, renderRequirementHtml, StatusState } from './requirementHtml';
+import {
+  describeMove,
+  evidenceGaps,
+  KANBAN_COLUMNS,
+  KanbanColumn,
+  planMove,
+  RequirementArtifact,
+} from '@palab/weaver-markdown';
+import { applyMove, fetchEvidence, fetchIssue, getGitHubToken } from './github';
+import { isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
 
 interface Panel {
@@ -92,7 +99,14 @@ export class RequirementView {
       const results = await Promise.all(
         entry.requirement.tasks.map(async (task) => {
           if (!task.issueUrl) return undefined;
-          return [task.id, await fetchIssue(token, task.issueUrl)] as const;
+          const [issue, evidence] = await Promise.all([
+            fetchIssue(token, task.issueUrl),
+            fetchEvidence(token, task.issueUrl),
+          ]);
+          const status: TaskStatus = issue.ok
+            ? { ok: true, issue: issue.issue, ...(evidence.ok ? { evidence: evidence.evidence } : { evidenceError: evidence.error }) }
+            : issue;
+          return [task.id, status] as const;
         }),
       );
       const byTask: StatusState['byTask'] = {};
@@ -119,9 +133,12 @@ export class RequirementView {
     }
 
     const lines = describeMove(plan, current.issue);
+    const missing = column === 'Verified' ? evidenceGaps('Verified', current.evidence) : [];
     const warning =
       column === 'Verified'
-        ? '\n\nVerified means the acceptance evidence has been checked. Weaver does not check it for you.'
+        ? `\n\nVerified means the acceptance evidence has been checked. Weaver does not check it for you.${
+            missing.length ? `\nEvidence gaps right now: ${missing.join('; ')}.` : ''
+          }`
         : '';
     const detail = `This edits GitHub issue #${current.issue.number}:\n- ${lines.join('\n- ')}${warning}`;
     const choice = await vscode.window.showWarningMessage(

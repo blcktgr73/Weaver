@@ -1,5 +1,13 @@
 import * as vscode from 'vscode';
-import { IssueSnapshot, MovePlan, parseIssueUrl } from '@palab/weaver-markdown';
+import {
+  CheckRunLike,
+  IssueSnapshot,
+  MovePlan,
+  parseIssueUrl,
+  PullEvidence,
+  summarizeChecks,
+  TaskEvidence,
+} from '@palab/weaver-markdown';
 
 export type IssueResult = { ok: true; issue: IssueSnapshot } | { ok: false; error: string };
 
@@ -164,4 +172,84 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan)
     return `updated on ${updated.join(', ')}`;
   });
   return steps;
+}
+
+export type EvidenceResult = { ok: true; evidence: TaskEvidence } | { ok: false; error: string };
+
+async function getJson<T>(token: string, url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+  return (await response.json()) as T;
+}
+
+interface TimelineEvent {
+  event: string;
+  source?: {
+    issue?: {
+      number: number;
+      title: string;
+      html_url: string;
+      repository_url: string;
+      pull_request?: object;
+    };
+  };
+}
+
+/**
+ * Finds pull requests that reference the Issue (timeline cross-references),
+ * then reads each one's merge state and check runs. A reference is a link,
+ * not proof the PR implements the task; the view says so.
+ */
+export async function fetchEvidence(token: string, issueUrl: string): Promise<EvidenceResult> {
+  const ref = parseIssueUrl(issueUrl);
+  if (!ref) return { ok: false, error: 'not a GitHub Issue URL' };
+
+  try {
+    const events: TimelineEvent[] = [];
+    for (let page = 1; page <= 3; page += 1) {
+      const batch = await getJson<TimelineEvent[]>(
+        token,
+        `${API}/repos/${ref.owner}/${ref.repo}/issues/${ref.number}/timeline?per_page=100&page=${page}`,
+      );
+      events.push(...batch);
+      if (batch.length < 100) break;
+    }
+
+    const sources = new Map<string, NonNullable<NonNullable<TimelineEvent['source']>['issue']>>();
+    for (const event of events) {
+      const source = event.source?.issue;
+      if (event.event === 'cross-referenced' && source?.pull_request && source.repository_url.startsWith(`${API}/repos/`)) {
+        sources.set(source.html_url, source);
+      }
+    }
+
+    const pulls = await Promise.all(
+      [...sources.values()].map(async (source): Promise<PullEvidence> => {
+        const pr = await getJson<{ state: string; merged_at: string | null; head: { sha: string } }>(
+          token,
+          `${source.repository_url}/pulls/${source.number}`,
+        );
+        const runs = await getJson<{ check_runs: CheckRunLike[] }>(
+          token,
+          `${source.repository_url}/commits/${pr.head.sha}/check-runs?per_page=100`,
+        );
+        return {
+          number: source.number,
+          title: source.title,
+          url: source.html_url,
+          state: pr.merged_at ? 'merged' : pr.state === 'open' ? 'open' : 'closed',
+          checks: summarizeChecks(runs.check_runs),
+        };
+      }),
+    );
+    return { ok: true, evidence: { pulls: pulls.sort((a, b) => a.number - b.number) } };
+  } catch (error) {
+    return { ok: false, error: `could not read evidence: ${(error as Error).message}` };
+  }
 }

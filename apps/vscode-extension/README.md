@@ -8,6 +8,7 @@ This is the first implementation slice of Weaver.
 - Show validation errors and warnings in the Problems panel, refreshed on startup and on save.
 - Show a read-only Requirement view: metadata, acceptance criteria, tasks with Issue links, validation gaps. It refreshes on save.
 - Read GitHub Issue state and labels for each task (button **Load issue status**, uses your VS Code GitHub sign-in, read-only) and show the Kanban column, owner, and gaps, plus a six-column board. Column rules are in [Product Requirements v0.1](../../docs/product/requirements-v0.1.md#status-mapping).
+- Show execution evidence per task: pull requests that reference the Issue, whether they merged, and their check results, plus evidence gaps (no PR, no merged PR, failing/missing checks) once a task is in Review or Verified. The Verified move confirmation lists current gaps. Weaver reports gaps; it never decides acceptance.
 - Move a task to another column from its Status cell. Every move shows exactly what will change on GitHub (labels, Issue state, shared board Status) and asks first. Rules: [DEC-003](../../docs/decisions/DEC-003-board-status-mapping.md). Moving needs the `project` GitHub scope, requested only at that moment.
 - Open a requirement's Markdown from a quick-pick command.
 - Report requirement/task counts and validation totals.
