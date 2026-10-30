@@ -5,7 +5,7 @@ This page lists the ways to get the Weaver VS Code extension to other people, wh
 | Channel | Status | Needs |
 |---|---|---|
 | VSIX file | Works today | A built `.vsix` file |
-| GitHub Release | Planned | A tag and a CI step that attaches the VSIX |
+| GitHub Release | Works from the first tag | A `v*` tag that matches the extension version |
 | VS Code Marketplace | Planned | A LICENSE file, a publisher account, a token |
 | Open VSX | Planned | Same as Marketplace, plus an Open VSX account |
 
@@ -34,15 +34,22 @@ Send the same file to anyone who should try it. They need VS Code 1.90 or later.
 
 The VSIX is built with `--skip-license` because the repository has no LICENSE file yet. Choose a license before sharing the file outside the team.
 
-## GitHub Release (planned)
+## GitHub Release
 
-Attach the VSIX to a tagged release so people can download it from the repository without building:
+Pushing a tag builds the VSIX in CI and attaches it to a GitHub Release (`.github/workflows/release.yml`). Releases are marked as pre-releases while the version is `0.0.x`.
 
-```bash
-gh release create v0.0.1 dist/weaver-0.0.1.vsix --title "Weaver 0.0.1" --notes "First MVP build"
-```
+1. Bump the version in `apps/vscode-extension/package.json` (and the lock file): `npm version <version> -w @palab/weaver-vscode-extension --no-git-tag-version`.
+2. Merge the bump to `main`.
+3. Tag and push. The tag must be `v` plus the extension version, or the workflow fails before building:
 
-The planned CI step builds the VSIX on a `v*` tag and attaches it automatically. Until then, run the command above by hand after `npm run package`.
+   ```bash
+   git tag v0.0.3
+   git push origin v0.0.3
+   ```
+
+4. Open the repository's Releases page, download `weaver-<version>.vsix`, and install it as described above.
+
+The same workflow runs the checks and tests first, so a broken build never reaches a release.
 
 ## VS Code Marketplace (planned)
 
