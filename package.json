@@ -11,6 +11,7 @@
     "check": "npm run build -w @palab/weaver-markdown && npm run check -w @palab/weaver-vscode-extension",
     "test": "npm run test -w @palab/weaver-markdown",
     "dev": "npm run build && node scripts/dev.js examples/sample-workspace",
-    "dev:docs": "npm run build && node scripts/dev.js docs"
+    "dev:docs": "npm run build && node scripts/dev.js docs",
+    "package": "npm run build && npm run package -w @palab/weaver-vscode-extension"
   }
 }
