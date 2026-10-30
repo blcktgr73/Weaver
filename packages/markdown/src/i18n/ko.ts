@@ -1,0 +1,60 @@
+import type { Message, MessageKey } from './en';
+
+// Korean particles (은/는, 이/가) change with the last sound of the word before them.
+// Messages put IDs and values after a colon so any value reads naturally.
+export const ko: Record<MessageKey, Message> = {
+  'validation.frontmatter-invalid': 'frontmatter(문서 머리말)가 올바른 YAML이 아닙니다: {detail}',
+  'validation.missing-field': '필수 항목이 없거나 비어 있습니다: "{field}"',
+  'validation.invalid-id': 'ID가 {pattern} 형식이 아닙니다: "{id}"',
+  'validation.invalid-status': '허용되지 않는 상태입니다: "{status}". 사용할 수 있는 값: {allowed}.',
+  'validation.invalid-repository': '저장소는 owner/name 형식이어야 합니다: "{repository}"',
+  'validation.unknown-field': '알 수 없는 항목입니다(그대로 두고 해석하지 않음): "{field}"',
+  'validation.story-ids-not-list': '"story_ids"는 목록이어야 합니다.',
+  'validation.invalid-story-id': '스토리 ID가 US-### 형식이 아닙니다: "{id}"',
+  'validation.no-acceptance-criteria': '"## Acceptance criteria" 아래에 항목이 없습니다.',
+  'validation.no-tasks': '"## Tasks" 아래에 항목이 없습니다.',
+  'validation.malformed-task-item': '작업 목록 항목이 TASK ID로 시작하지 않습니다: "{item}"',
+  'validation.task-without-issue': 'Issue 링크가 없는 작업입니다: {task}',
+  'validation.invalid-requirement-ref': '요구사항 참조가 REQ-### 형식이 아닙니다: "{requirement}"',
+  'validation.invalid-assignee-type': 'assignee_type은 human 또는 agent여야 합니다: "{value}"',
+  'validation.invalid-blockers': '"blockers"는 목록이어야 합니다.',
+  'validation.duplicate-id': '이미 정의된 ID입니다: {id} (위치: {path})',
+  'validation.unknown-requirement': '존재하지 않는 요구사항을 가리킵니다: {task} → {requirement}',
+  'validation.task-listed-twice': '이미 다른 요구사항에 등록된 작업입니다: {task} (등록 위치: {owner})',
+
+  'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
+  'gap.no-status-label': '상태 라벨이 없습니다',
+  'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',
+  'gap.open-but-verified': '열려 있는데 status:verified 라벨이 붙어 있습니다',
+
+  'gap.evidence-not-loaded': '증거를 아직 읽지 않았습니다',
+  'gap.no-linked-pr': '연결된 PR이 없습니다',
+  'gap.no-merged-pr': '병합된 PR이 없습니다',
+  'gap.checks-failing': '체크가 실패한 PR이 있습니다: {prs}',
+  'gap.checks-pending': '체크가 아직 실행 중인 PR이 있습니다: {prs}',
+  'gap.checks-none': '체크 결과가 없는 PR이 있습니다: {prs}',
+
+  'move.remove-labels': '라벨 제거: {labels}',
+  'move.add-label': '라벨 추가: {label}',
+  'move.close-issue': 'Issue 닫기',
+  'move.reopen-issue': 'Issue 다시 열기',
+  'move.set-board-status': '보드 Status 설정: {status}',
+
+  'pull.summary': 'PR #{number} {state} · {checks} · {link}',
+  'pull.state.open': '열림',
+  'pull.state.closed': '닫힘',
+  'pull.state.merged': '병합됨',
+  'pull.checks.passing': '체크 통과',
+  'pull.checks.failing': '체크 실패',
+  'pull.checks.pending': '체크 진행 중',
+  'pull.checks.none': '체크 없음',
+  'pull.link.closes': 'Issue를 닫음',
+  'pull.link.mentions': 'Issue를 언급',
+
+  'column.Backlog': '백로그',
+  'column.Ready': '준비됨',
+  'column.In progress': '진행 중',
+  'column.Blocked': '막힘',
+  'column.Review': '검토',
+  'column.Verified': '검증됨',
+};

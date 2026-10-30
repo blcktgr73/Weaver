@@ -3,12 +3,14 @@ import * as vscode from 'vscode';
 import {
   describeMove,
   evidenceGaps,
+  formatNotice,
   KANBAN_COLUMNS,
   KanbanColumn,
   planMove,
   RequirementArtifact,
 } from '@palab/weaver-markdown';
 import { applyMove, fetchEvidence, fetchIssue, getGitHubToken } from './github';
+import { currentLocale } from './locale';
 import { isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
 
@@ -132,8 +134,10 @@ export class RequirementView {
       return;
     }
 
-    const lines = describeMove(plan, current.issue);
-    const missing = column === 'Verified' ? evidenceGaps('Verified', current.evidence) : [];
+    const locale = currentLocale();
+    const lines = describeMove(plan, current.issue).map((line) => formatNotice(line, locale));
+    const missing =
+      column === 'Verified' ? evidenceGaps('Verified', current.evidence).map((gap) => formatNotice(gap, locale)) : [];
     const warning =
       column === 'Verified'
         ? `\n\nVerified means the acceptance evidence has been checked. Weaver does not check it for you.${
@@ -174,6 +178,6 @@ export class RequirementView {
     const nonce = randomBytes(16).toString('hex');
     const issues = loaded.issues.filter((issue) => issue.path === requirement.path);
     panel.title = `${requirement.id} ${requirement.title}`;
-    panel.webview.html = renderRequirementHtml(requirement, issues, nonce, panel.webview.cspSource, entry.status);
+    panel.webview.html = renderRequirementHtml(requirement, issues, nonce, panel.webview.cspSource, entry.status, currentLocale());
   }
 }

@@ -1,3 +1,5 @@
+import type { Notice } from './i18n';
+
 export const KANBAN_COLUMNS = ['Backlog', 'Ready', 'In progress', 'Blocked', 'Review', 'Verified'] as const;
 export type KanbanColumn = (typeof KANBAN_COLUMNS)[number];
 
@@ -21,8 +23,8 @@ export interface IssueSnapshot {
 
 export interface KanbanPlacement {
   column: KanbanColumn;
-  /** Human-readable reasons the card needs attention. Empty when consistent. */
-  gaps: string[];
+  /** Reasons the card needs attention. Empty when consistent. */
+  gaps: Notice[];
 }
 
 /**
@@ -30,21 +32,21 @@ export interface KanbanPlacement {
  * See "Status mapping" in docs/product/requirements-v0.1.md.
  */
 export function placeIssue(issue: Pick<IssueSnapshot, 'state' | 'labels'>): KanbanPlacement {
-  const gaps: string[] = [];
+  const gaps: Notice[] = [];
   const found = KANBAN_COLUMNS.filter((column) =>
     issue.labels.some((label) => LABEL_TO_COLUMN[label] === column),
   );
 
-  if (found.length > 1) gaps.push(`multiple status labels: ${found.join(', ')}`);
+  if (found.length > 1) gaps.push({ code: 'gap.multiple-status-labels', args: { columns: found } });
   let column: KanbanColumn = found[0] ?? 'Backlog';
-  if (found.length === 0) gaps.push('no status label');
+  if (found.length === 0) gaps.push({ code: 'gap.no-status-label' });
 
   if (issue.state === 'closed' && column !== 'Verified') {
-    gaps.push('closed without status:verified (verification gap)');
+    gaps.push({ code: 'gap.closed-without-verified' });
     column = 'Review';
   }
   if (issue.state === 'open' && column === 'Verified') {
-    gaps.push('open but labeled status:verified');
+    gaps.push({ code: 'gap.open-but-verified' });
   }
   return { column, gaps };
 }
@@ -99,12 +101,14 @@ export function planMove(issue: Pick<IssueSnapshot, 'state' | 'labels'>, target:
   return { column: target, addLabel, removeLabels, state, projectStatus: PROJECT_STATUS_FOR_COLUMN[target], noop };
 }
 
-/** Human-readable list of what a move will change, for the confirmation dialog. */
-export function describeMove(plan: MovePlan, issue: Pick<IssueSnapshot, 'state' | 'labels'>): string[] {
-  const lines: string[] = [];
-  if (plan.removeLabels.length) lines.push(`Remove label${plan.removeLabels.length > 1 ? 's' : ''}: ${plan.removeLabels.join(', ')}`);
-  if (!issue.labels.includes(plan.addLabel)) lines.push(`Add label: ${plan.addLabel}`);
-  if (issue.state !== plan.state) lines.push(`${plan.state === 'closed' ? 'Close' : 'Reopen'} the Issue`);
-  lines.push(`Set board Status: ${plan.projectStatus}`);
+/** What a move will change, one notice per line, for the confirmation dialog. */
+export function describeMove(plan: MovePlan, issue: Pick<IssueSnapshot, 'state' | 'labels'>): Notice[] {
+  const lines: Notice[] = [];
+  if (plan.removeLabels.length) {
+    lines.push({ code: 'move.remove-labels', args: { labels: plan.removeLabels, count: plan.removeLabels.length } });
+  }
+  if (!issue.labels.includes(plan.addLabel)) lines.push({ code: 'move.add-label', args: { label: plan.addLabel } });
+  if (issue.state !== plan.state) lines.push({ code: plan.state === 'closed' ? 'move.close-issue' : 'move.reopen-issue' });
+  lines.push({ code: 'move.set-board-status', args: { status: plan.projectStatus } });
   return lines;
 }
