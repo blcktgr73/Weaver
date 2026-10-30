@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { documentKindOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
 import { RequirementView } from './requirementView';
@@ -8,8 +9,21 @@ export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   const view = new RequirementView();
 
+  // Tells the menus whether the active file is a Weaver document (TASK-018).
+  let latest: Loaded | undefined;
+  const publishDocumentKind = (): void => {
+    const document = vscode.window.activeTextEditor?.document;
+    const kind =
+      document && latest
+        ? documentKindOf(latest.artifacts, vscode.workspace.asRelativePath(document.uri, false))
+        : 'none';
+    void vscode.commands.executeCommand('setContext', 'weaver.documentKind', kind);
+  };
+
   const refresh = async (): Promise<Loaded> => {
     const loaded = await loadWorkspaceArtifacts();
+    latest = loaded;
+    publishDocumentKind();
     publishDiagnostics(diagnostics, loaded, currentLocale());
     view.update(loaded);
     return loaded;
@@ -89,11 +103,13 @@ export function activate(context: vscode.ExtensionContext): void {
     if (document.languageId === 'markdown') void refresh();
   });
 
+  const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);
+
   const onLanguage = vscode.workspace.onDidChangeConfiguration((event) => {
     if (event.affectsConfiguration('weaver.language')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, editor, openSource, openView, scanWorkspace, onSave, onLanguage);
+  context.subscriptions.push(diagnostics, editor, openSource, openView, scanWorkspace, onSave, onActiveEditor, onLanguage);
   void refresh();
 }
 
