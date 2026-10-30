@@ -77,6 +77,10 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-013` — As a reviewer, I can see commits that are not linked to any task, so work does not land outside the requirement flow.
 - `US-014` — As a reviewer, I can tell which pull request actually implements a task, not only which pull requests mention its Issue. (Partly met: the view labels each PR "closes Issue" or "mentions Issue" from GitHub closing keywords such as `Closes #5`. Gap rules do not use the label yet.)
 - `US-015` — As a first-time user, I can reach the Requirement view from the requirement file itself, without knowing which of two similarly named commands opens it. (Friction found when trying the first build: `Open Requirement` opened the source, `Show Requirement` opened the view.)
+- `US-016` — As a maintainer, I can assign a task to a human or an agent from the Requirement view, and the choice is written to the task file and the GitHub Issue assignee together. (Friction found when verifying the first MVP: owners can only be typed into task front matter by hand.)
+- `US-017` — As a maintainer, I can keep a roster of contributors in the repository: each entry says whether it is a human or an agent, and for an agent, which tool or model it is and how it is reached. Task owners are then picked from the roster instead of free text.
+- `US-018` — As a reviewer, I can see who reviews or approves a task, separately from who implements it, and I can see that a human approved work done by an agent.
+- `US-019` — As a maintainer, I can hand a task to a remote agent (for example OpenClaw or Hermes) with durable context taken from the requirement, the task file, and prior evidence, and the agent's branch, pull request, and test results come back to the task. Other agents, such as Dot and Duet, are tried the same way afterwards, so the handoff contract must not depend on one agent.
 
 ### PALab project adoption
 
