@@ -69,7 +69,7 @@
             "filenamePattern": "REQ-*.md"
           }
         ],
-        "priority": "option"
+        "priority": "default"
       }
     ]
   },
