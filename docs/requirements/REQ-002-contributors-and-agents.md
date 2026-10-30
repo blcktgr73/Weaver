@@ -35,7 +35,7 @@ A maintainer can assign a task to a human or an agent, hand it over with its con
 - `TASK-015` Record reviewers and human approval of agent work — [GitHub Issue #38](https://github.com/blcktgr73/Weaver/issues/38)
 - `TASK-016` Decide the agent handoff contract — [GitHub Issue #39](https://github.com/blcktgr73/Weaver/issues/39)
 
-Tasks that implement the handoff are added after `TASK-016` records the contract decision.
+Tasks that implement the handoff are added after `TASK-016` records the contract decision. `TASK-016` is deferred, so `AC-005` and `AC-006` stay open while `TASK-013` to `TASK-015` go first.
 
 ## Evidence policy
 
