@@ -81,6 +81,26 @@ export const LABEL_FOR_COLUMN = Object.fromEntries(
   Object.entries(LABEL_TO_COLUMN).map(([label, column]) => [column, label]),
 ) as Record<KanbanColumn, string>;
 
+/** The `Status` of an Issue on one GitHub project board, as read from GitHub. */
+export interface BoardItem {
+  project: string;
+  status: string;
+}
+
+/**
+ * The board Status is derived from the label (DEC-003). A person can change it
+ * by hand on the board, so report items that no longer match. When `project`
+ * is given, only that board counts.
+ */
+export function boardGaps(column: KanbanColumn, items: BoardItem[] | undefined, project?: string): Notice[] {
+  if (!items) return [];
+  const expected = PROJECT_STATUS_FOR_COLUMN[column];
+  return items
+    .filter((item) => !project || item.project === project)
+    .filter((item) => item.status !== expected)
+    .map((item) => ({ code: 'gap.board-status-differs' as const, args: { board: item.project, actual: item.status, expected } }));
+}
+
 export interface MovePlan {
   column: KanbanColumn;
   addLabel: string;

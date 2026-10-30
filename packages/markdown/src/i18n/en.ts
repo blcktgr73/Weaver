@@ -70,6 +70,9 @@ export const en = {
   'ui.criteria.state.verified': 'verified',
   'ui.criteria.state.verified-with-gaps': 'verified, evidence gaps',
   'ui.criteria.tasks': 'Tasks',
+  'gap.board-status-differs': 'board "{board}" shows {actual}, but the label says {expected}',
+  'gap.no-closing-pr': 'no merged pull request that closes the Issue',
+  'ui.evidence.exception': 'evidence exception: {reason}',
 
   // Kanban column names (labels and board values stay in English)
   'column.Backlog': 'Backlog',

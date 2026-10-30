@@ -1,4 +1,6 @@
 import {
+  BoardItem,
+  boardGaps,
   describePull,
   evidenceGaps,
   formatNotice,
@@ -26,7 +28,7 @@ import {
 } from '@palab/weaver-markdown';
 
 export type TaskStatus =
-  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice }
+  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[] }
   | { ok: false; error: Notice };
 
 export interface StatusState {
@@ -89,12 +91,15 @@ export function renderRequirementHtml(
     const result = status?.byTask[taskId];
     const entry = placed.get(taskId);
     if (!result?.ok || !entry) return [];
-    const evidence = result.evidenceError
-      ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
-      : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
     const task = tasks.find((candidate) => candidate.id === taskId);
+    const evidence = task?.file?.evidenceException
+      ? []
+      : result.evidenceError
+        ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
+        : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
+    const board = boardGaps(entry.placement.column, result.board, requirement.githubProject).map((gap) => formatNotice(gap, locale));
     const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
-    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...evidence];
+    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...board, ...evidence];
   };
 
   /** The recorded owner (task file), or the Issue assignee as a hint. */
@@ -125,10 +130,12 @@ export function renderRequirementHtml(
     const entry = placed.get(taskId);
     if (!entry) return '<span class="muted">—</span>';
     const gaps = allGaps(taskId).map((g) => `<div class="warn small">${e(g)}</div>`).join('');
+    const reason = tasks.find((task) => task.id === taskId)?.file?.evidenceException;
+    const exception = reason ? `<div class="muted small">${e(tt('ui.evidence.exception', { reason }))}</div>` : '';
     const options = KANBAN_COLUMNS.map(
       (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(column(c))}</option>`,
     ).join('');
-    return `<span class="col-badge">${e(column(entry.placement.column))}</span>${gaps}
+    return `<span class="col-badge">${e(column(entry.placement.column))}</span>${gaps}${exception}
       <div><select data-move="${e(taskId)}" title="${e(tt('ui.move.tooltip'))}" aria-label="${e(tt('ui.move.aria', { task: taskId }))}">${options}</select></div>`;
   };
 
@@ -136,7 +143,8 @@ export function renderRequirementHtml(
     const result = status?.byTask[taskId];
     const entry = placed.get(taskId);
     if (!result?.ok || !entry) return undefined;
-    const gapCount = result.evidenceError ? 1 : evidenceGaps(entry.placement.column, result.evidence).length;
+    const excepted = tasks.find((task) => task.id === taskId)?.file?.evidenceException;
+    const gapCount = excepted ? 0 : result.evidenceError ? 1 : evidenceGaps(entry.placement.column, result.evidence).length;
     return { column: entry.placement.column, evidenceGapCount: gapCount };
   };
   const mapped = hasCriteriaMapping(tasks);

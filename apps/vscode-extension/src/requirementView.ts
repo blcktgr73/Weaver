@@ -12,7 +12,7 @@ import {
   planMove,
   RequirementArtifact,
 } from '@palab/weaver-markdown';
-import { applyMove, fetchEvidence, fetchIssue, getGitHubToken } from './github';
+import { applyMove, fetchBoardItems, fetchEvidence, fetchIssue, getGitHubToken } from './github';
 import { currentLocale, message } from './locale';
 import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
@@ -109,12 +109,18 @@ export class RequirementView {
       const results = await Promise.all(
         this.tasksOf(entry).map(async (task) => {
           if (!task.issueUrl) return undefined;
-          const [issue, evidence] = await Promise.all([
+          const [issue, evidence, board] = await Promise.all([
             fetchIssue(token, task.issueUrl),
             fetchEvidence(token, task.issueUrl),
+            fetchBoardItems(token, task.issueUrl),
           ]);
           const status: TaskStatus = issue.ok
-            ? { ok: true, issue: issue.issue, ...(evidence.ok ? { evidence: evidence.evidence } : { evidenceError: evidence.error }) }
+            ? {
+                ok: true,
+                issue: issue.issue,
+                ...(evidence.ok ? { evidence: evidence.evidence } : { evidenceError: evidence.error }),
+                ...(board ? { board } : {}),
+              }
             : issue;
           return [task.id, status] as const;
         }),

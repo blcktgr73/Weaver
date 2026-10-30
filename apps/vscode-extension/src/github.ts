@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import {
+  BoardItem,
   CheckRunLike,
   closesIssue,
   IssueSnapshot,
@@ -192,6 +193,28 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan)
     return { code: 'step.updated-boards', args: { boards: updated } };
   });
   return steps;
+}
+
+const BOARD_ITEMS = `query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){issue(number:$n){projectItems(first:10){nodes{project{title} fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}`;
+
+/**
+ * The Issue's Status on each project board. Best effort: reading a board needs
+ * the project scope, so a failure means "unknown" and no mismatch is reported.
+ */
+export async function fetchBoardItems(token: string, issueUrl: string): Promise<BoardItem[] | undefined> {
+  const ref = parseIssueUrl(issueUrl);
+  if (!ref) return undefined;
+  try {
+    type Nodes = {
+      repository: { issue: { projectItems: { nodes: { project: { title: string }; fieldValueByName: { name?: string } | null }[] } } };
+    };
+    const data = await graphql<Nodes>(token, BOARD_ITEMS, { o: ref.owner, r: ref.repo, n: ref.number });
+    return data.repository.issue.projectItems.nodes.flatMap((node) =>
+      node.fieldValueByName?.name ? [{ project: node.project.title, status: node.fieldValueByName.name }] : [],
+    );
+  } catch {
+    return undefined;
+  }
 }
 
 export type EvidenceResult = { ok: true; evidence: TaskEvidence } | { ok: false; error: Notice };

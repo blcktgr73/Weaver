@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeMove, formatNotice, groupByColumn, parseIssueUrl, placeIssue, planMove } from '../src';
+import { boardGaps, describeMove, formatNotice, groupByColumn, parseIssueUrl, placeIssue, planMove } from '../src';
 
 describe('placeIssue', () => {
   it('maps each status label to its column', () => {
@@ -109,5 +109,22 @@ describe('describeMove', () => {
       'Issue 닫기',
       '보드 Status 설정: Done',
     ]);
+  });
+});
+
+describe('boardGaps', () => {
+  it('reports a board whose Status differs from the label-derived Status', () => {
+    expect(boardGaps('Review', [{ project: 'PALab Ops Kanban', status: 'Todo' }])).toEqual([
+      { code: 'gap.board-status-differs', args: { board: 'PALab Ops Kanban', actual: 'Todo', expected: 'In Progress' } },
+    ]);
+  });
+  it('accepts a matching Status and ignores boards it cannot read', () => {
+    expect(boardGaps('Verified', [{ project: 'B', status: 'Done' }])).toEqual([]);
+    expect(boardGaps('Verified', undefined)).toEqual([]);
+  });
+  it('looks only at the named board when one is given', () => {
+    const items = [{ project: 'Other', status: 'Todo' }, { project: 'Mine', status: 'Done' }];
+    expect(boardGaps('Verified', items, 'Mine')).toEqual([]);
+    expect(boardGaps('Verified', items)).toHaveLength(1);
   });
 });
