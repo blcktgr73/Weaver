@@ -43,6 +43,7 @@ When adopting another PALab project, connect it first as an external repository 
 - Do not mark work complete without evidence or an explicit exception.
 - Update the relevant product document or story map when behavior changes.
 - Add tests with implementation work whenever practical.
+- Write requirements, decisions, and all other project documents in English. Text shown to users goes through the message catalog in `packages/markdown/src/i18n` (English and Korean), not into documents or code as literals.
 
 ## Naming
 
