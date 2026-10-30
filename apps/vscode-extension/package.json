@@ -59,7 +59,19 @@
           "group": "navigation"
         }
       ]
-    }
+    },
+    "customEditors": [
+      {
+        "viewType": "weaver.requirementEditor",
+        "displayName": "%weaver.editor.requirement.displayName%",
+        "selector": [
+          {
+            "filenamePattern": "REQ-*.md"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",
