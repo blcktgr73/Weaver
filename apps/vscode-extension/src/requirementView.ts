@@ -28,16 +28,19 @@ interface Panel {
   status: StatusState;
   /** True when the panel is a custom editor tab for the requirement file itself. */
   hosted: boolean;
+  /** A task to scroll to, kept until the first status read has finished. */
+  focusTask?: string;
 }
 
 /** Read-only view of one requirement: a side panel per requirement ID, or a custom editor tab per file. */
 export class RequirementView {
   private readonly panels = new Set<Panel>();
 
-  show(loaded: Loaded, requirement: RequirementArtifact): void {
+  show(loaded: Loaded, requirement: RequirementArtifact, focusTask?: string): void {
     const existing = [...this.panels].find((p) => !p.hosted && p.requirement.id === requirement.id);
     if (existing) {
       existing.panel.reveal(undefined, true);
+      existing.focusTask = focusTask;
       this.apply(existing, loaded, requirement);
       return;
     }
@@ -48,7 +51,7 @@ export class RequirementView {
       vscode.ViewColumn.Beside,
       { enableScripts: true, retainContextWhenHidden: false },
     );
-    this.open({ panel, requirement, loaded, uri: loaded.uris.get(requirement.path), status: { byTask: {}, loading: false }, hosted: false });
+    this.open({ panel, requirement, loaded, uri: loaded.uris.get(requirement.path), status: { byTask: {}, loading: false }, hosted: false, focusTask });
   }
 
   /** Shows the view inside a custom editor tab that VS Code created for the requirement file. */
@@ -147,6 +150,7 @@ export class RequirementView {
       void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
     } finally {
       if (this.panels.has(entry)) this.render(entry);
+      entry.focusTask = undefined;
     }
   }
 
@@ -265,6 +269,6 @@ export class RequirementView {
     const nonce = randomBytes(16).toString('hex');
     const issues = loaded.issues.filter((issue) => issue.path === requirement.path);
     if (!entry.hosted) panel.title = `${requirement.id} ${requirement.title}`;
-    panel.webview.html = renderRequirementHtml(requirement, this.tasksOf(entry), issues, nonce, panel.webview.cspSource, entry.status, currentLocale());
+    panel.webview.html = renderRequirementHtml(requirement, this.tasksOf(entry), issues, nonce, panel.webview.cspSource, entry.status, currentLocale(), entry.focusTask);
   }
 }

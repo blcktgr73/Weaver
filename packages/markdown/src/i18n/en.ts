@@ -154,6 +154,7 @@ export const en = {
   'ui.msg.move-done': 'Weaver: moved {task} to {column}.',
   'ui.msg.no-requirements': 'Weaver: no valid requirement artifacts found. Check the Problems panel.',
   'ui.msg.pick-requirement': 'Select a Weaver requirement',
+  'ui.msg.task-without-requirement': 'Weaver: {task} refers to a requirement that does not exist. Check the Problems panel.',
   'ui.msg.not-requirement': 'Weaver: this file is not a valid requirement. Check the Problems panel.',
   'ui.msg.scan-summary': 'Weaver scan: {requirements} requirement(s), {tasks} task file(s), {files} Markdown file(s); {errors} error(s), {warnings} warning(s).',
   'ui.msg.show-problems': 'Show Problems',
