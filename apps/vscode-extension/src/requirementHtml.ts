@@ -7,6 +7,9 @@ import {
   KANBAN_COLUMNS,
   KanbanPlacement,
   Locale,
+  MessageArgs,
+  MessageKey,
+  Notice,
   placeIssue,
   RequirementArtifact,
   t,
@@ -16,8 +19,8 @@ import {
 } from '@palab/weaver-markdown';
 
 export type TaskStatus =
-  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: string }
-  | { ok: false; error: string };
+  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice }
+  | { ok: false; error: Notice };
 
 export interface StatusState {
   /** Task ID to the result of reading its Issue. */
@@ -39,8 +42,8 @@ export function isOpenableUrl(url: string): boolean {
   return /^https:\/\/github\.com\//.test(url);
 }
 
-const STATUS_NOTE: Record<string, string> = {
-  verified: 'Verified status is not the same as accepted. Acceptance is a human decision.',
+const STATUS_NOTE: Record<string, MessageKey> = {
+  verified: 'ui.note.verified',
 };
 
 export function renderRequirementHtml(
@@ -52,24 +55,26 @@ export function renderRequirementHtml(
   locale: Locale = 'en',
 ): string {
   const e = escapeHtml;
+  const tt = (key: MessageKey, args?: MessageArgs): string => t(key, locale, args);
+  const column = (name: string): string => tt(`column.${name}` as MessageKey);
   const meta: [string, string | undefined][] = [
-    ['Owner', requirement.owner],
-    ['Repository', requirement.repository],
-    ['Project', requirement.githubProject],
-    ['Stories', requirement.storyIds.join(', ') || undefined],
-    ['Source', requirement.path],
+    [tt('ui.meta.owner'), requirement.owner],
+    [tt('ui.meta.repository'), requirement.repository],
+    [tt('ui.meta.project'), requirement.githubProject],
+    [tt('ui.meta.stories'), requirement.storyIds.join(', ') || undefined],
+    [tt('ui.meta.source'), requirement.path],
   ];
 
   const metaHtml = meta
-    .map(([label, value]) => `<dt>${label}</dt><dd>${value ? e(value) : '<span class="muted">not set</span>'}</dd>`)
+    .map(([label, value]) => `<dt>${e(label)}</dt><dd>${value ? e(value) : `<span class="muted">${e(tt('ui.not-set'))}</span>`}</dd>`)
     .join('');
 
   const criteriaHtml = requirement.criteria.length
     ? `<ol class="plain">${requirement.criteria
         .map((c) => `<li><span class="tag">${e(c.id)}</span> ${e(c.text)}</li>`)
         .join('')}</ol>
-       <p class="muted">Criteria are not yet mapped to tasks or evidence.</p>`
-    : '<p class="empty">No acceptance criteria found under “## Acceptance criteria”.</p>';
+       <p class="muted">${e(tt('ui.criteria.unmapped'))}</p>`
+    : `<p class="empty">${e(tt('ui.criteria.empty'))}</p>`;
 
   const loaded = status !== undefined && Object.keys(status.byTask).length > 0;
   const placed = new Map<string, { issue: IssueSnapshot; placement: KanbanPlacement }>();
@@ -84,7 +89,7 @@ export function renderRequirementHtml(
     const entry = placed.get(taskId);
     if (!result?.ok || !entry) return [];
     const evidence = result.evidenceError
-      ? [`evidence: ${result.evidenceError}`]
+      ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
       : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
     return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...evidence];
   };
@@ -92,9 +97,9 @@ export function renderRequirementHtml(
   const evidenceCell = (taskId: string): string => {
     const result = status?.byTask[taskId];
     if (!result?.ok) return '<span class="muted">—</span>';
-    if (result.evidenceError) return `<span class="warn small">${e(result.evidenceError)}</span>`;
+    if (result.evidenceError) return `<span class="warn small">${e(formatNotice(result.evidenceError, locale))}</span>`;
     const pulls = result.evidence?.pulls ?? [];
-    if (pulls.length === 0) return '<span class="muted">no PR</span>';
+    if (pulls.length === 0) return `<span class="muted">${e(tt('ui.evidence.no-pr'))}</span>`;
     return pulls
       .map((p) => `<div class="small"><a href="#" data-url="${e(p.url)}" title="${e(p.title)}">${e(describePull(p, locale))}</a></div>`)
       .join('');
@@ -103,80 +108,83 @@ export function renderRequirementHtml(
   const statusCell = (taskId: string): string => {
     const result = status?.byTask[taskId];
     if (!result) return '<span class="muted">—</span>';
-    if (!result.ok) return `<span class="warn">${e(result.error)}</span>`;
+    if (!result.ok) return `<span class="warn">${e(formatNotice(result.error, locale))}</span>`;
     const entry = placed.get(taskId);
     if (!entry) return '<span class="muted">—</span>';
     const gaps = allGaps(taskId).map((g) => `<div class="warn small">${e(g)}</div>`).join('');
     const options = KANBAN_COLUMNS.map(
-      (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(c)}</option>`,
+      (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(column(c))}</option>`,
     ).join('');
-    return `<span class="col-badge">${e(entry.placement.column)}</span>${gaps}
-      <div><select data-move="${e(taskId)}" title="Move to another column (asks for confirmation)" aria-label="Move ${e(taskId)}">${options}</select></div>`;
+    return `<span class="col-badge">${e(column(entry.placement.column))}</span>${gaps}
+      <div><select data-move="${e(taskId)}" title="${e(tt('ui.move.tooltip'))}" aria-label="${e(tt('ui.move.aria', { task: taskId }))}">${options}</select></div>`;
   };
 
   const tasksHtml = requirement.tasks.length
-    ? `<table><thead><tr><th>Task</th><th>Title</th><th>Issue</th><th>Status</th><th>Evidence</th><th>Owner</th></tr></thead><tbody>${requirement.tasks
-        .map((t) => {
+    ? `<table><thead><tr><th>${e(tt('ui.table.task'))}</th><th>${e(tt('ui.table.title'))}</th><th>${e(tt('ui.table.issue'))}</th><th>${e(tt('ui.table.status'))}</th><th>${e(tt('ui.table.evidence'))}</th><th>${e(tt('ui.table.owner'))}</th></tr></thead><tbody>${requirement.tasks
+        .map((task) => {
           const link =
-            t.issueUrl && isOpenableUrl(t.issueUrl)
-              ? `<a href="#" data-url="${e(t.issueUrl)}">#${t.issueNumber ?? 'open'}</a>`
-              : '<span class="warn">not linked</span>';
-          const owners = placed.get(t.id)?.issue.assignees ?? [];
-          const owner = status?.byTask[t.id] ? (owners.length ? e(owners.join(', ')) : '<span class="muted">unassigned</span>') : '<span class="muted">—</span>';
-          return `<tr><td><span class="tag">${e(t.id)}</span></td><td>${e(t.title)}</td><td>${link}</td><td>${statusCell(t.id)}</td><td>${evidenceCell(t.id)}</td><td>${owner}</td></tr>`;
+            task.issueUrl && isOpenableUrl(task.issueUrl)
+              ? `<a href="#" data-url="${e(task.issueUrl)}">#${task.issueNumber ?? 'open'}</a>`
+              : `<span class="warn">${e(tt('ui.issue.not-linked'))}</span>`;
+          const owners = placed.get(task.id)?.issue.assignees ?? [];
+          const owner = status?.byTask[task.id]
+            ? owners.length
+              ? e(owners.join(', '))
+              : `<span class="muted">${e(tt('ui.owner.unassigned'))}</span>`
+            : '<span class="muted">—</span>';
+          return `<tr><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
         })
         .join('')}</tbody></table>
        <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
-         status?.loading ? 'Loading…' : loaded ? 'Refresh issue status' : 'Load issue status'
+         e(tt(status?.loading ? 'ui.button.loading' : loaded ? 'ui.button.refresh' : 'ui.button.load'))
        }</button></div>
-       <p class="muted small">Reading uses your VS Code GitHub sign-in. Changing a column edits GitHub (labels, Issue state, board Status) and always asks first.</p>`
-    : '<p class="empty">No tasks found under “## Tasks”.</p>';
+       <p class="muted small">${e(tt('ui.tasks.note'))}</p>`
+    : `<p class="empty">${e(tt('ui.tasks.empty'))}</p>`;
 
   let boardHtml = '';
   if (loaded) {
-    const cards = requirement.tasks.flatMap((t) => {
-      const entry = placed.get(t.id);
-      return entry ? [{ task: t, issue: entry.issue, placement: entry.placement }] : [];
+    const cards = requirement.tasks.flatMap((task) => {
+      const entry = placed.get(task.id);
+      return entry ? [{ task, issue: entry.issue, placement: entry.placement }] : [];
     });
     const grouped = groupByColumn(cards);
-    const off = requirement.tasks.filter((t) => !placed.has(t.id));
-    boardHtml = `<h2>Board</h2>
+    const off = requirement.tasks.filter((task) => !placed.has(task.id));
+    boardHtml = `<h2>${e(tt('ui.board.title'))}</h2>
       <div class="board">${KANBAN_COLUMNS.map(
-        (column) => `<div class="lane"><h3>${e(column)} <span class="muted">${grouped[column].length}</span></h3>${grouped[column]
+        (name) => `<div class="lane"><h3>${e(column(name))} <span class="muted">${grouped[name].length}</span></h3>${grouped[name]
           .map(
             (c) => `<div class="card"><span class="tag">${e(c.task.id)}</span> ${e(c.task.title)}
-              <div class="muted small">${c.issue.assignees.length ? e(c.issue.assignees.join(', ')) : 'unassigned'}</div>
+              <div class="muted small">${c.issue.assignees.length ? e(c.issue.assignees.join(', ')) : e(tt('ui.owner.unassigned'))}</div>
               ${allGaps(c.task.id).map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
           )
           .join('')}</div>`,
       ).join('')}</div>
-      ${off.length ? `<p class="muted small">Not on the board: ${off.map((t) => e(t.id)).join(', ')} (no readable Issue).</p>` : ''}`;
+      ${off.length ? `<p class="muted small">${e(tt('ui.board.not-on-board', { tasks: off.map((task) => task.id) }))}</p>` : ''}`;
   }
 
-  let evidenceHtml =
-    '<p class="muted">Load issue status to see the pull requests and checks linked to each task.</p>';
+  let evidenceHtml = `<p class="muted">${e(tt('ui.evidence.hint-load'))}</p>`;
   if (loaded) {
     const withGaps = requirement.tasks
-      .map((t) => ({ t, gaps: allGaps(t.id) }))
-      .filter((x) => status?.byTask[x.t.id]?.ok && x.gaps.length > 0);
+      .map((task) => ({ task, gaps: allGaps(task.id) }))
+      .filter((x) => status?.byTask[x.task.id]?.ok && x.gaps.length > 0);
     evidenceHtml = withGaps.length
       ? `<ul class="plain">${withGaps
-          .map((x) => `<li><span class="tag">${e(x.t.id)}</span> <span class="warn">${x.gaps.map(e).join('; ')}</span></li>`)
+          .map((x) => `<li><span class="tag">${e(x.task.id)}</span> <span class="warn">${x.gaps.map(e).join('; ')}</span></li>`)
           .join('')}</ul>`
-      : '<p class="ok">No evidence gaps among the tasks that were read.</p>';
-    evidenceHtml += `<p class="muted small">Pull requests are found by references to the Issue. A reference is a link, not proof the change implements the task. Weaver reports gaps; acceptance stays a human decision.</p>`;
+      : `<p class="ok">${e(tt('ui.evidence.none'))}</p>`;
+    evidenceHtml += `<p class="muted small">${e(tt('ui.evidence.footnote'))}</p>`;
   }
 
   const gapsHtml = issues.length
     ? `<ul class="plain">${issues
-        .map((i) => `<li class="${i.severity}"><strong>${i.severity}</strong> ${e(t(validationKey(i.code), locale, i.args))}</li>`)
+        .map((i) => `<li class="${i.severity}"><strong>${e(tt(`ui.severity.${i.severity}` as MessageKey))}</strong> ${e(tt(validationKey(i.code), i.args))}</li>`)
         .join('')}</ul>`
-    : '<p class="ok">No validation gaps.</p>';
+    : `<p class="ok">${e(tt('ui.gaps.none'))}</p>`;
 
-  const note = STATUS_NOTE[requirement.status];
+  const noteKey = STATUS_NOTE[requirement.status];
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
@@ -218,25 +226,25 @@ export function renderRequirementHtml(
 <body>
   <div class="idline">${e(requirement.id)}<span class="badge">${e(requirement.status)}</span></div>
   <h1>${e(requirement.title)}</h1>
-  ${note ? `<p class="muted">${e(note)}</p>` : ''}
+  ${noteKey ? `<p class="muted">${e(tt(noteKey))}</p>` : ''}
   <dl>${metaHtml}</dl>
   <div class="actions">
-    <button data-cmd="openSource">Open source</button>
-    <button data-cmd="openPreview">Open preview</button>
+    <button data-cmd="openSource">${e(tt('ui.button.open-source'))}</button>
+    <button data-cmd="openPreview">${e(tt('ui.button.open-preview'))}</button>
   </div>
 
-  <h2>Acceptance criteria (${requirement.criteria.length})</h2>
+  <h2>${e(tt('ui.criteria.title', { count: requirement.criteria.length }))}</h2>
   ${criteriaHtml}
 
-  <h2>Tasks (${requirement.tasks.length})</h2>
+  <h2>${e(tt('ui.tasks.title', { count: requirement.tasks.length }))}</h2>
   ${tasksHtml}
 
   ${boardHtml}
 
-  <h2>Gaps and checks (${issues.length})</h2>
+  <h2>${e(tt('ui.gaps.title', { count: issues.length }))}</h2>
   ${gapsHtml}
 
-  <h2>Evidence</h2>
+  <h2>${e(tt('ui.evidence.title'))}</h2>
   ${evidenceHtml}
 
 <script nonce="${nonce}">

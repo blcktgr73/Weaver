@@ -4,13 +4,16 @@ import {
   closesIssue,
   IssueSnapshot,
   MovePlan,
+  Notice,
   parseIssueUrl,
   PullEvidence,
   summarizeChecks,
   TaskEvidence,
 } from '@palab/weaver-markdown';
 
-export type IssueResult = { ok: true; issue: IssueSnapshot } | { ok: false; error: string };
+export type IssueResult = { ok: true; issue: IssueSnapshot } | { ok: false; error: Notice };
+
+const raw = (detail: string): Notice => ({ code: 'github.err.raw', args: { detail } });
 
 /**
  * Uses VS Code's built-in GitHub sign-in. Reading needs `repo`; moving a card also needs `project`.
@@ -27,7 +30,7 @@ export async function getGitHubToken(interactive: boolean, scopes: string[] = ['
 
 export async function fetchIssue(token: string, issueUrl: string): Promise<IssueResult> {
   const ref = parseIssueUrl(issueUrl);
-  if (!ref) return { ok: false, error: 'not a GitHub Issue URL' };
+  if (!ref) return { ok: false, error: { code: 'github.err.not-issue-url' } };
 
   try {
     const response = await fetch(`https://api.github.com/repos/${ref.owner}/${ref.repo}/issues/${ref.number}`, {
@@ -38,7 +41,10 @@ export async function fetchIssue(token: string, issueUrl: string): Promise<Issue
       },
     });
     if (!response.ok) {
-      return { ok: false, error: response.status === 404 ? 'not found or no access' : `GitHub returned ${response.status}` };
+      return {
+        ok: false,
+        error: response.status === 404 ? { code: 'github.err.not-found' } : { code: 'github.err.http', args: { status: response.status } },
+      };
     }
     const data = (await response.json()) as {
       number: number;
@@ -60,17 +66,30 @@ export async function fetchIssue(token: string, issueUrl: string): Promise<Issue
       },
     };
   } catch (error) {
-    return { ok: false, error: `network error: ${(error as Error).message}` };
+    return { ok: false, error: { code: 'github.err.network', args: { detail: (error as Error).message } } };
   }
 }
 
 export interface MoveStep {
-  name: string;
+  name: Notice;
   ok: boolean;
-  detail?: string;
+  detail?: Notice;
+  /** The step had nothing to do, for example an Issue that is not on a board. */
+  skipped?: boolean;
 }
 
 const API = 'https://api.github.com';
+
+/** An error whose message can be shown in any language. */
+class WeaverError extends Error {
+  constructor(readonly notice: Notice) {
+    super(notice.code);
+  }
+}
+
+function errorNotice(error: unknown): Notice {
+  return error instanceof WeaverError ? error.notice : raw((error as Error).message);
+}
 
 async function rest(token: string, method: string, path: string, body?: unknown): Promise<Response> {
   return fetch(`${API}${path}`, {
@@ -109,38 +128,38 @@ const SET_STATUS = `mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2Ite
 export async function applyMove(token: string, issueUrl: string, plan: MovePlan): Promise<MoveStep[]> {
   const ref = parseIssueUrl(issueUrl);
   const steps: MoveStep[] = [];
-  if (!ref) return [{ name: 'parse Issue URL', ok: false, detail: 'not a GitHub Issue URL' }];
+  if (!ref) return [{ name: { code: 'step.parse-url' }, ok: false, detail: { code: 'github.err.not-issue-url' } }];
   const base = `/repos/${ref.owner}/${ref.repo}/issues/${ref.number}`;
 
-  const run = async (name: string, action: () => Promise<string | undefined>): Promise<boolean> => {
+  const run = async (name: Notice, action: () => Promise<Notice | undefined>): Promise<boolean> => {
     try {
       const detail = await action();
-      steps.push({ name, ok: true, detail });
+      steps.push({ name, ok: true, ...(detail ? { detail, skipped: detail.code === 'step.skipped-no-board' } : {}) });
       return true;
     } catch (error) {
-      steps.push({ name, ok: false, detail: (error as Error).message });
+      steps.push({ name, ok: false, detail: errorNotice(error) });
       return false;
     }
   };
   const expectOk = async (response: Response): Promise<void> => {
-    if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+    if (!response.ok) throw new WeaverError({ code: 'github.err.http', args: { status: response.status } });
   };
 
   for (const label of plan.removeLabels) {
-    const ok = await run(`remove label ${label}`, async () => {
+    const ok = await run({ code: 'step.remove-label', args: { label } }, async () => {
       const response = await rest(token, 'DELETE', `${base}/labels/${encodeURIComponent(label)}`);
       if (response.status !== 404) await expectOk(response);
       return undefined;
     });
     if (!ok) return steps;
   }
-  const labeled = await run(`add label ${plan.addLabel}`, async () => {
+  const labeled = await run({ code: 'step.add-label', args: { label: plan.addLabel } }, async () => {
     await expectOk(await rest(token, 'POST', `${base}/labels`, { labels: [plan.addLabel] }));
     return undefined;
   });
   if (!labeled) return steps;
   if (
-    !(await run(`${plan.state === 'closed' ? 'close' : 'reopen'} Issue`, async () => {
+    !(await run({ code: plan.state === 'closed' ? 'step.close-issue' : 'step.reopen-issue' }, async () => {
       const body = plan.state === 'closed' ? { state: 'closed', state_reason: 'completed' } : { state: 'open' };
       await expectOk(await rest(token, 'PATCH', base, body));
       return undefined;
@@ -149,7 +168,7 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan)
     return steps;
   }
 
-  await run(`set board Status to ${plan.projectStatus}`, async () => {
+  await run({ code: 'step.set-board-status', args: { status: plan.projectStatus } }, async () => {
     type Items = {
       repository: {
         issue: {
@@ -161,21 +180,21 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan)
     };
     const data = await graphql<Items>(token, PROJECT_ITEMS, { o: ref.owner, r: ref.repo, n: ref.number });
     const items = data.repository.issue.projectItems.nodes;
-    if (items.length === 0) return 'skipped: the Issue is not on a project board';
+    if (items.length === 0) return { code: 'step.skipped-no-board' };
     const updated: string[] = [];
     for (const item of items) {
       const field = item.project.field;
       const option = field?.options.find((o) => o.name === plan.projectStatus);
-      if (!field || !option) throw new Error(`board "${item.project.title}" has no Status option "${plan.projectStatus}"`);
+      if (!field || !option) throw new WeaverError({ code: 'step.no-status-option', args: { board: item.project.title, status: plan.projectStatus } });
       await graphql(token, SET_STATUS, { p: item.project.id, i: item.id, f: field.id, o: option.id });
       updated.push(item.project.title);
     }
-    return `updated on ${updated.join(', ')}`;
+    return { code: 'step.updated-boards', args: { boards: updated } };
   });
   return steps;
 }
 
-export type EvidenceResult = { ok: true; evidence: TaskEvidence } | { ok: false; error: string };
+export type EvidenceResult = { ok: true; evidence: TaskEvidence } | { ok: false; error: Notice };
 
 async function getJson<T>(token: string, url: string): Promise<T> {
   const response = await fetch(url, {
@@ -185,7 +204,7 @@ async function getJson<T>(token: string, url: string): Promise<T> {
       'X-GitHub-Api-Version': '2022-11-28',
     },
   });
-  if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+  if (!response.ok) throw new WeaverError({ code: 'github.err.http', args: { status: response.status } });
   return (await response.json()) as T;
 }
 
@@ -209,7 +228,7 @@ interface TimelineEvent {
  */
 export async function fetchEvidence(token: string, issueUrl: string): Promise<EvidenceResult> {
   const ref = parseIssueUrl(issueUrl);
-  if (!ref) return { ok: false, error: 'not a GitHub Issue URL' };
+  if (!ref) return { ok: false, error: { code: 'github.err.not-issue-url' } };
 
   try {
     const events: TimelineEvent[] = [];
@@ -253,6 +272,6 @@ ${pr.body ?? ''}`, ref.number) ? 'closes' : 'mentions',
     );
     return { ok: true, evidence: { pulls: pulls.sort((a, b) => a.number - b.number) } };
   } catch (error) {
-    return { ok: false, error: `could not read evidence: ${(error as Error).message}` };
+    return { ok: false, error: errorNotice(error) };
   }
 }

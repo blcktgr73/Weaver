@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { currentLocale } from './locale';
+import { currentLocale, message } from './locale';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const pickRequirement = async (loaded: Loaded) => {
     const requirements = requirementsOf(loaded);
     if (requirements.length === 0) {
-      void vscode.window.showInformationMessage('Weaver: no valid requirement artifacts found. Check the Problems panel.');
+      void vscode.window.showInformationMessage(message('ui.msg.no-requirements'));
       return undefined;
     }
     const selected = await vscode.window.showQuickPick(
@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext): void {
         detail: requirement.path,
         requirement,
       })),
-      { placeHolder: 'Select a Weaver requirement' },
+      { placeHolder: message('ui.msg.pick-requirement') },
     );
     return selected?.requirement;
   };
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (requirement) {
         view.show(loaded, requirement);
       } else {
-        void vscode.window.showInformationMessage('Weaver: this file is not a valid requirement. Check the Problems panel.');
+        void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
       }
       return;
     }
@@ -60,12 +60,17 @@ export function activate(context: vscode.ExtensionContext): void {
     const { errors, warnings } = publishDiagnostics(diagnostics, loaded, currentLocale());
     const requirements = requirementsOf(loaded).length;
     const tasks = loaded.artifacts.length - requirements;
-    const summary =
-      `Weaver scan: ${requirements} requirement(s), ${tasks} task file(s), ` +
-      `${loaded.markdownFileCount} Markdown file(s); ${errors} error(s), ${warnings} warning(s).`;
+    const summary = message('ui.msg.scan-summary', {
+      requirements,
+      tasks,
+      files: loaded.markdownFileCount,
+      errors,
+      warnings,
+    });
 
     if (errors > 0) {
-      const choice = await vscode.window.showWarningMessage(summary, 'Show Problems');
+      const showProblems = message('ui.msg.show-problems');
+      const choice = await vscode.window.showWarningMessage(summary, showProblems);
       if (choice) await vscode.commands.executeCommand('workbench.actions.view.problems');
     } else {
       void vscode.window.showInformationMessage(summary);

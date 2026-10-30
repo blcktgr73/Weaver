@@ -19,16 +19,16 @@
     "commands": [
       {
         "command": "weaver.openRequirementView",
-        "title": "Weaver: Open Requirement View",
+        "title": "%weaver.command.openRequirementView.title%",
         "icon": "$(preview)"
       },
       {
         "command": "weaver.openRequirementSource",
-        "title": "Weaver: Open Requirement Source"
+        "title": "%weaver.command.openRequirementSource.title%"
       },
       {
         "command": "weaver.scanWorkspace",
-        "title": "Weaver: Scan Workspace"
+        "title": "%weaver.command.scanWorkspace.title%"
       }
     ],
     "configuration": {
@@ -42,7 +42,12 @@
             "ko"
           ],
           "default": "auto",
-          "description": "Language of Weaver messages. auto follows the VS Code display language and falls back to English."
+          "description": "%weaver.config.language.description%",
+          "enumDescriptions": [
+            "%weaver.config.language.auto%",
+            "%weaver.config.language.en%",
+            "%weaver.config.language.ko%"
+          ]
         }
       }
     },
