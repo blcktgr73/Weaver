@@ -19,7 +19,7 @@ This is the first implementation slice of Weaver.
 - Report requirement/task counts and validation totals.
 - Show validation messages, gaps, and move summaries in English or Korean. Set `weaver.language` to `auto` (follows the VS Code display language), `en`, or `ko`. Approach: [DEC-004](../../docs/decisions/DEC-004-internationalization.md).
 
-Install and first use: [Getting started](../../docs/onboarding/getting-started.md). Build an installable file with `npm run package` from the repository root.
+Install and first use: [Getting started](../../docs/onboarding/getting-started.md). Build an installable file with `npm run package` from the repository root. Ways to share or publish it: [Distributing the extension](../../docs/onboarding/distribution.md).
 
 ## Commands
 
