@@ -15,3 +15,7 @@ assignee: blcktgr73
 Tracked in [Issue #45](https://github.com/blcktgr73/Weaver/issues/45). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Create the publisher account and token, then publish to the Marketplace and/or Open VSX. Keep tokens in CI secrets.
+
+## Deferred
+
+Deferred by the maintainer on 2026-10-30. When picked up, start with the VS Code Marketplace (publisher `palab`, matching the extension ID `palab.weaver`); Open VSX follows. Publish a pre-release first, and put tokens in repository secrets only.
