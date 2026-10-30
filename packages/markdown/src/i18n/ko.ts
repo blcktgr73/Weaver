@@ -147,6 +147,7 @@ export const ko: Record<MessageKey, Message> = {
   'ui.msg.move-done': 'Weaver: 이동 완료 — {task} → {column}',
   'ui.msg.no-requirements': 'Weaver: 유효한 요구사항 문서가 없습니다. 문제(Problems) 패널을 확인하세요.',
   'ui.msg.pick-requirement': 'Weaver 요구사항을 고르세요',
+  'ui.msg.task-without-requirement': 'Weaver: {task}이(가) 가리키는 요구사항이 없습니다. 문제(Problems) 패널을 확인하세요.',
   'ui.msg.not-requirement': 'Weaver: 이 파일은 유효한 요구사항이 아닙니다. 문제(Problems) 패널을 확인하세요.',
   'ui.msg.scan-summary': 'Weaver 스캔: 요구사항 {requirements}개, 작업 파일 {tasks}개, Markdown 파일 {files}개, 오류 {errors}건, 경고 {warnings}건.',
   'ui.msg.show-problems': '문제 보기',

@@ -63,6 +63,7 @@ export function renderRequirementHtml(
   cspSource: string,
   status?: StatusState,
   locale: Locale = 'en',
+  focusTask?: string,
 ): string {
   const e = escapeHtml;
   const tt = (key: MessageKey, args?: MessageArgs): string => t(key, locale, args);
@@ -174,7 +175,7 @@ export function renderRequirementHtml(
               ? `<a href="#" data-url="${e(task.issueUrl)}">#${task.issueNumber ?? 'open'}</a>`
               : `<span class="warn">${e(tt('ui.issue.not-linked'))}</span>`;
           const owner = ownerHtml(task);
-          return `<tr><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
+          return `<tr id="task-${e(task.id)}"${task.id === focusTask ? ' class="focus-row"' : ''}><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
         })
         .join('')}</tbody></table>
        <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
@@ -247,6 +248,7 @@ export function renderRequirementHtml(
   dd { margin: 0; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--vscode-panel-border); }
+  tr.focus-row td { background: var(--vscode-editor-selectionHighlightBackground, transparent); }
   th { color: var(--vscode-descriptionForeground); font-weight: 500; }
   ol.plain, ul.plain { padding-left: 0; list-style: none; margin: 0; }
   ol.plain li, ul.plain li { padding: 3px 0; }
@@ -295,6 +297,7 @@ export function renderRequirementHtml(
 
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
+  ${focusTask && /^TASK-\d+$/.test(focusTask) ? `document.getElementById('task-${focusTask}')?.scrollIntoView({ block: 'center' });` : ''}
   document.addEventListener('change', (event) => {
     const select = event.target.closest('select[data-move]');
     if (select) vscode.postMessage({ type: 'moveTask', taskId: select.dataset.move, column: select.value });

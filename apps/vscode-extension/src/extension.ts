@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { documentKindOf } from '@palab/weaver-markdown';
+import { documentKindOf, viewTargetOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
 import { RequirementView } from './requirementView';
@@ -58,12 +58,15 @@ export function activate(context: vscode.ExtensionContext): void {
   const openView = vscode.commands.registerCommand('weaver.openRequirementView', async (resource?: vscode.Uri) => {
     const loaded = await refresh();
     if (resource instanceof vscode.Uri) {
-      const requirement = requirementsOf(loaded).find((r) => loaded.uris.get(r.path)?.toString() === resource.toString());
-      if (requirement) {
-        // The file itself is known, so show its view in place of the source.
-        await vscode.commands.executeCommand('vscode.openWith', resource, REQUIREMENT_EDITOR);
-      } else {
+      const target = viewTargetOf(loaded.artifacts, vscode.workspace.asRelativePath(resource, false));
+      if (!target) {
         void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
+      } else if (target.taskId) {
+        // A task file: show its requirement, scrolled to the task.
+        view.show(loaded, target.requirement, target.taskId);
+      } else {
+        // The requirement file itself: show its view in place of the source.
+        await vscode.commands.executeCommand('vscode.openWith', resource, REQUIREMENT_EDITOR);
       }
       return;
     }
