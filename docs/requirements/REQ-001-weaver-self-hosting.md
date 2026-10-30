@@ -37,6 +37,11 @@ PALab contributors can move from a Weaver requirement to an assigned task, imple
 - `TASK-005` Build the first VS Code Kanban projection — [GitHub Issue #5](https://github.com/blcktgr73/Weaver/issues/5)
 - `TASK-006` Minimal read-only Requirement view — [GitHub Issue #8](https://github.com/blcktgr73/Weaver/issues/8)
 - `TASK-007` Move a task between Kanban columns with explicit confirmation — [GitHub Issue #12](https://github.com/blcktgr73/Weaver/issues/12)
+- `TASK-008` Show and record who owns each task (human or agent) — [GitHub Issue #23](https://github.com/blcktgr73/Weaver/issues/23)
+- `TASK-009` Map acceptance criteria to tasks and evidence — [GitHub Issue #24](https://github.com/blcktgr73/Weaver/issues/24)
+- `TASK-010` Show label, board Status, and closing-PR mismatches as gaps — [GitHub Issue #25](https://github.com/blcktgr73/Weaver/issues/25)
+- `TASK-011` Record blockers, human decisions, and acceptance — [GitHub Issue #26](https://github.com/blcktgr73/Weaver/issues/26)
+- `TASK-012` Package the extension and write a getting-started guide — [GitHub Issue #27](https://github.com/blcktgr73/Weaver/issues/27)
 
 `TASK-005` was split from `TASK-002`; see [DEC-002](../decisions/DEC-002-split-task-002.md).
 
