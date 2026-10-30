@@ -1,14 +1,18 @@
 import {
   describePull,
   evidenceGaps,
+  formatNotice,
   groupByColumn,
   IssueSnapshot,
   KANBAN_COLUMNS,
   KanbanPlacement,
+  Locale,
   placeIssue,
   RequirementArtifact,
+  t,
   TaskEvidence,
   ValidationIssue,
+  validationKey,
 } from '@palab/weaver-markdown';
 
 export type TaskStatus =
@@ -45,6 +49,7 @@ export function renderRequirementHtml(
   nonce: string,
   cspSource: string,
   status?: StatusState,
+  locale: Locale = 'en',
 ): string {
   const e = escapeHtml;
   const meta: [string, string | undefined][] = [
@@ -80,8 +85,8 @@ export function renderRequirementHtml(
     if (!result?.ok || !entry) return [];
     const evidence = result.evidenceError
       ? [`evidence: ${result.evidenceError}`]
-      : evidenceGaps(entry.placement.column, result.evidence);
-    return [...entry.placement.gaps, ...evidence];
+      : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
+    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...evidence];
   };
 
   const evidenceCell = (taskId: string): string => {
@@ -91,7 +96,7 @@ export function renderRequirementHtml(
     const pulls = result.evidence?.pulls ?? [];
     if (pulls.length === 0) return '<span class="muted">no PR</span>';
     return pulls
-      .map((p) => `<div class="small"><a href="#" data-url="${e(p.url)}" title="${e(p.title)}">${e(describePull(p))}</a></div>`)
+      .map((p) => `<div class="small"><a href="#" data-url="${e(p.url)}" title="${e(p.title)}">${e(describePull(p, locale))}</a></div>`)
       .join('');
   };
 
@@ -164,7 +169,7 @@ export function renderRequirementHtml(
 
   const gapsHtml = issues.length
     ? `<ul class="plain">${issues
-        .map((i) => `<li class="${i.severity}"><strong>${i.severity}</strong> ${e(i.message)}</li>`)
+        .map((i) => `<li class="${i.severity}"><strong>${i.severity}</strong> ${e(t(validationKey(i.code), locale, i.args))}</li>`)
         .join('')}</ul>`
     : '<p class="ok">No validation gaps.</p>';
 

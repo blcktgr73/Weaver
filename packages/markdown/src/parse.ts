@@ -1,5 +1,6 @@
 import { parse as parseYaml } from 'yaml';
 import { parseCriteria, parseTasks } from './body';
+import type { MessageArgs } from './i18n';
 import {
   ASSIGNEE_TYPES,
   AssigneeType,
@@ -38,15 +39,15 @@ export function parseArtifact(path: string, text: string): ParseResult {
   if (!match) return { isArtifact: false, issues: [] };
 
   const issues: ValidationIssue[] = [];
-  const add = (severity: ValidationIssue['severity'], code: string, message: string) =>
-    issues.push({ severity, code, message, path });
+  const add = (severity: ValidationIssue['severity'], code: string, args?: MessageArgs) =>
+    issues.push({ severity, code, ...(args ? { args } : {}), path });
 
   let data: unknown;
   try {
     data = parseYaml(match[1]);
   } catch (error) {
     if (!TYPE_HINT.test(match[1])) return { isArtifact: false, issues: [] };
-    add('error', 'frontmatter-invalid', `Frontmatter is not valid YAML: ${(error as Error).message}`);
+    add('error', 'frontmatter-invalid', { detail: (error as Error).message });
     return { isArtifact: true, issues };
   }
 
@@ -62,27 +63,27 @@ export function parseArtifact(path: string, text: string): ParseResult {
   const body = text.slice(match[0].length);
   const required = (field: string): string | undefined => {
     const value = str(fm[field]);
-    if (!value) add('error', 'missing-field', `Required field "${field}" is missing or empty.`);
+    if (!value) add('error', 'missing-field', { field });
     return value;
   };
 
   const id = required('id');
   if (id && !PATTERNS[type].test(id)) {
-    add('error', 'invalid-id', `"${id}" does not match the ${type === 'requirement' ? 'REQ-###' : 'TASK-###'} pattern.`);
+    add('error', 'invalid-id', { id, pattern: type === 'requirement' ? 'REQ-###' : 'TASK-###' });
   }
   const title = required('title');
   const statusRaw = required('status');
   if (statusRaw && !(LIFECYCLE_STATUSES as readonly string[]).includes(statusRaw)) {
-    add('error', 'invalid-status', `Status "${statusRaw}" is not allowed. Use one of: ${LIFECYCLE_STATUSES.join(', ')}.`);
+    add('error', 'invalid-status', { status: statusRaw, allowed: LIFECYCLE_STATUSES.join(', ') });
   }
   const repository = str(fm.repository);
   if (repository && !PATTERNS.repository.test(repository)) {
-    add('error', 'invalid-repository', `Repository "${repository}" must look like owner/name.`);
+    add('error', 'invalid-repository', { repository });
   }
 
   const known = type === 'requirement' ? KNOWN_REQUIREMENT_FIELDS : KNOWN_TASK_FIELDS;
   for (const key of Object.keys(fm)) {
-    if (!known.includes(key)) add('warning', 'unknown-field', `Unknown field "${key}" is kept but not interpreted.`);
+    if (!known.includes(key)) add('warning', 'unknown-field', { field: key });
   }
 
   const status = statusRaw as LifecycleStatus;
@@ -91,23 +92,23 @@ export function parseArtifact(path: string, text: string): ParseResult {
     const rawStories = fm.story_ids ?? [];
     const storyIds: string[] = [];
     if (!Array.isArray(rawStories)) {
-      add('error', 'invalid-story-id', '"story_ids" must be a list.');
+      add('error', 'story-ids-not-list');
     } else {
       for (const story of rawStories) {
         if (typeof story === 'string' && PATTERNS.story.test(story)) storyIds.push(story);
-        else add('error', 'invalid-story-id', `Story ID "${String(story)}" does not match US-###.`);
+        else add('error', 'invalid-story-id', { id: String(story) });
       }
     }
 
     const criteria = parseCriteria(body);
     const { tasks, malformed } = parseTasks(body);
-    if (criteria.length === 0) add('warning', 'no-acceptance-criteria', 'No items under "## Acceptance criteria".');
-    if (tasks.length === 0) add('warning', 'no-tasks', 'No items under "## Tasks".');
+    if (criteria.length === 0) add('warning', 'no-acceptance-criteria');
+    if (tasks.length === 0) add('warning', 'no-tasks');
     for (const item of malformed) {
-      add('warning', 'malformed-task-item', `Task list item does not start with a TASK ID: "${item}"`);
+      add('warning', 'malformed-task-item', { item });
     }
     for (const task of tasks) {
-      if (!task.issueUrl) add('warning', 'task-without-issue', `${task.id} has no Issue link.`);
+      if (!task.issueUrl) add('warning', 'task-without-issue', { task: task.id });
     }
 
     const hasErrors = issues.some((i) => i.severity === 'error');
@@ -125,15 +126,15 @@ export function parseArtifact(path: string, text: string): ParseResult {
 
   const requirement = required('requirement');
   if (requirement && !PATTERNS.requirement.test(requirement)) {
-    add('error', 'invalid-requirement-ref', `Requirement reference "${requirement}" does not match REQ-###.`);
+    add('error', 'invalid-requirement-ref', { requirement });
   }
   const assigneeType = str(fm.assignee_type);
   if (assigneeType && !(ASSIGNEE_TYPES as readonly string[]).includes(assigneeType)) {
-    add('error', 'invalid-assignee-type', `assignee_type "${assigneeType}" must be human or agent.`);
+    add('error', 'invalid-assignee-type', { value: assigneeType });
   }
   const blockers = Array.isArray(fm.blockers) ? fm.blockers.map(String) : [];
   if (fm.blockers !== undefined && !Array.isArray(fm.blockers)) {
-    add('error', 'invalid-blockers', '"blockers" must be a list.');
+    add('error', 'invalid-blockers');
   }
 
   const hasErrors = issues.some((i) => i.severity === 'error');

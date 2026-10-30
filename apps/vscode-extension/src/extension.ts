@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { currentLocale } from './locale';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
@@ -8,7 +9,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const refresh = async (): Promise<Loaded> => {
     const loaded = await loadWorkspaceArtifacts();
-    publishDiagnostics(diagnostics, loaded);
+    publishDiagnostics(diagnostics, loaded, currentLocale());
     view.update(loaded);
     return loaded;
   };
@@ -56,7 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
     const loaded = await refresh();
-    const { errors, warnings } = publishDiagnostics(diagnostics, loaded);
+    const { errors, warnings } = publishDiagnostics(diagnostics, loaded, currentLocale());
     const requirements = requirementsOf(loaded).length;
     const tasks = loaded.artifacts.length - requirements;
     const summary =
@@ -75,7 +76,11 @@ export function activate(context: vscode.ExtensionContext): void {
     if (document.languageId === 'markdown') void refresh();
   });
 
-  context.subscriptions.push(diagnostics, openSource, openView, scanWorkspace, onSave);
+  const onLanguage = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('weaver.language')) void refresh();
+  });
+
+  context.subscriptions.push(diagnostics, openSource, openView, scanWorkspace, onSave, onLanguage);
   void refresh();
 }
 

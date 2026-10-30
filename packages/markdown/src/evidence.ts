@@ -1,3 +1,4 @@
+import { Locale, Notice, t } from './i18n';
 import { KanbanColumn } from './kanban';
 
 export type ChecksState = 'passing' | 'failing' | 'pending' | 'none';
@@ -37,37 +38,40 @@ export function summarizeChecks(runs: CheckRunLike[]): ChecksState {
  * Evidence is only demanded once a task claims to be in review or verified;
  * it reports gaps and never decides acceptance.
  */
-export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | undefined): string[] {
+export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | undefined): Notice[] {
   if (column !== 'Review' && column !== 'Verified') return [];
-  if (!evidence) return ['evidence not loaded'];
+  if (!evidence) return [{ code: 'gap.evidence-not-loaded' }];
+  if (evidence.pulls.length === 0) return [{ code: 'gap.no-linked-pr' }];
 
-  const gaps: string[] = [];
-  if (evidence.pulls.length === 0) {
-    gaps.push('no linked pull request');
-    return gaps;
-  }
+  const gaps: Notice[] = [];
   if (column === 'Verified' && !evidence.pulls.some((pull) => pull.state === 'merged')) {
-    gaps.push('no merged pull request');
+    gaps.push({ code: 'gap.no-merged-pr' });
   }
   // closed without merge is not evidence either way
   const live = evidence.pulls.filter((pull) => pull.state !== 'closed');
-  gaps.push(...groupedPullGap(live, 'failing', 'has failing checks', 'have failing checks'));
-  gaps.push(...groupedPullGap(live, 'pending', 'checks are still running', 'checks are still running'));
-  gaps.push(...groupedPullGap(live, 'none', 'has no check results', 'have no check results'));
+  gaps.push(...groupedPullGap(live, 'failing', 'gap.checks-failing'));
+  gaps.push(...groupedPullGap(live, 'pending', 'gap.checks-pending'));
+  gaps.push(...groupedPullGap(live, 'none', 'gap.checks-none'));
   return gaps;
 }
 
-/** One line per check state, so four old PRs do not produce four warnings. */
-function groupedPullGap(pulls: PullEvidence[], state: ChecksState, one: string, many: string): string[] {
+/** One notice per check state, so four old PRs do not produce four warnings. */
+function groupedPullGap(
+  pulls: PullEvidence[],
+  state: ChecksState,
+  code: 'gap.checks-failing' | 'gap.checks-pending' | 'gap.checks-none',
+): Notice[] {
   const matching = pulls.filter((pull) => pull.checks === state).map((pull) => `#${pull.number}`);
-  if (matching.length === 0) return [];
-  return matching.length === 1 ? [`PR ${matching[0]} ${one}`] : [`PRs ${matching.join(', ')} ${many}`];
+  return matching.length === 0 ? [] : [{ code, args: { prs: matching, count: matching.length } }];
 }
 
-export function describePull(pull: PullEvidence): string {
-  const checks = pull.checks === 'none' ? 'no checks' : `checks ${pull.checks}`;
-  const link = pull.link === 'closes' ? 'closes Issue' : 'mentions Issue';
-  return `PR #${pull.number} ${pull.state} · ${checks} · ${link}`;
+export function describePull(pull: PullEvidence, locale: Locale = 'en'): string {
+  return t('pull.summary', locale, {
+    number: pull.number,
+    state: t(`pull.state.${pull.state}`, locale),
+    checks: t(`pull.checks.${pull.checks}`, locale),
+    link: t(`pull.link.${pull.link}`, locale),
+  });
 }
 
 const CLOSING_WORD = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+(?:[\w.-]+\/[\w.-]+)?#(\d+)\b/gi;

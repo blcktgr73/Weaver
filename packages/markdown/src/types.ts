@@ -16,12 +16,15 @@ export type LifecycleStatus = (typeof LIFECYCLE_STATUSES)[number];
 export const ASSIGNEE_TYPES = ['human', 'agent'] as const;
 export type AssigneeType = (typeof ASSIGNEE_TYPES)[number];
 
+import type { MessageArgs } from './i18n';
+
 export type Severity = 'error' | 'warning';
 
 export interface ValidationIssue {
   severity: Severity;
+  /** Short rule code. The message is looked up as `validation.<code>` in the catalog. */
   code: string;
-  message: string;
+  args?: MessageArgs;
   /** Workspace-relative path of the artifact the issue belongs to. */
   path: string;
 }

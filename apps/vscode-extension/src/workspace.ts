@@ -1,5 +1,13 @@
 import * as vscode from 'vscode';
-import { Artifact, loadWorkspace, ValidationIssue, WorkspaceResult } from '@palab/weaver-markdown';
+import {
+  Artifact,
+  loadWorkspace,
+  Locale,
+  t,
+  ValidationIssue,
+  validationKey,
+  WorkspaceResult,
+} from '@palab/weaver-markdown';
 
 const EXCLUDE = '**/{node_modules,.git,dist,out}/**';
 const MAX_FILES = 2000;
@@ -28,6 +36,7 @@ export async function loadWorkspaceArtifacts(): Promise<Loaded> {
 export function publishDiagnostics(
   collection: vscode.DiagnosticCollection,
   loaded: Loaded,
+  locale: Locale,
 ): { errors: number; warnings: number } {
   collection.clear();
   const byPath = new Map<string, ValidationIssue[]>();
@@ -48,7 +57,7 @@ export function publishDiagnostics(
         else warnings += 1;
         const diagnostic = new vscode.Diagnostic(
           new vscode.Range(0, 0, 0, 0),
-          issue.message,
+          t(validationKey(issue.code), locale, issue.args),
           isError ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning,
         );
         diagnostic.source = 'Weaver';

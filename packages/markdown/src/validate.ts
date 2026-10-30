@@ -1,3 +1,4 @@
+import type { MessageArgs } from './i18n';
 import { parseArtifact } from './parse';
 import { Artifact, ValidationIssue, WorkspaceResult } from './types';
 
@@ -9,13 +10,13 @@ export interface SourceFile {
 /** Cross-artifact rules: unique IDs, resolvable requirement references, single task owner. */
 export function validateWorkspace(artifacts: Artifact[]): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const add = (a: Artifact, code: string, message: string) =>
-    issues.push({ severity: 'error', code, message, path: a.path });
+  const add = (a: Artifact, code: string, args: MessageArgs) =>
+    issues.push({ severity: 'error', code, args, path: a.path });
 
   const byId = new Map<string, Artifact>();
   for (const artifact of artifacts) {
     const first = byId.get(artifact.id);
-    if (first) add(artifact, 'duplicate-id', `${artifact.id} is already defined in ${first.path}.`);
+    if (first) add(artifact, 'duplicate-id', { id: artifact.id, path: first.path });
     else byId.set(artifact.id, artifact);
   }
 
@@ -24,13 +25,13 @@ export function validateWorkspace(artifacts: Artifact[]): ValidationIssue[] {
     if (artifact.kind === 'task') {
       const target = byId.get(artifact.requirement);
       if (!target || target.kind !== 'requirement') {
-        add(artifact, 'unknown-requirement', `${artifact.id} refers to ${artifact.requirement}, which does not exist.`);
+        add(artifact, 'unknown-requirement', { task: artifact.id, requirement: artifact.requirement });
       }
     } else {
       for (const task of artifact.tasks) {
         const owner = taskOwner.get(task.id);
         if (owner && owner !== artifact.id) {
-          add(artifact, 'task-listed-twice', `${task.id} is already listed under ${owner}.`);
+          add(artifact, 'task-listed-twice', { task: task.id, owner });
         } else {
           taskOwner.set(task.id, artifact.id);
         }

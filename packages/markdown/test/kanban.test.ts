@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeMove, groupByColumn, parseIssueUrl, placeIssue, planMove } from '../src';
+import { describeMove, formatNotice, groupByColumn, parseIssueUrl, placeIssue, planMove } from '../src';
 
 describe('placeIssue', () => {
   it('maps each status label to its column', () => {
@@ -11,25 +11,25 @@ describe('placeIssue', () => {
   });
 
   it('puts an unlabeled open issue in Backlog and flags it', () => {
-    expect(placeIssue({ state: 'open', labels: ['task'] })).toEqual({ column: 'Backlog', gaps: ['no status label'] });
+    expect(placeIssue({ state: 'open', labels: ['task'] })).toEqual({ column: 'Backlog', gaps: [{ code: 'gap.no-status-label' }] });
   });
 
   it('flags a closed issue without verification evidence', () => {
     const placement = placeIssue({ state: 'closed', labels: ['status:review'] });
     expect(placement.column).toBe('Review');
-    expect(placement.gaps[0]).toContain('verification gap');
+    expect(placement.gaps[0].code).toBe('gap.closed-without-verified');
   });
 
   it('flags an open issue labeled verified', () => {
     const placement = placeIssue({ state: 'open', labels: ['status:verified'] });
     expect(placement.column).toBe('Verified');
-    expect(placement.gaps).toEqual(['open but labeled status:verified']);
+    expect(placement.gaps).toEqual([{ code: 'gap.open-but-verified' }]);
   });
 
   it('flags multiple status labels and uses the earliest column', () => {
     const placement = placeIssue({ state: 'open', labels: ['status:review', 'status:ready'] });
     expect(placement.column).toBe('Ready');
-    expect(placement.gaps[0]).toContain('multiple status labels');
+    expect(placement.gaps[0].code).toBe('gap.multiple-status-labels');
   });
 });
 
@@ -96,11 +96,18 @@ describe('planMove', () => {
 describe('describeMove', () => {
   it('lists each change', () => {
     const issue = { state: 'open' as const, labels: ['status:review'] };
-    expect(describeMove(planMove(issue, 'Verified'), issue)).toEqual([
+    const lines = describeMove(planMove(issue, 'Verified'), issue);
+    expect(lines.map((n) => formatNotice(n, 'en'))).toEqual([
       'Remove label: status:review',
       'Add label: status:verified',
       'Close the Issue',
       'Set board Status: Done',
+    ]);
+    expect(lines.map((n) => formatNotice(n, 'ko'))).toEqual([
+      '라벨 제거: status:review',
+      '라벨 추가: status:verified',
+      'Issue 닫기',
+      '보드 Status 설정: Done',
     ]);
   });
 });

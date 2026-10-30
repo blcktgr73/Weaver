@@ -12,6 +12,7 @@ This is the first implementation slice of Weaver.
 - Move a task to another column from its Status cell. Every move shows exactly what will change on GitHub (labels, Issue state, shared board Status) and asks first. Rules: [DEC-003](../../docs/decisions/DEC-003-board-status-mapping.md). Moving needs the `project` GitHub scope, requested only at that moment.
 - Open a requirement's Markdown from a quick-pick command. Several PRs with the same check state are reported as one gap line.
 - Report requirement/task counts and validation totals.
+- Show validation messages, gaps, and move summaries in English or Korean. Set `weaver.language` to `auto` (follows the VS Code display language), `en`, or `ko`. Approach: [DEC-004](../../docs/decisions/DEC-004-internationalization.md).
 
 ## Commands
 
