@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { loadWorkspace, mergeTasks, ownerGaps, ownerOf, parseArtifact, RequirementArtifact, TaskArtifact } from '../src';
+import {
+  criteriaCoverage,
+  hasCriteriaMapping,
+  loadWorkspace,
+  mergeTasks,
+  ownerGaps,
+  ownerOf,
+  parseArtifact,
+  RequirementArtifact,
+  TaskArtifact,
+  uncoveredCriteria,
+} from '../src';
 
 const REQ = `---
 id: REQ-010
@@ -113,5 +124,46 @@ describe('mergeTasks and owners', () => {
     expect(ownerGaps('Backlog', undefined)).toEqual([]);
     expect(ownerGaps('Ready', undefined)).toEqual([{ code: 'gap.no-owner' }]);
     expect(ownerGaps('Review', { name: 'ada', source: 'file' })).toEqual([]);
+  });
+});
+
+describe('criteria coverage', () => {
+  const workspace = loadWorkspace([
+    { path: 'req.md', text: REQ },
+    { path: 'a.md', text: taskFile('status: draft\ncriteria: [AC-001]') },
+    {
+      path: 'b.md',
+      text: taskFile('status: draft\ncriteria: [AC-001]').replace('TASK-010', 'TASK-011'),
+    },
+  ]);
+  const requirement = workspace.artifacts.find((a) => a.kind === 'requirement') as RequirementArtifact;
+  const tasks = mergeTasks(requirement, workspace.artifacts);
+  const coverage = (progress: Parameters<typeof criteriaCoverage>[2]) =>
+    criteriaCoverage(requirement.criteria, tasks, progress);
+  const state = (progress: Parameters<typeof criteriaCoverage>[2], index = 0) => coverage(progress)[index].state;
+
+  it('reports a criterion nobody claims', () => {
+    expect(state(() => undefined, 1)).toBe('uncovered');
+    expect(uncoveredCriteria(coverage(() => undefined), tasks).map((c) => c.id)).toEqual(['AC-002']);
+  });
+
+  it('does not judge coverage before any task maps criteria', () => {
+    const bare = mergeTasks(requirement, []);
+    expect(hasCriteriaMapping(bare)).toBe(false);
+    expect(uncoveredCriteria(criteriaCoverage(requirement.criteria, bare, () => undefined), bare)).toEqual([]);
+  });
+
+  it('is unknown until every claiming task was read', () => {
+    expect(state((id) => (id === 'TASK-010' ? { column: 'Verified', evidenceGapCount: 0 } : undefined))).toBe('unknown');
+  });
+
+  it('is in progress while any claiming task is not Verified', () => {
+    const progress = (id: string) => ({ column: id === 'TASK-010' ? ('Verified' as const) : ('Review' as const), evidenceGapCount: 0 });
+    expect(state(progress)).toBe('in-progress');
+  });
+
+  it('is verified only when every claiming task is Verified without gaps', () => {
+    expect(state(() => ({ column: 'Verified', evidenceGapCount: 0 }))).toBe('verified');
+    expect(state((id) => ({ column: 'Verified', evidenceGapCount: id === 'TASK-011' ? 2 : 0 }))).toBe('verified-with-gaps');
   });
 });

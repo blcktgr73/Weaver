@@ -63,6 +63,13 @@ export const en = {
   'ui.owner.agent': 'agent',
   'ui.owner.human': 'human',
   'ui.owner.from-issue': 'from the Issue',
+  'gap.criterion-uncovered': 'no task covers this criterion',
+  'ui.criteria.state.uncovered': 'no task',
+  'ui.criteria.state.unknown': 'status not loaded',
+  'ui.criteria.state.in-progress': 'in progress',
+  'ui.criteria.state.verified': 'verified',
+  'ui.criteria.state.verified-with-gaps': 'verified, evidence gaps',
+  'ui.criteria.tasks': 'Tasks',
 
   // Kanban column names (labels and board values stay in English)
   'column.Backlog': 'Backlog',

@@ -5,6 +5,8 @@ import {
   groupByColumn,
   IssueSnapshot,
   KANBAN_COLUMNS,
+  criteriaCoverage,
+  hasCriteriaMapping,
   KanbanPlacement,
   Locale,
   MergedTask,
@@ -17,6 +19,8 @@ import {
   RequirementArtifact,
   t,
   TaskEvidence,
+  TaskProgress,
+  uncoveredCriteria,
   ValidationIssue,
   validationKey,
 } from '@palab/weaver-markdown';
@@ -73,13 +77,6 @@ export function renderRequirementHtml(
     .map(([label, value]) => `<dt>${e(label)}</dt><dd>${value ? e(value) : `<span class="muted">${e(tt('ui.not-set'))}</span>`}</dd>`)
     .join('');
 
-  const criteriaHtml = requirement.criteria.length
-    ? `<ol class="plain">${requirement.criteria
-        .map((c) => `<li><span class="tag">${e(c.id)}</span> ${e(c.text)}</li>`)
-        .join('')}</ol>
-       <p class="muted">${e(tt('ui.criteria.unmapped'))}</p>`
-    : `<p class="empty">${e(tt('ui.criteria.empty'))}</p>`;
-
   const loaded = status !== undefined && Object.keys(status.byTask).length > 0;
   const placed = new Map<string, { issue: IssueSnapshot; placement: KanbanPlacement }>();
   for (const task of tasks) {
@@ -135,6 +132,35 @@ export function renderRequirementHtml(
       <div><select data-move="${e(taskId)}" title="${e(tt('ui.move.tooltip'))}" aria-label="${e(tt('ui.move.aria', { task: taskId }))}">${options}</select></div>`;
   };
 
+  const progress = (taskId: string): TaskProgress | undefined => {
+    const result = status?.byTask[taskId];
+    const entry = placed.get(taskId);
+    if (!result?.ok || !entry) return undefined;
+    const gapCount = result.evidenceError ? 1 : evidenceGaps(entry.placement.column, result.evidence).length;
+    return { column: entry.placement.column, evidenceGapCount: gapCount };
+  };
+  const mapped = hasCriteriaMapping(tasks);
+  const coverage = criteriaCoverage(requirement.criteria, tasks, progress);
+  const uncovered = uncoveredCriteria(coverage, tasks);
+
+  const stateClass = (state: string): string =>
+    state === 'verified' ? 'ok' : state === 'uncovered' || state === 'verified-with-gaps' ? 'warn' : 'muted';
+  const criteriaHtml = requirement.criteria.length
+    ? mapped
+      ? `<ol class="plain">${coverage
+          .map(
+            (c) => `<li><span class="tag">${e(c.criterion.id)}</span> ${e(c.criterion.text)}
+              <div class="small"><span class="muted">${e(tt('ui.criteria.tasks'))}:</span> ${
+                c.tasks.length ? c.tasks.map((task) => `<span class="tag">${e(task.id)}</span>`).join(', ') : '—'
+              } · <span class="${stateClass(c.state)}">${e(tt(`ui.criteria.state.${c.state}` as MessageKey))}</span></div></li>`,
+          )
+          .join('')}</ol>`
+      : `<ol class="plain">${requirement.criteria
+          .map((c) => `<li><span class="tag">${e(c.id)}</span> ${e(c.text)}</li>`)
+          .join('')}</ol>
+       <p class="muted">${e(tt('ui.criteria.unmapped'))}</p>`
+    : `<p class="empty">${e(tt('ui.criteria.empty'))}</p>`;
+
   const tasksHtml = tasks.length
     ? `<table><thead><tr><th>${e(tt('ui.table.task'))}</th><th>${e(tt('ui.table.title'))}</th><th>${e(tt('ui.table.issue'))}</th><th>${e(tt('ui.table.status'))}</th><th>${e(tt('ui.table.evidence'))}</th><th>${e(tt('ui.table.owner'))}</th></tr></thead><tbody>${tasks
         .map((task) => {
@@ -186,9 +212,12 @@ export function renderRequirementHtml(
     evidenceHtml += `<p class="muted small">${e(tt('ui.evidence.footnote'))}</p>`;
   }
 
-  const gapsHtml = issues.length
+  const gapCount = issues.length + uncovered.length;
+  const gapsHtml = gapCount
     ? `<ul class="plain">${issues
         .map((i) => `<li class="${i.severity}"><strong>${e(tt(`ui.severity.${i.severity}` as MessageKey))}</strong> ${e(tt(validationKey(i.code), i.args))}</li>`)
+        .join('')}${uncovered
+        .map((c) => `<li class="warning"><strong>${e(tt('ui.severity.warning'))}</strong> <span class="tag">${e(c.id)}</span> ${e(tt('gap.criterion-uncovered'))}</li>`)
         .join('')}</ul>`
     : `<p class="ok">${e(tt('ui.gaps.none'))}</p>`;
 
@@ -252,7 +281,7 @@ export function renderRequirementHtml(
 
   ${boardHtml}
 
-  <h2>${e(tt('ui.gaps.title', { count: issues.length }))}</h2>
+  <h2>${e(tt('ui.gaps.title', { count: gapCount }))}</h2>
   ${gapsHtml}
 
   <h2>${e(tt('ui.evidence.title'))}</h2>
