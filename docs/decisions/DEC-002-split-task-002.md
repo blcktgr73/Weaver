@@ -1,21 +1,21 @@
-# DEC-002: TASK-002를 스캔·열기와 칸반 투영으로 분리
+# DEC-002: Split TASK-002 into scan/open and the Kanban projection
 
-- 상태: 확정
-- 날짜: 2026-10-28
-- 관련: `REQ-001`, `TASK-002`, `TASK-005`
+- Status: accepted
+- Date: 2026-10-28
+- Related: `REQ-001`, `TASK-002`, `TASK-005`
 
-## 배경
+## Context
 
-`TASK-002`가 두 가지 뜻으로 쓰였다.
+`TASK-002` had two meanings.
 
-- `REQ-001` 문서: "VS Code 워크스페이스 스캔과 요구사항 열기"
-- 이슈 #2: "첫 VS Code 칸반 투영"
+- `REQ-001` document: "Implement the VS Code workspace scan and requirement opener".
+- Issue #2: "Build the first VS Code Kanban projection".
 
-구현된 코드(커밋 `0e33ada`)는 앞의 것만 담고 있다. 이슈 #2를 그대로 두면 칸반이 만들어졌다고 오해하거나, 이미 끝난 일을 다시 열게 된다. 또 이 커밋은 작업과 연결되지 않은 채 들어갔다.
+The implemented code (commit `0e33ada`) covers only the first. Leaving Issue #2 as it was would suggest that a Kanban exists, or would reopen work that is already done. The commit also landed without being linked to a task.
 
-## 결정
+## Decision
 
-- `TASK-002`는 **스캔과 요구사항 열기**로 한정한다. 이슈 #2의 제목과 본문을 이에 맞게 고쳤다.
-- **칸반 투영**은 새 `TASK-005`(이슈 #5)로 옮긴다.
-- 이슈 #2는 `status:review`로 둔다. 코드는 있으나 Extension Development Host에서의 수동 검증과 사람의 승인이 남았다. 증거 없이 `verified`로 올리지 않는다.
-- 작업과 연결되지 않은 커밋이 생긴 마찰은 `US-013`으로 기록한다.
+- `TASK-002` is limited to **scan and requirement opener**. The title and body of Issue #2 were corrected to match.
+- The **Kanban projection** moves to a new `TASK-005` (Issue #5).
+- Issue #2 stays at `status:review`. The code exists, but manual verification in the Extension Development Host and a human approval remain. It is not raised to `verified` without evidence.
+- The friction of a commit that was not linked to a task is recorded as `US-013`.

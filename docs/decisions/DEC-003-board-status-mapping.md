@@ -1,19 +1,19 @@
-# DEC-003: 공유 보드 상태와 Weaver 칸반 열의 관계
+# DEC-003: How the shared board Status relates to the Weaver Kanban columns
 
-- 상태: 확정
-- 날짜: 2026-10-30
-- 관련: `REQ-001`, `TASK-005`, `TASK-007`, [DEC-001](./DEC-001-status-vocabulary.md)
+- Status: accepted
+- Date: 2026-10-30
+- Related: `REQ-001`, `TASK-005`, `TASK-007`, [DEC-001](./DEC-001-status-vocabulary.md)
 
-## 배경
+## Context
 
-공유 보드(PALab Ops Kanban)의 `Status` 필드는 `Todo / In Progress / Done` 세 값이고, Weaver의 칸반은 여섯 열(Backlog, Ready, In progress, Blocked, Review, Verified)이다. 카드를 옮길 때 어느 쪽이 기준인지 정해야 했다.
+The `Status` field of the shared board (PALab Ops Kanban) has three values: `Todo / In Progress / Done`. The Weaver Kanban has six columns: Backlog, Ready, In progress, Blocked, Review, Verified. When a card moves, one side has to be the source of truth.
 
-## 결정 (A안)
+## Decision (option A)
 
-- **여섯 열의 기준은 이슈 라벨(`status:*`)과 이슈 상태(열림/닫힘)다.**
-- 보드의 `Status` 필드는 이 값에서 **파생되는 요약**이며, 보드 설정은 바꾸지 않는다.
+- **The source of the six columns is the Issue label (`status:*`) and the Issue state (open/closed).**
+- The board `Status` field is a **summary derived from them**. Board settings are not changed.
 
-| Weaver 열 | 이슈 라벨 | 이슈 상태 | 보드 Status |
+| Weaver column | Issue label | Issue state | Board Status |
 | --- | --- | --- | --- |
 | Backlog | `status:backlog` | open | Todo |
 | Ready | `status:ready` | open | Todo |
@@ -22,9 +22,9 @@
 | Review | `status:review` | open | In Progress |
 | Verified | `status:verified` | closed | Done |
 
-## 결과
+## Consequences
 
-- 카드를 옮기면 라벨, 이슈 상태, 보드 Status를 한 번에 맞춘다. 규칙은 `packages/markdown`의 `planMove`가 단일 기준이다.
-- Blocked와 Review는 보드에서 구분되지 않는다. 구분이 필요하면 Weaver 화면을 본다.
-- 사람이 보드에서 Status를 직접 바꾸면 라벨과 어긋날 수 있다. 이 불일치를 공백으로 표시하는 일은 후속 작업이다.
-- 보드에 여섯 값을 가진 새 필드를 두는 B안은 채택하지 않았다. 필요해지면 새 결정으로 다시 다룬다.
+- Moving a card sets the label, the Issue state, and the board Status together. `planMove` in `packages/markdown` is the single rule.
+- Blocked and Review cannot be told apart on the board. Use the Weaver view when the difference matters.
+- A person who changes Status directly on the board can make it disagree with the label. Showing that disagreement as a gap is follow-up work.
+- Option B, a new board field with six values, was not adopted. It can be revisited with a new decision if it becomes necessary.
