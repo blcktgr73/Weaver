@@ -58,6 +58,13 @@ export const ko: Record<MessageKey, Message> = {
   'ui.owner.agent': '에이전트',
   'ui.owner.human': '사람',
   'ui.owner.from-issue': 'Issue 기준',
+  'gap.criterion-uncovered': '이 수락 기준을 맡은 작업이 없습니다',
+  'ui.criteria.state.uncovered': '작업 없음',
+  'ui.criteria.state.unknown': '상태를 읽지 않음',
+  'ui.criteria.state.in-progress': '진행 중',
+  'ui.criteria.state.verified': '검증됨',
+  'ui.criteria.state.verified-with-gaps': '검증됨, 증거 공백 있음',
+  'ui.criteria.tasks': '작업',
 
   'column.Backlog': '백로그',
   'column.Ready': '준비됨',

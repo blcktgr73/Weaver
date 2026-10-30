@@ -6,6 +6,7 @@ requirement: REQ-001
 issue: https://github.com/blcktgr73/Weaver/issues/3
 repository: blcktgr73/Weaver
 assignee_type: human
+criteria: [AC-006]
 assignee: blcktgr73
 ---
 

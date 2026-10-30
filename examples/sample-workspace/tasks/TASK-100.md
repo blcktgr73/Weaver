@@ -4,6 +4,7 @@ type: task
 title: Task that has an Issue link
 requirement: REQ-100
 issue: https://github.com/blcktgr73/Weaver/issues/1
+criteria: [AC-001, AC-002]
 assignee_type: human
 assignee: sample-user
 ---
