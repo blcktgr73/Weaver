@@ -21,13 +21,14 @@ fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify(manifest, null
 for (const file of ['README.md', 'package.nls.json', 'package.nls.ko.json']) {
   fs.copyFileSync(path.join(extension, file), path.join(stage, file));
 }
+fs.copyFileSync(path.join(root, 'LICENSE'), path.join(stage, 'LICENSE'));
 fs.copyFileSync(path.join(extension, 'dist', 'extension.js'), path.join(stage, 'dist', 'extension.js'));
 
 const output = path.join(root, 'dist', `weaver-${manifest.version}.vsix`);
 const vsce = path.join(root, 'node_modules', '@vscode', 'vsce', 'vsce');
 const result = spawnSync(
   process.execPath,
-  [vsce, 'package', '--no-dependencies', '--skip-license', '--out', output],
+  [vsce, 'package', '--no-dependencies', '--out', output],
   { cwd: stage, stdio: 'inherit' },
 );
 if (result.status !== 0) process.exit(result.status ?? 1);
