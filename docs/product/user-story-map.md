@@ -83,6 +83,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-019` — As a maintainer, I can hand a task to a remote agent (for example OpenClaw or Hermes) with durable context taken from the requirement, the task file, and prior evidence, and the agent's branch, pull request, and test results come back to the task. Other agents, such as Dot and Duet, are tried the same way afterwards, so the handoff contract must not depend on one agent.
 - `US-020` — As a first-time user, I can open a requirement file and see its Weaver view straight away, and I can open the matching view from other Weaver documents with one button, without it appearing on ordinary Markdown files.
 - `US-021` — As a new user, I can install a released Weaver build from a GitHub Release or a registry, without building it from source.
+- `US-022` — As a team lead, I can describe my team's development process (columns, label mapping, evidence rules) in the repository, and move to it one part at a time, so Weaver fits a process that differs from the one it was built with.
 
 ### PALab project adoption
 
