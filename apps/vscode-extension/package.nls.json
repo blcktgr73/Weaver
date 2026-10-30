@@ -5,5 +5,6 @@
   "weaver.config.language.description": "Language of Weaver messages inside the extension. Command titles follow the VS Code display language.",
   "weaver.config.language.auto": "Follow the VS Code display language; English if it is not supported.",
   "weaver.config.language.en": "English",
-  "weaver.config.language.ko": "Korean (한국어)"
+  "weaver.config.language.ko": "Korean (한국어)",
+  "weaver.editor.requirement.displayName": "Weaver Requirement View"
 }

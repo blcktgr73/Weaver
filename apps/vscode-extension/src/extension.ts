@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { currentLocale, message } from './locale';
+import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
@@ -36,7 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const loaded = await refresh();
     const requirement = await pickRequirement(loaded);
     const uri = requirement && loaded.uris.get(requirement.path);
-    if (uri) await vscode.window.showTextDocument(uri);
+    if (uri) await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
   });
 
   // From the editor title button the file is known; from the command palette the user picks one.
@@ -45,7 +46,8 @@ export function activate(context: vscode.ExtensionContext): void {
     if (resource instanceof vscode.Uri) {
       const requirement = requirementsOf(loaded).find((r) => loaded.uris.get(r.path)?.toString() === resource.toString());
       if (requirement) {
-        view.show(loaded, requirement);
+        // The file itself is known, so show its view in place of the source.
+        await vscode.commands.executeCommand('vscode.openWith', resource, REQUIREMENT_EDITOR);
       } else {
         void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
       }
@@ -77,6 +79,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  const editor = vscode.window.registerCustomEditorProvider(
+    REQUIREMENT_EDITOR,
+    new RequirementEditorProvider(view, refresh),
+    { supportsMultipleEditorsPerDocument: true, webviewOptions: { retainContextWhenHidden: false } },
+  );
+
   const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
     if (document.languageId === 'markdown') void refresh();
   });
@@ -85,7 +93,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (event.affectsConfiguration('weaver.language')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, openSource, openView, scanWorkspace, onSave, onLanguage);
+  context.subscriptions.push(diagnostics, editor, openSource, openView, scanWorkspace, onSave, onLanguage);
   void refresh();
 }
 

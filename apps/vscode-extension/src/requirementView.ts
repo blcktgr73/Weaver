@@ -26,14 +26,16 @@ interface Panel {
   loaded: Loaded;
   uri: vscode.Uri | undefined;
   status: StatusState;
+  /** True when the panel is a custom editor tab for the requirement file itself. */
+  hosted: boolean;
 }
 
-/** Read-only view of one requirement. One panel per requirement ID. */
+/** Read-only view of one requirement: a side panel per requirement ID, or a custom editor tab per file. */
 export class RequirementView {
-  private readonly panels = new Map<string, Panel>();
+  private readonly panels = new Set<Panel>();
 
   show(loaded: Loaded, requirement: RequirementArtifact): void {
-    const existing = this.panels.get(requirement.id);
+    const existing = [...this.panels].find((p) => !p.hosted && p.requirement.id === requirement.id);
     if (existing) {
       existing.panel.reveal(undefined, true);
       this.apply(existing, loaded, requirement);
@@ -46,19 +48,25 @@ export class RequirementView {
       vscode.ViewColumn.Beside,
       { enableScripts: true, retainContextWhenHidden: false },
     );
-    const entry: Panel = {
-      panel,
-      requirement,
-      loaded,
-      uri: loaded.uris.get(requirement.path),
-      status: { byTask: {}, loading: false },
-    };
-    this.panels.set(requirement.id, entry);
+    this.open({ panel, requirement, loaded, uri: loaded.uris.get(requirement.path), status: { byTask: {}, loading: false }, hosted: false });
+  }
 
-    panel.onDidDispose(() => this.panels.delete(requirement.id));
+  /** Shows the view inside a custom editor tab that VS Code created for the requirement file. */
+  attach(panel: vscode.WebviewPanel, loaded: Loaded, requirement: RequirementArtifact): void {
+    this.open({ panel, requirement, loaded, uri: loaded.uris.get(requirement.path), status: { byTask: {}, loading: false }, hosted: true });
+  }
+
+  private open(entry: Panel): void {
+    const { panel } = entry;
+    this.panels.add(entry);
+
+    panel.onDidDispose(() => this.panels.delete(entry));
     panel.webview.onDidReceiveMessage(async (message: { type: string; url?: string; taskId?: string; column?: string }) => {
       if (message.type === 'openSource' && entry.uri) {
-        await vscode.window.showTextDocument(entry.uri, { viewColumn: vscode.ViewColumn.One });
+        // `default` is the text editor even when Weaver is the default editor for the file.
+        await vscode.commands.executeCommand('vscode.openWith', entry.uri, 'default', {
+          viewColumn: entry.hosted ? vscode.ViewColumn.Active : vscode.ViewColumn.One,
+        });
       } else if (message.type === 'openPreview' && entry.uri) {
         await vscode.commands.executeCommand('markdown.showPreviewToSide', entry.uri);
       } else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {
@@ -78,7 +86,8 @@ export class RequirementView {
 
   /** Re-render open panels after the workspace was re-read. */
   update(loaded: Loaded): void {
-    for (const [id, entry] of this.panels) {
+    for (const entry of this.panels) {
+      const id = entry.requirement.id;
       const requirement = loaded.artifacts.find((a) => a.kind === 'requirement' && a.id === id);
       if (requirement?.kind === 'requirement') {
         this.apply(entry, loaded, requirement);
@@ -137,7 +146,7 @@ export class RequirementView {
       entry.status = { byTask: entry.status.byTask, loading: false };
       void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
     } finally {
-      if (this.panels.get(entry.requirement.id) === entry) this.render(entry);
+      if (this.panels.has(entry)) this.render(entry);
     }
   }
 
@@ -255,7 +264,7 @@ export class RequirementView {
     const { panel, requirement, loaded } = entry;
     const nonce = randomBytes(16).toString('hex');
     const issues = loaded.issues.filter((issue) => issue.path === requirement.path);
-    panel.title = `${requirement.id} ${requirement.title}`;
+    if (!entry.hosted) panel.title = `${requirement.id} ${requirement.title}`;
     panel.webview.html = renderRequirementHtml(requirement, this.tasksOf(entry), issues, nonce, panel.webview.cspSource, entry.status, currentLocale());
   }
 }

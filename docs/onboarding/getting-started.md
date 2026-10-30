@@ -83,6 +83,12 @@ Create these labels once. Use `Closes #<number>` in the pull request that finish
 ## 5. Use the view
 
 1. Open the requirement file and press the preview button at the top right of the editor, or run **Weaver: Open Requirement View**.
+   A requirement file named `REQ-*.md` opens as the view by default; nothing needs to be configured. **Open source** in the view shows the Markdown text, and `Reopen Editor With…` → **Text Editor** does the same. To always open these files as text, add this to your user settings:
+
+   ```json
+   "workbench.editorAssociations": { "REQ-*.md": "default" }
+   ```
+
 2. Sign in to GitHub when VS Code asks. Reading needs the `repo` scope. Moving a card also needs `project`, asked only at that moment.
 3. The view shows the criteria with their tasks and evidence state, the task table (Issue, column, evidence, owner), the Kanban board, and the gaps.
 4. Change a task's column from its Status cell. Every move lists what it will change on GitHub and asks first.
