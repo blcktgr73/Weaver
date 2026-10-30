@@ -46,6 +46,11 @@ export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | unde
   const gaps: Notice[] = [];
   if (column === 'Verified' && !evidence.pulls.some((pull) => pull.state === 'merged')) {
     gaps.push({ code: 'gap.no-merged-pr' });
+  } else if (
+    column === 'Verified' &&
+    !evidence.pulls.some((pull) => pull.state === 'merged' && pull.link === 'closes')
+  ) {
+    gaps.push({ code: 'gap.no-closing-pr' });
   }
   // closed without merge is not evidence either way
   const live = evidence.pulls.filter((pull) => pull.state !== 'closed');

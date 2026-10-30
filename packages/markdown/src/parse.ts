@@ -29,6 +29,7 @@ const KNOWN_REQUIREMENT_FIELDS = [
 const KNOWN_TASK_FIELDS = [
   'id', 'type', 'title', 'requirement', 'status', 'assignee_type', 'assignee', 'repository',
   'branch', 'pull_request', 'issue', 'tests', 'blockers', 'criteria',
+  'evidence_exception',
 ];
 
 function str(value: unknown): string | undefined {
@@ -164,6 +165,7 @@ export function parseArtifact(path: string, text: string): ParseResult {
     ...(pullRequest !== undefined ? { pullRequest } : {}),
     ...(str(fm.issue) ? { issue: str(fm.issue) } : {}),
     ...(str(fm.tests) ? { tests: str(fm.tests) } : {}),
+    ...(str(fm.evidence_exception) ? { evidenceException: str(fm.evidence_exception) } : {}),
     frontmatter: fm,
   };
   return { isArtifact: true, artifact, issues };

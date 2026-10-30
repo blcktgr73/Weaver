@@ -36,6 +36,12 @@ describe('evidenceGaps', () => {
   it('accepts a merged pull request with passing checks', () => {
     expect(evidenceGaps('Verified', { pulls: [pull()] })).toEqual([]);
   });
+  it('asks Verified for a pull request that closes the Issue, not only one that mentions it', () => {
+    const mention = { pulls: [pull({ link: 'mentions' })] };
+    expect(evidenceGaps('Verified', mention)).toEqual([{ code: 'gap.no-closing-pr' }]);
+    expect(evidenceGaps('Review', mention)).toEqual([]);
+    expect(evidenceGaps('Verified', { pulls: [pull({ link: 'mentions' }), pull({ number: 8 })] })).toEqual([]);
+  });
   it('flags failing, pending, and missing checks', () => {
     expect(text(evidenceGaps('Review', { pulls: [pull({ checks: 'failing' })] }))).toEqual(['PR #7 has failing checks']);
     expect(text(evidenceGaps('Review', { pulls: [pull({ checks: 'pending' })] }))).toEqual(['PR #7 checks are still running']);

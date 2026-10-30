@@ -71,6 +71,8 @@ export interface TaskArtifact {
   pullRequest?: string | null;
   issue?: string;
   tests?: string;
+  /** A human-approved reason to accept a task without complete evidence (DEC-006). */
+  evidenceException?: string;
   /** Acceptance criteria IDs (`AC-001`) this task satisfies. */
   criteria: string[];
   blockers: string[];

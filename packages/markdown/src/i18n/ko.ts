@@ -65,6 +65,9 @@ export const ko: Record<MessageKey, Message> = {
   'ui.criteria.state.verified': '검증됨',
   'ui.criteria.state.verified-with-gaps': '검증됨, 증거 공백 있음',
   'ui.criteria.tasks': '작업',
+  'gap.board-status-differs': '보드 "{board}"의 Status는 {actual}인데, 라벨 기준은 {expected}입니다',
+  'gap.no-closing-pr': '이 Issue를 닫는 병합된 PR이 없습니다',
+  'ui.evidence.exception': '증거 예외: {reason}',
 
   'column.Backlog': '백로그',
   'column.Ready': '준비됨',

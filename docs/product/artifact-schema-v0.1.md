@@ -65,6 +65,7 @@ A task normally lives as a GitHub Issue plus a line in the requirement's `## Tas
 | `issue` | no | URL | |
 | `tests` | no | string | e.g. `pending`, a command, or a check URL |
 | `blockers` | no | list of strings | |
+| `evidence_exception` | no | string | a human-approved reason to accept the task without complete evidence ([DEC-006](../decisions/DEC-006-closing-pr-evidence.md)) |
 | `criteria` | no | list of `AC-###` | acceptance criteria of the requirement that this task satisfies |
 
 ## Lifecycle status
