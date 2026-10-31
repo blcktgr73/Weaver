@@ -90,7 +90,7 @@ Create these labels once. Use `Closes #<number>` in the pull request that finish
    ```
 
 2. Sign in to GitHub when VS Code asks. Reading needs the `repo` scope. Moving a card also needs `project`, asked only at that moment.
-3. The view shows the criteria with their tasks and evidence state, the task table (Issue, column, evidence, owner), the Kanban board, and the gaps.
+3. The view shows the criteria with their tasks and evidence state, the task table (Issue, column, evidence, owner), one line of stage counts, and the gaps. The board itself is on the Overview (section 7).
 4. Change a task's column from its Status cell. Every move lists what it will change on GitHub and asks first.
 5. When you decide the requirement is done, press **Record acceptance**. Weaver lists what is still open and writes `status: accepted`, `accepted_by`, and `accepted_on` into the file after you confirm. Weaver never accepts by itself.
 
