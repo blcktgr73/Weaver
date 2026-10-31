@@ -114,6 +114,8 @@ The Overview shows the work of all registered repositories on one Kanban: the co
      - your-org/your-repo
    ```
 
+   To use your own personal or organization Project, follow [Register your own Project](register-your-project.md).
+
 2. Open that folder in VS Code. The Overview opens by itself when the file exists, or run **Weaver: Open Overview**.
 3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
 4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (the example registry plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
