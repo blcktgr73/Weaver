@@ -91,3 +91,24 @@ export function buildLanes<T extends { repository: string; number: number; place
     };
   });
 }
+
+/** What to show on the Overview: every card of a requirement, or the one card of a task. */
+export interface FocusTarget {
+  requirementId: string;
+  taskId?: string;
+}
+
+/**
+ * The cards of a requirement, or of one of its tasks, found through the Issue links of the
+ * files in the workspace. The result keeps the order of `cards`.
+ */
+export function focusCards<T extends { url: string }>(
+  cards: readonly T[],
+  links: ReadonlyMap<string, RequirementLink>,
+  target: FocusTarget,
+): T[] {
+  return cards.filter((card) => {
+    const link = links.get(normalizeIssueUrl(card.url));
+    return link !== undefined && link.id === target.requirementId && (target.taskId === undefined || link.taskId === target.taskId);
+  });
+}

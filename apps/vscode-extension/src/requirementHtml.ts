@@ -266,6 +266,7 @@ export function renderRequirementHtml(
   <div class="actions">
     <button data-cmd="openSource">${e(tt('ui.button.open-source'))}</button>
     <button data-cmd="openPreview">${e(tt('ui.button.open-preview'))}</button>
+    <button data-cmd="showOnOverview">${e(tt('ui.button.show-on-overview'))}</button>
     ${requirement.status === 'accepted' ? '' : `<button data-cmd="acceptRequirement">${e(tt('ui.button.accept'))}</button>`}
   </div>
 

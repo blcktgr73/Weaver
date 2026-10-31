@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildLanes, loadWorkspace, parseFabric, placeIssue, requirementsByIssue } from '../src';
+import { buildLanes, focusCards, loadWorkspace, parseFabric, placeIssue, requirementsByIssue } from '../src';
 
 const registry = (text: string) => {
   const { registry: parsed } = parseFabric('fabric.yaml', text);
@@ -50,6 +50,30 @@ describe('buildLanes', () => {
   it('counts blocked cards so a collapsed lane can still show them', () => {
     const lanes = buildLanes(reg, [card('o/Zed', 1, ['status:blocked']), card('o/Zed', 2, ['status:blocked']), card('o/Zed', 3)]);
     expect(lanes[0]).toMatchObject({ total: 3, blocked: 2 });
+  });
+});
+
+describe('focusCards', () => {
+  const link = (id: string, taskId: string) => ({ id, title: id, path: `${id}.md`, taskId });
+  const links = new Map([
+    ['https://github.com/o/a/issues/1', link('REQ-001', 'TASK-001')],
+    ['https://github.com/o/a/issues/2', link('REQ-001', 'TASK-002')],
+    ['https://github.com/o/a/issues/3', link('REQ-002', 'TASK-003')],
+  ]);
+  const cards = [1, 2, 3, 4].map((n) => ({ url: `https://github.com/O/A/issues/${n}/` }));
+
+  it('returns every card of a requirement, in the order of the cards', () => {
+    expect(focusCards(cards, links, { requirementId: 'REQ-001' })).toEqual([cards[0], cards[1]]);
+  });
+
+  it('returns only the card of the task when a task is given', () => {
+    expect(focusCards(cards, links, { requirementId: 'REQ-001', taskId: 'TASK-002' })).toEqual([cards[1]]);
+  });
+
+  it('returns nothing for a requirement or task with no card, or for a card with no link', () => {
+    expect(focusCards(cards, links, { requirementId: 'REQ-009' })).toEqual([]);
+    expect(focusCards(cards, links, { requirementId: 'REQ-001', taskId: 'TASK-003' })).toEqual([]);
+    expect(focusCards([cards[3]], links, { requirementId: 'REQ-001' })).toEqual([]);
   });
 });
 

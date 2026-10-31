@@ -45,6 +45,11 @@
       {
         "command": "weaver.openFabricRoot",
         "title": "%weaver.command.openFabricRoot.title%"
+      },
+      {
+        "command": "weaver.showOnOverview",
+        "title": "%weaver.command.showOnOverview.title%",
+        "icon": "$(project)"
       }
     ],
     "configuration": {
@@ -83,6 +88,11 @@
       "editor/title": [
         {
           "command": "weaver.openRequirementView",
+          "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
+          "group": "navigation"
+        },
+        {
+          "command": "weaver.showOnOverview",
           "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
           "group": "navigation"
         }

@@ -94,6 +94,9 @@ export const en = {
   'ui.overview.mismatches-skipped': 'One check was skipped: {reasons}',
   'ui.overview.open-file': 'Open {path}',
   'ui.overview.clone': 'Clone missing repositories',
+  'ui.overview.clear-focus': 'Clear highlight',
+  'ui.overview.focus-none': '{target} has no card on the Overview. Its Issues may not be on the Project.',
+  'ui.button.show-on-overview': 'Show on the Overview',
 
   // Stale cards
   'stale.idle': { one: 'no change for {days} day', other: 'no change for {days} days' },
