@@ -3,6 +3,8 @@ import * as vscode from 'vscode';
 import {
   buildLanes,
   FabricRegistry,
+  findMismatches,
+  MergedPull,
   normalizeIssueUrl,
   Notice,
   parseFabric,
@@ -10,7 +12,7 @@ import {
   requirementsByIssue,
   ValidationIssue,
 } from '@palab/weaver-markdown';
-import { ProjectCard, ProjectRead, readProject } from '@palab/weaver-github';
+import { ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
 import { fetchEvidence, getGitHubToken } from './github';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
@@ -47,6 +49,9 @@ export class OverviewView {
   private error: Notice | undefined;
   /** Newest request wins, so a slow answer cannot overwrite a newer one. */
   private request = 0;
+  /** Recently merged pull requests, and the checks that could not read them. */
+  private pulls: MergedPull[] = [];
+  private skippedChecks: Notice[] = [];
   /** Which projects are shown and which lanes are folded. Stored on this computer, never in the repository. */
   private hidden: Set<string>;
   private collapsed: Set<string>;
@@ -75,7 +80,7 @@ export class OverviewView {
         retainContextWhenHidden: true,
       });
       this.panel.onDidDispose(() => (this.panel = undefined));
-      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string }) => this.onMessage(message));
+      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string }) => this.onMessage(message));
     }
     await this.load(false);
   }
@@ -86,7 +91,7 @@ export class OverviewView {
     if (this.panel) this.render();
   }
 
-  private async onMessage(message: { type: string; url?: string; id?: string }): Promise<void> {
+  private async onMessage(message: { type: string; url?: string; id?: string; path?: string }): Promise<void> {
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
     else if (message.type === 'toggleLane' && message.id) this.flip(this.hidden, HIDDEN_KEY, message.id);
@@ -97,6 +102,10 @@ export class OverviewView {
       this.render();
     }
     else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
+    else if (message.type === 'openFile' && message.path) {
+      const uri = this.loaded?.uris.get(message.path);
+      if (uri) await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Beside });
+    }
     else if (message.type === 'cardMenu' && message.url) await this.cardMenu(message.url);
     else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
@@ -227,6 +236,10 @@ export class OverviewView {
     const result = await readProject(token, registry.project, registry.repositories.map((r) => r.repository));
     if (request !== this.request) return;
     if (result.ok) {
+      const pulls = await Promise.all(registry.repositories.map((r) => readMergedPulls(token, r.repository)));
+      if (request !== this.request) return;
+      this.pulls = pulls.flatMap((r) => (r.ok ? r.pulls : []));
+      this.skippedChecks = pulls.flatMap((r) => (r.ok ? [] : [r.error]));
       this.read = result.read;
       this.phase = 'ready';
     } else {
@@ -256,6 +269,13 @@ export class OverviewView {
       skipped: this.read.skipped,
       hidden: [...this.hidden],
       collapsed: [...this.collapsed],
+      mismatches: findMismatches({
+        artifacts: this.loaded?.artifacts ?? [],
+        cards: this.read.cards,
+        repositories: this.registry.registry.repositories.map((r) => r.repository),
+        pulls: this.pulls,
+      }),
+      skippedChecks: this.skippedChecks,
     };
   }
 

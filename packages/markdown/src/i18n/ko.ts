@@ -79,6 +79,20 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.na.pull-request-failed': '풀 리퀘스트를 읽지 못했습니다.',
   'ui.overview.pick-pull-request': '어느 풀 리퀘스트를 열까요?',
 
+  // 파일, Issue, Project 사이의 어긋남
+  'mismatch.task-without-issue': '{task}에 Issue 링크가 없습니다.',
+  'mismatch.broken-issue-link': '{task}의 링크 "{issue}"는 GitHub Issue 주소가 아닙니다.',
+  'mismatch.issue-not-on-project': '{task}가 가리키는 {issue}가 Project에 없습니다.',
+  'mismatch.card-without-file': '{repository}의 #{number}는 Project에 있지만 이를 적은 태스크 파일이나 요구사항이 없습니다: {title}',
+  'mismatch.merged-pr-not-linked': '풀 리퀘스트 #{pull}가 {task}를 가리키지만 Issue #{number}를 닫지 않습니다.',
+  'mismatch.board-status-differs': '{repository}의 #{number}는 보드에서 {board}인데, 라벨로는 {column}({expected})입니다.',
+  'pulls.failed': '{repository}의 병합된 풀 리퀘스트를 읽지 못했습니다.',
+  'ui.overview.mismatches': '어긋남 ({count})',
+  'ui.overview.mismatches-none': '파일, Issue, Project 사이에 어긋남이 없습니다.',
+  'ui.overview.mismatches-note': 'Weaver는 알려 주기만 하고 아무것도 바꾸지 않습니다.',
+  'ui.overview.mismatches-skipped': '점검 하나를 건너뛰었습니다: {reasons}',
+  'ui.overview.open-file': '{path} 열기',
+
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',
   'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',
