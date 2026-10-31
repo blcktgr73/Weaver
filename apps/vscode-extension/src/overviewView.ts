@@ -4,6 +4,8 @@ import {
   buildLanes,
   cloneDirectories,
   FabricRegistry,
+  FocusTarget,
+  focusCards,
   findMismatches,
   MergedPull,
   normalizeIssueUrl,
@@ -54,6 +56,8 @@ export class OverviewView {
   private error: Notice | undefined;
   /** Newest request wins, so a slow answer cannot overwrite a newer one. */
   private request = 0;
+  /** Set by Show on the Overview; the matching cards are highlighted until it is cleared. */
+  private focus: FocusTarget | undefined;
   /** Recently merged pull requests, and the checks that could not read them. */
   private pulls: MergedPull[] = [];
   private skippedChecks: Notice[] = [];
@@ -90,6 +94,34 @@ export class OverviewView {
     await this.load(false);
   }
 
+  /** Opens the Overview and highlights the cards of a requirement, or of one task (TASK-041). */
+  async showFocused(loaded: Loaded, target: FocusTarget): Promise<void> {
+    this.focus = target;
+    await this.show(loaded);
+    if (this.phase !== 'ready' || !this.read) return;
+    const label = target.taskId ?? target.requirementId;
+    if (this.matching().length === 0) void vscode.window.showInformationMessage(text('ui.overview.focus-none', { target: label }));
+  }
+
+  /** The cards that the current focus names. */
+  private matching(): ProjectCard[] {
+    if (!this.focus || !this.read) return [];
+    return focusCards(this.read.cards, requirementsByIssue(this.loaded?.artifacts ?? []), this.focus);
+  }
+
+  /** Turns on the project of each highlighted card and unfolds its lane, so the card can be seen. */
+  private revealFocus(): void {
+    if (this.registry.kind !== 'ok') return;
+    for (const card of this.matching()) {
+      const lane = this.registry.registry.repositories.find((r) => r.repository.toLowerCase() === card.repository.toLowerCase());
+      if (!lane) continue;
+      this.hidden.delete(lane.repository);
+      this.collapsed.delete(lane.repository);
+    }
+    void this.store.update(HIDDEN_KEY, [...this.hidden]);
+    void this.store.update(COLLAPSED_KEY, [...this.collapsed]);
+  }
+
   /** The workspace was re-read: requirement links may have changed. */
   update(loaded: Loaded): void {
     this.loaded = loaded;
@@ -106,7 +138,10 @@ export class OverviewView {
       void this.store.update(HIDDEN_KEY, []);
       this.render();
     }
-    else if (message.type === 'cloneMissing') await vscode.commands.executeCommand('weaver.cloneRegistered');
+    else if (message.type === 'clearFocus') {
+      this.focus = undefined;
+      this.render();
+    } else if (message.type === 'cloneMissing') await vscode.commands.executeCommand('weaver.cloneRegistered');
     else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
     else if (message.type === 'openFile' && message.path) {
       const uri = this.loaded?.uris.get(message.path);
@@ -258,6 +293,7 @@ export class OverviewView {
       this.pulls = pulls.flatMap((r) => (r.ok ? r.pulls : []));
       this.skippedChecks = pulls.flatMap((r) => (r.ok ? [] : [r.error]));
       this.read = result.read;
+      this.revealFocus();
       this.phase = 'ready';
     } else {
       this.error = result.error;
@@ -276,6 +312,7 @@ export class OverviewView {
 
     const links = requirementsByIssue(this.loaded?.artifacts ?? []);
     const now = new Date();
+    const focused = new Set(this.matching().map((card) => normalizeIssueUrl(card.url)));
     const idleDays = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
     const tasks = new Map(
       (this.loaded?.artifacts ?? []).flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])),
@@ -286,6 +323,7 @@ export class OverviewView {
       return {
         ...card,
         requirement,
+        focus: focused.has(normalizeIssueUrl(card.url)),
         stale: staleNotices(
           {
             column: card.placement.column,
@@ -314,6 +352,7 @@ export class OverviewView {
         pulls: this.pulls,
       }),
       skippedChecks: this.skippedChecks,
+      focusActive: focused.size > 0,
     };
   }
 

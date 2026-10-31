@@ -125,6 +125,8 @@ What a card opens:
 - **`#62`** opens the Issue on GitHub.
 - **Right-click a card** to choose among the task file, the requirement source, the Issue, a pull request that refers to the Issue (needs the GitHub sign-in), and the repository folder. A place that cannot open is listed with the reason.
 
+**Show on the Overview** goes the other way. Press it in a requirement view, or in the editor title bar of a requirement or task file, and the Overview opens with that requirement's cards (or that task's card) outlined and scrolled into view. A project that was turned off is turned on and its lane is unfolded. **Clear highlight** removes the outline. When the requirement has no card, Weaver says so; its Issues may not be on the Project.
+
 A card can carry up to three **stale marks**, each shown on its own:
 
 - *no change for N days*: an open card in Ready, In progress, Blocked, or Review whose Issue has not changed for the limit or longer. The limit is the setting `weaver.staleDays` (14 days by default). Backlog and Verified cards, and closed Issues, are never idle.

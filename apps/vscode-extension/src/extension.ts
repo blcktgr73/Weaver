@@ -82,6 +82,29 @@ export function activate(context: vscode.ExtensionContext): void {
     await overview.show(await refresh());
   });
 
+  // From a requirement view, a requirement file, or a task file: show its cards on the Overview (TASK-041).
+  const showOnOverview = vscode.commands.registerCommand(
+    'weaver.showOnOverview',
+    async (arg?: vscode.Uri | { requirementId: string; taskId?: string }) => {
+      const loaded = await refresh();
+      let target: { requirementId: string; taskId?: string } | undefined;
+      if (arg instanceof vscode.Uri) {
+        const found = viewTargetOf(loaded.artifacts, vscode.workspace.asRelativePath(arg, false));
+        if (found) target = { requirementId: found.requirement.id, ...(found.taskId ? { taskId: found.taskId } : {}) };
+      } else if (arg) {
+        target = arg;
+      } else {
+        const requirement = await pickRequirement(loaded);
+        if (requirement) target = { requirementId: requirement.id };
+      }
+      if (!target) {
+        void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
+        return;
+      }
+      await overview.showFocused(loaded, target);
+    },
+  );
+
   const setRoot = vscode.commands.registerCommand('weaver.setFabricRoot', () => setFabricRoot());
   const cloneAll = vscode.commands.registerCommand('weaver.cloneRegistered', () => cloneRegistered());
   const openRoot = vscode.commands.registerCommand('weaver.openFabricRoot', () => openFabricRoot());
@@ -124,7 +147,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // With a registry at the workspace root, the Overview is where exploration starts (REQ-006).
     if ((await readRegistry()).kind !== 'none') await overview.show(loaded);

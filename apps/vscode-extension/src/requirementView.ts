@@ -70,6 +70,8 @@ export class RequirementView {
         await vscode.commands.executeCommand('vscode.openWith', entry.uri, 'default', {
           viewColumn: entry.hosted ? vscode.ViewColumn.Active : vscode.ViewColumn.One,
         });
+      } else if (message.type === 'showOnOverview') {
+        await vscode.commands.executeCommand('weaver.showOnOverview', { requirementId: entry.requirement.id });
       } else if (message.type === 'openPreview' && entry.uri) {
         await vscode.commands.executeCommand('markdown.showPreviewToSide', entry.uri);
       } else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {

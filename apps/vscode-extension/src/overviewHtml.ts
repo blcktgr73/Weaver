@@ -27,6 +27,8 @@ export interface OverviewCard {
   requirement?: RequirementLink;
   /** Why the card needs a second look: idle, no pull request, or waiting for a decision. */
   stale: Notice[];
+  /** The card a requirement view or task file asked to see. */
+  focus?: boolean;
 }
 
 export type OverviewState =
@@ -47,6 +49,8 @@ export type OverviewState =
       mismatches: Mismatch[];
       /** Checks that could not run, such as unreadable pull requests. */
       skippedChecks: Notice[];
+      /** True while some cards are highlighted, so the header can offer to clear them. */
+      focusActive: boolean;
     };
 
 const TASK_PREFIX = /^\[TASK-\d{3,}\]\s*/;
@@ -70,7 +74,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     const titleHtml = card.requirement
       ? `<a class="title" href="#" data-open="${e(card.url)}" title="${e(tt('ui.overview.open-task', { id: card.requirement.id, task: card.requirement.taskId }))}">${title}</a>`
       : `<a class="title" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">${title}</a>`;
-    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}${card.stale.length ? ' is-stale' : ''}" data-card="${e(card.url)}">
+    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}${card.stale.length ? ' is-stale' : ''}${card.focus ? ' focus' : ''}" data-card="${e(card.url)}">
         <div class="top"><a class="tag" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">#${card.number}</a>${card.taskId ? ` <span class="muted small">${e(card.taskId)}</span>` : ''} ${requirement}</div>
         <div>${titleHtml}</div>${gaps}${stale}${assignees}
       </div>`;
@@ -168,6 +172,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   .colhead { position: sticky; top: 0; z-index: 2; background: var(--vscode-editor-background); padding: 6px 0; font-weight: 600; color: var(--vscode-descriptionForeground); }
   .col { min-height: 24px; }
   .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; background: var(--vscode-editor-background); }
+  .card.focus { outline: 2px solid var(--vscode-focusBorder, var(--vscode-textLink-foreground)); outline-offset: 1px; }
   .card.has-gap { border-color: var(--vscode-editorWarning-foreground); }
   .stale { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
   .stale-chip { font-size: 0.8em; padding: 0 7px; border-radius: 10px; border: 1px solid var(--vscode-panel-border); color: var(--vscode-descriptionForeground); }
@@ -194,11 +199,12 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </style>
 </head>
 <body>
-  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') : ''}</header>
+  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>
   ${filter}
   <div class="scroll">${body}</div>
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
+  document.querySelector('.card.focus')?.scrollIntoView({ block: 'center', inline: 'center' });
   document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold],[data-file]');
     if (!target) return;
