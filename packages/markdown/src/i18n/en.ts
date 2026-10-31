@@ -34,6 +34,15 @@ export const en = {
   'validation.fabric-invalid-repository-entry': 'A repository entry must be "owner/name" or have a "repository" field.',
   'validation.fabric-duplicate-repository': 'Repository "{repository}" is listed more than once.',
 
+  // Reading the central Project
+  'project.unreachable': 'GitHub could not be reached, so the Project is not shown.',
+  'project.unauthorized': 'GitHub rejected the sign-in. Sign in again.',
+  'project.missing-scope': 'The GitHub sign-in lacks the "project" scope that reading a Project needs.',
+  'project.forbidden': 'GitHub denied access to the Project.',
+  'project.not-found': 'Project {number} of {owner} was not found, or this sign-in cannot see it.',
+  'project.rate-limited': 'GitHub is limiting requests. Try again later.',
+  'project.too-large': 'The Project has more than {pages} pages of items, so reading stopped.',
+
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
   'gap.no-status-label': 'no status label',
