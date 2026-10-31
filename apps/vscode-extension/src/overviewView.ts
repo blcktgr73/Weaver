@@ -8,8 +8,11 @@ import {
   FocusTarget,
   focusCards,
   findMismatches,
+  makeSnapshot,
   MergedPull,
   moveLane,
+  readSnapshot,
+  snapshotAge,
   normalizeIssueUrl,
   offlineCards,
   Notice,
@@ -35,6 +38,7 @@ const REGISTRY_FILE = 'fabric.yaml';
 const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
 const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 const ORDER_KEY = 'weaver.overview.laneOrder';
+const SNAPSHOT_KEY = 'weaver.overview.lastRead';
 
 type Registry =
   | { kind: 'none' }
@@ -56,6 +60,8 @@ export class OverviewView {
   private loaded: Loaded | undefined;
   private registry: Registry = { kind: 'none' };
   private read: ProjectRead | undefined;
+  /** When `read` was read from GitHub, as an ISO date (DEC-011). */
+  private readAt: string | undefined;
   private phase: 'sign-in' | 'loading' | 'error' | 'ready' = 'loading';
   private error: Notice | undefined;
   /** Newest request wins, so a slow answer cannot overwrite a newer one. */
@@ -330,11 +336,20 @@ export class OverviewView {
       this.pulls = pulls.flatMap((r) => (r.ok ? r.pulls : []));
       this.skippedChecks = pulls.flatMap((r) => (r.ok ? [] : [r.error]));
       this.read = result.read;
+      this.readAt = new Date().toISOString();
+      void this.store.update(SNAPSHOT_KEY, makeSnapshot(registry.project, result.read.title, result.read.cards, new Date(this.readAt)));
       this.revealFocus();
       this.phase = 'ready';
     } else {
       this.error = result.error;
       this.phase = 'error';
+      if (!this.read) {
+        const kept = readSnapshot<ProjectCard>(this.store.get(SNAPSHOT_KEY), registry.project);
+        if (kept) {
+          this.read = { title: kept.title, cards: kept.cards, skipped: 0 };
+          this.readAt = kept.readAt;
+        }
+      }
     }
     this.render();
   }
@@ -345,7 +360,13 @@ export class OverviewView {
     if (this.phase === 'sign-in') return { kind: 'sign-in' };
     if (this.phase === 'loading') return { kind: 'loading' };
     if (this.phase === 'error' && this.error) {
-      // GitHub could not be read: show the board the files give, marked as not current.
+      // GitHub could not be read: show the last board read (DEC-011), or else the board the files give.
+      if (this.read && this.readAt) {
+        const links = requirementsByIssue(this.loaded?.artifacts ?? []);
+        const cards: OverviewCard[] = this.read.cards.map((card) => ({ ...card, requirement: links.get(normalizeIssueUrl(card.url)), stale: [] }));
+        const lanes = applyLaneOrder(buildLanes(this.registry.registry, cards), this.order);
+        return { kind: 'error', error: this.error, offline: { lanes, collapsed: [...this.collapsed], snapshotAge: snapshotAge(this.readAt, new Date()) } };
+      }
       const lanes = buildLanes(
         this.registry.registry,
         offlineCards(this.loaded?.artifacts ?? [], this.registry.registry).map(

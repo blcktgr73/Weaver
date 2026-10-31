@@ -40,11 +40,12 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 - Pressing a card title opens its requirement view scrolled to the task, or the Issue when no requirement file is visible. A right-click menu on a card lists the task file, the requirement source, the Issue, a pull request that refers to it, and the repository folder; a place that cannot open stays in the list with the reason.
 - Cards that have not moved for a set time, that have no evidence, or that wait for a human decision are marked on the board.
 - Weaver lists mismatches between the repository files, the Issues, and the central Project, using these kinds: task file without an Issue, Issue link that is not an Issue address, task whose Issue is not on the Project, Project card without a task file (for repositories whose files are in the workspace), merged pull request that names a task in its branch or trailing `(TASK-###)` but does not close its Issue (`docs:` pull requests are left out), and board status that disagrees with the label. This check only reports; it changes nothing.
-- When GitHub cannot be reached, Weaver shows a read-only Kanban from the repository files and says that the state is not current.
+- When GitHub cannot be reached, Weaver shows a read-only Kanban, the last board it read or else one built from the repository files, and says that the state is not current.
 - A repository can be viewed on the Overview without being opened as its own VS Code folder.
 - Every user-facing message for this feature is in the message catalog in English and Korean.
 - A requirement view does not carry a second Kanban board. It shows one line of stage counts for its tasks, and the Overview is the only board.
 - From a requirement view or a task file, an action shows its cards on the Overview: the project is turned on, its lane is unfolded, and the cards of that requirement or task are highlighted.
+- Each successful read of the Project is kept on the user's computer, never in the repository. When GitHub cannot be read, the Overview shows that board with its age, and falls back to the files only when no read of the same Project was kept.
 
 ## Open decisions
 
@@ -56,6 +57,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 - The central Project is configuration. PALab keeps PALab Ops Kanban, and other teams register their own: [DEC-007](../decisions/DEC-007-central-project-is-configuration.md).
 - The registry is `fabric.yaml` at the root of the Weaver repository: [DEC-010](../decisions/DEC-010-fabric-registry-location.md).
 - The six columns stay derived from Issue labels, and no custom Project field is required: [DEC-009](../decisions/DEC-009-keep-labels-for-columns.md).
+- The offline board is the last board read from GitHub, kept on the user's computer: [DEC-011](../decisions/DEC-011-offline-board-from-last-read.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
 
@@ -74,6 +76,8 @@ Open decisions are recorded as `DEC-###` documents before the related tasks star
 - `TASK-039` Reorder, collapse, hide, and filter lanes — [GitHub Issue #73](https://github.com/blcktgr73/Weaver/issues/73)
 - `TASK-040` Replace the requirement board with a stage summary — [GitHub Issue #81](https://github.com/blcktgr73/Weaver/issues/81)
 - `TASK-041` Show the cards of a requirement or task on the Overview — [GitHub Issue #82](https://github.com/blcktgr73/Weaver/issues/82)
+
+- `TASK-042` Show the last read board when GitHub is unreachable — [GitHub Issue #92](https://github.com/blcktgr73/Weaver/issues/92)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
