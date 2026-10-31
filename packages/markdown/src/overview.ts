@@ -112,3 +112,32 @@ export function focusCards<T extends { url: string }>(
     return link !== undefined && link.id === target.requirementId && (target.taskId === undefined || link.taskId === target.taskId);
   });
 }
+
+/**
+ * Puts lanes in the order the user chose. Lanes the user has not placed keep their registry
+ * order after the placed ones, and names in `order` that are no longer registered are ignored.
+ */
+export function applyLaneOrder<T extends { repository: string }>(lanes: readonly T[], order: readonly string[]): T[] {
+  const rank = new Map(order.map((name, index) => [name.toLowerCase(), index]));
+  const placed = lanes.filter((lane) => rank.has(lane.repository.toLowerCase()));
+  const rest = lanes.filter((lane) => !rank.has(lane.repository.toLowerCase()));
+  placed.sort((a, b) => (rank.get(a.repository.toLowerCase()) as number) - (rank.get(b.repository.toLowerCase()) as number));
+  return [...placed, ...rest];
+}
+
+/**
+ * Moves one lane a step up (-1) or down (1) among the lanes that are shown, by swapping it with
+ * its neighbor in the full order, so a hidden lane in between never makes a move do nothing.
+ * Returns the new full order; it is unchanged when the lane is already at that end.
+ */
+export function moveLane(fullOrder: readonly string[], shown: readonly string[], repository: string, delta: -1 | 1): string[] {
+  const next = [...fullOrder];
+  const at = shown.indexOf(repository);
+  const neighbor = at < 0 ? undefined : shown[at + delta];
+  if (neighbor === undefined) return next;
+  const a = next.indexOf(repository);
+  const b = next.indexOf(neighbor);
+  if (a < 0 || b < 0) return next;
+  [next[a], next[b]] = [next[b], next[a]];
+  return next;
+}

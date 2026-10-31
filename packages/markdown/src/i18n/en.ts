@@ -95,6 +95,8 @@ export const en = {
   'ui.overview.open-file': 'Open {path}',
   'ui.overview.clone': 'Clone missing repositories',
   'ui.overview.clear-focus': 'Clear highlight',
+  'ui.overview.move-up': 'Move {title} up',
+  'ui.overview.move-down': 'Move {title} down',
   'ui.overview.offline-note': 'This board is built from the files in this workspace, not from GitHub. Its state may be out of date.',
   'gap.offline-no-status': 'state unknown: the task file gives no status (the Issue has it)',
   'ui.overview.focus-none': '{target} has no card on the Overview. Its Issues may not be on the Project.',
