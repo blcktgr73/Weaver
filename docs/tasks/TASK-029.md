@@ -18,5 +18,8 @@ Check whether a fine-grained token can read a personal Project, and which scopes
 
 ## Done when
 
-- The result is written in DEC-010 with the exact scopes for a personal and an organization Project.
-- The error shown to a user without the scope is decided.
+- DEC-010 records which login each client uses and the scopes checked for a personal Project (done: `gh` classic token with `repo` and `project`).
+- DEC-010 says what is not verified: fine-grained tokens, organization Projects, and the VS Code sign-in (the last is confirmed in `TASK-031`).
+- The behavior without the `project` scope is decided (DEC-010, item 6).
+
+Scope change on 2026-10-31: the maintainer chose to reuse the existing `gh` and VS Code logins and not to test fine-grained tokens.
