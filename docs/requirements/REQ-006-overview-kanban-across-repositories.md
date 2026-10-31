@@ -58,16 +58,16 @@ Open decisions are recorded as `DEC-###` documents before the related tasks star
 
 ## Tasks
 
-- `TASK-029` Verify Project read access and record the registry decision
-- `TASK-030` Define and validate the fabric registry
-- `TASK-031` Read all items of the central Project
-- `TASK-032` Show the Overview Kanban
-- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card
-- `TASK-034` Set a fabric root folder and clone the missing repositories
-- `TASK-035` List mismatches between files, Issues, and the Project
-- `TASK-036` Mark stale cards
-- `TASK-037` Show a read-only board when GitHub is unreachable
-- `TASK-038` Write the guide for registering your own Project
+- `TASK-029` Verify Project read access and record the registry decision — [GitHub Issue #61](https://github.com/blcktgr73/Weaver/issues/61)
+- `TASK-030` Define and validate the fabric registry — [GitHub Issue #62](https://github.com/blcktgr73/Weaver/issues/62)
+- `TASK-031` Read all items of the central Project — [GitHub Issue #63](https://github.com/blcktgr73/Weaver/issues/63)
+- `TASK-032` Show the Overview Kanban — [GitHub Issue #64](https://github.com/blcktgr73/Weaver/issues/64)
+- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card — [GitHub Issue #65](https://github.com/blcktgr73/Weaver/issues/65)
+- `TASK-034` Set a fabric root folder and clone the missing repositories — [GitHub Issue #66](https://github.com/blcktgr73/Weaver/issues/66)
+- `TASK-035` List mismatches between files, Issues, and the Project — [GitHub Issue #67](https://github.com/blcktgr73/Weaver/issues/67)
+- `TASK-036` Mark stale cards — [GitHub Issue #68](https://github.com/blcktgr73/Weaver/issues/68)
+- `TASK-037` Show a read-only board when GitHub is unreachable — [GitHub Issue #69](https://github.com/blcktgr73/Weaver/issues/69)
+- `TASK-038` Write the guide for registering your own Project — [GitHub Issue #70](https://github.com/blcktgr73/Weaver/issues/70)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
