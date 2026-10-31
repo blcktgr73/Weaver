@@ -57,6 +57,12 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.registry-problems': '등록부에 문제가 있습니다:',
   'ui.overview.open-requirement': '{id} 열기: {title}',
   'ui.overview.open-issue': 'GitHub에서 Issue #{number} 열기',
+  'ui.overview.projects': '프로젝트',
+  'ui.overview.show-all': '모두 보기',
+  'ui.overview.toggle-project': '{title} 보기·숨기기',
+  'ui.overview.fold': '{title} 접기',
+  'ui.overview.unfold': '{title} 펼치기',
+  'ui.overview.all-hidden': '모든 프로젝트가 숨겨져 있습니다. 위에서 하나를 켜 주세요.',
 
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',

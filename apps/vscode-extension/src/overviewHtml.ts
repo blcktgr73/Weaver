@@ -32,7 +32,15 @@ export type OverviewState =
   | { kind: 'sign-in' }
   | { kind: 'loading' }
   | { kind: 'error'; error: Notice }
-  | { kind: 'ready'; projectTitle: string; lanes: Lane<OverviewCard>[]; skipped: number };
+  | {
+      kind: 'ready';
+      projectTitle: string;
+      lanes: Lane<OverviewCard>[];
+      skipped: number;
+      /** Repositories the user turned off, and lanes folded to their header. Kept on this computer only. */
+      hidden: string[];
+      collapsed: string[];
+    };
 
 const TASK_PREFIX = /^\[TASK-\d{3,}\]\s*/;
 
@@ -54,13 +62,14 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       </div>`;
   };
 
-  const laneHtml = (lane: Lane<OverviewCard>): string => `<section class="lane">
-      <h2>${e(lane.title)} <span class="muted small">${e(lane.repository)}</span>
+  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean): string => `<section class="lane">
+      <h2><button class="fold" data-fold="${e(lane.repository)}" aria-expanded="${!folded}" title="${e(tt(folded ? 'ui.overview.unfold' : 'ui.overview.fold', { title: lane.title }))}">${folded ? '\u25b8' : '\u25be'}</button>${e(lane.title)} <span class="muted small">${e(lane.repository)}</span>
         <span class="badge">${e(tt('ui.overview.cards', { count: lane.total }))}</span>${lane.blocked ? `<span class="badge blocked">${e(tt('ui.overview.blocked', { count: lane.blocked }))}</span>` : ''}</h2>
-      ${lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
+      ${folded ? '' : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
     </section>`;
 
   let body: string;
+  let filter = '';
   switch (state.kind) {
     case 'no-registry':
       body = `<p class="muted">${e(tt('ui.overview.no-registry'))}</p>`;
@@ -79,11 +88,24 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     case 'error':
       body = `<p class="warn">${e(formatNotice(state.error, locale))}</p><div class="actions">${button('signIn', 'ui.overview.sign-in')}${button('refresh', 'ui.overview.refresh')}</div>`;
       break;
-    case 'ready':
-      body = `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
-      ${state.lanes.map(laneHtml).join('')}
-      ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`;
+    case 'ready': {
+      const hidden = new Set(state.hidden);
+      const collapsed = new Set(state.collapsed);
+      const shown = state.lanes.filter((lane) => !hidden.has(lane.repository));
+      const chips = state.lanes
+        .map((lane) => {
+          const on = !hidden.has(lane.repository);
+          return `<button class="chip ${on ? 'on' : 'off'}" data-toggle="${e(lane.repository)}" aria-pressed="${on}" title="${e(tt('ui.overview.toggle-project', { title: lane.title }))}">${e(lane.title)} <span class="n">${lane.total}</span></button>`;
+        })
+        .join('');
+      filter = `<div class="filter"><span class="muted">${e(tt('ui.overview.projects'))}</span>${chips}${hidden.size ? button('showAll', 'ui.overview.show-all') : ''}</div>`;
+      body = shown.length
+        ? `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
+      ${shown.map((lane) => laneHtml(lane, collapsed.has(lane.repository))).join('')}
+      ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`
+        : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`;
       break;
+    }
   }
 
   const projectLine = state.kind === 'ready' ? `<span class="muted">${e(tt('ui.overview.project', { title: state.projectTitle }))}</span>` : '';
@@ -96,13 +118,24 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${e(tt('ui.overview.title'))}</title>
 <style nonce="${nonce}">
-  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 24px 48px; line-height: 1.45; }
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 24px; line-height: 1.45; margin: 0; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
   header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
   h1 { font-size: 1.5em; margin: 16px 0 8px; }
   h2 { font-size: 1.05em; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--vscode-panel-border); }
-  .scroll { overflow-x: auto; }
+  /* The board scrolls inside the window, so both scrollbars stay in view. */
+  .scroll { flex: 1; min-height: 0; overflow: auto; padding-bottom: 24px; }
+  .scroll::-webkit-scrollbar { width: 12px; height: 12px; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--vscode-scrollbarSlider-background); }
+  .scroll::-webkit-scrollbar-thumb:hover { background: var(--vscode-scrollbarSlider-hoverBackground); }
+  .scroll::-webkit-scrollbar-corner { background: transparent; }
+  .filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 0 8px; }
+  button.chip { border-radius: 12px; padding: 2px 10px; border: 1px solid var(--vscode-panel-border); }
+  button.chip.on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
+  button.chip.off { background: transparent; color: var(--vscode-descriptionForeground); text-decoration: line-through; }
+  button.chip .n { opacity: 0.8; font-size: 0.85em; }
+  button.fold { background: transparent; color: var(--vscode-foreground); padding: 0 6px 0 0; font-size: 1em; }
   .cols { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 8px; min-width: 1040px; }
-  .colhead { position: sticky; top: 0; z-index: 1; background: var(--vscode-editor-background); padding: 6px 0; font-weight: 600; color: var(--vscode-descriptionForeground); }
+  .colhead { position: sticky; top: 0; z-index: 2; background: var(--vscode-editor-background); padding: 6px 0; font-weight: 600; color: var(--vscode-descriptionForeground); }
   .col { min-height: 24px; }
   .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; background: var(--vscode-editor-background); }
   .card.has-gap { border-color: var(--vscode-editorWarning-foreground); }
@@ -126,16 +159,19 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </head>
 <body>
   <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') : ''}</header>
+  ${filter}
   <div class="scroll">${body}</div>
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-cmd],[data-url],[data-req]');
+    const target = event.target.closest('[data-cmd],[data-url],[data-req],[data-toggle],[data-fold]');
     if (!target) return;
     event.preventDefault();
     if (target.dataset.cmd) vscode.postMessage({ type: target.dataset.cmd });
     if (target.dataset.url) vscode.postMessage({ type: 'openUrl', url: target.dataset.url });
     if (target.dataset.req) vscode.postMessage({ type: 'openRequirement', id: target.dataset.req });
+    if (target.dataset.toggle) vscode.postMessage({ type: 'toggleLane', id: target.dataset.toggle });
+    if (target.dataset.fold) vscode.postMessage({ type: 'foldLane', id: target.dataset.fold });
   });
 </script>
 </body>

@@ -58,6 +58,12 @@ export const en = {
   'ui.overview.registry-problems': 'The registry has problems:',
   'ui.overview.open-requirement': 'Open {id}: {title}',
   'ui.overview.open-issue': 'Open Issue #{number} on GitHub',
+  'ui.overview.projects': 'Projects',
+  'ui.overview.show-all': 'Show all',
+  'ui.overview.toggle-project': 'Show or hide {title}',
+  'ui.overview.fold': 'Collapse {title}',
+  'ui.overview.unfold': 'Expand {title}',
+  'ui.overview.all-hidden': 'All projects are hidden. Turn one on above.',
 
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',

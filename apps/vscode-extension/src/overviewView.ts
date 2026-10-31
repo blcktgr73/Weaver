@@ -18,6 +18,8 @@ import { REQUIREMENT_EDITOR } from './requirementEditor';
 import { Loaded } from './workspace';
 
 const REGISTRY_FILE = 'fabric.yaml';
+const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
+const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 
 type Registry =
   | { kind: 'none' }
@@ -43,6 +45,20 @@ export class OverviewView {
   private error: Notice | undefined;
   /** Newest request wins, so a slow answer cannot overwrite a newer one. */
   private request = 0;
+  /** Which projects are shown and which lanes are folded. Stored on this computer, never in the repository. */
+  private hidden: Set<string>;
+  private collapsed: Set<string>;
+
+  constructor(private readonly store: vscode.Memento) {
+    this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
+    this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
+  }
+
+  private flip(set: Set<string>, key: string, id: string): void {
+    if (!set.delete(id)) set.add(id);
+    void this.store.update(key, [...set]);
+    this.render();
+  }
 
   async show(loaded: Loaded): Promise<void> {
     this.loaded = loaded;
@@ -68,6 +84,13 @@ export class OverviewView {
   private async onMessage(message: { type: string; url?: string; id?: string }): Promise<void> {
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
+    else if (message.type === 'toggleLane' && message.id) this.flip(this.hidden, HIDDEN_KEY, message.id);
+    else if (message.type === 'foldLane' && message.id) this.flip(this.collapsed, COLLAPSED_KEY, message.id);
+    else if (message.type === 'showAll') {
+      this.hidden.clear();
+      void this.store.update(HIDDEN_KEY, []);
+      this.render();
+    }
     else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
     } else if (message.type === 'openRequirement' && message.id) {
@@ -125,6 +148,8 @@ export class OverviewView {
       projectTitle: this.read.title,
       lanes: buildLanes(this.registry.registry, cards),
       skipped: this.read.skipped,
+      hidden: [...this.hidden],
+      collapsed: [...this.collapsed],
     };
   }
 
