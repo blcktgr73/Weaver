@@ -10,8 +10,10 @@ const root = path.resolve(__dirname, '..');
 const extension = path.join(root, 'apps', 'vscode-extension');
 const folder = path.resolve(root, process.argv[2] || path.join('examples', 'sample-workspace'));
 
+// An installed copy (palab.weaver) registers the same commands as this checkout, so the host
+// would fail with "command ... already exists". Disable the installed copy in this window only.
 // `code` is a .cmd shim on Windows, so it needs a shell; quote the paths ourselves.
-const child = spawn(`code --new-window "--extensionDevelopmentPath=${extension}" "${folder}"`, {
+const child = spawn(`code --new-window --disable-extension palab.weaver "--extensionDevelopmentPath=${extension}" "${folder}"`, {
   shell: true,
   detached: true,
   stdio: 'ignore',
