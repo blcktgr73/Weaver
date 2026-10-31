@@ -5,7 +5,7 @@ export interface Args {
   flags: Set<string>;
 }
 
-const VALUE_OPTIONS = new Set(['root', 'repository', 'column', 'lang', 'approve', 'title', 'requirement', 'criteria', 'assignee', 'assignee-type', 'area']);
+const VALUE_OPTIONS = new Set(['root', 'repository', 'column', 'lang', 'approve', 'title', 'requirement', 'criteria', 'assignee', 'assignee-type', 'area', 'to', 'pull']);
 const FLAGS = new Set(['text', 'help']);
 
 /** `--name value` for options, `--name` for flags. Anything else is a positional word. */
