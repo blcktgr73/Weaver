@@ -95,6 +95,11 @@ export const en = {
   'ui.overview.open-file': 'Open {path}',
   'ui.overview.clone': 'Clone missing repositories',
 
+  // Stale cards
+  'stale.idle': { one: 'no change for {days} day', other: 'no change for {days} days' },
+  'stale.no-evidence': 'no linked pull request',
+  'stale.needs-decision': 'waiting for a human decision',
+
   // Fabric root and cloning the registered repositories
   'ui.fabric.root-prompt': 'Choose the folder that holds your clones',
   'ui.fabric.root-button': 'Use this folder',
