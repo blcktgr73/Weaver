@@ -7,5 +7,9 @@
   "weaver.config.language.auto": "Follow the VS Code display language; English if it is not supported.",
   "weaver.config.language.en": "English",
   "weaver.config.language.ko": "Korean (한국어)",
-  "weaver.editor.requirement.displayName": "Weaver Requirement View"
+  "weaver.editor.requirement.displayName": "Weaver Requirement View",
+  "weaver.command.setFabricRoot.title": "Weaver: Set Fabric Root Folder",
+  "weaver.command.cloneRegistered.title": "Weaver: Clone Registered Repositories",
+  "weaver.command.openFabricRoot.title": "Weaver: Open Fabric Root Folder",
+  "weaver.config.fabricRoot.description": "Local folder that holds the clones of the repositories in `fabric.yaml`. It stays on this computer and is never written to the repository."
 }

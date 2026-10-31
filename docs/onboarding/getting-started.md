@@ -129,6 +129,17 @@ The **Mismatches** list above the board shows where the files, the Issues, and t
 
 Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order in `fabric.yaml`. The Overview is read-only; to move a card, use a requirement view.
 
+### Clone the registered repositories
+
+Keep the clones of all registered repositories under one folder, the *fabric root*, and open that folder in VS Code to see them in one workspace.
+
+1. Run **Weaver: Set Fabric Root Folder** (or press **Clone missing repositories** in the Overview) and choose the folder. It is saved as the machine setting `weaver.fabricRoot` and is never written to the repository.
+2. Run **Weaver: Clone Registered Repositories**. Weaver lists the registered repositories that are not under the root yet; untick any you want to skip. It runs `git clone https://github.com/<owner>/<name>.git` for each, so your Git sign-in must be able to read them.
+3. A folder that already exists is never touched. A folder that exists but is not a Git repository is listed and skipped. One failed clone does not stop the others, and the summary names each failure.
+4. Run **Weaver: Open Fabric Root Folder** to open the root. Cards of a repository cloned there get **Repository folder** in their right-click menu even when it is not open in this window.
+
+Two registered repositories with the same name are cloned as `<owner>-<name>`.
+
 ## What Weaver does not do yet
 
 - A requirement view reads one repository at a time. The Overview shows the registered repositories together, read-only.
