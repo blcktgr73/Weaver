@@ -44,7 +44,7 @@ The steward never commits to a default branch, never closes an Issue, and never 
 
 ## Open decisions
 
-DEC-012 proposes answers to the first four items below.
+DEC-012 answers the first four items below; they stay listed until the tasks are done.
 
 - Which operations the first version of the tool supports and which stay manual.
 - How a conversation hands a ticket to the tool: a direct command, an agent-protocol (MCP) server, or a file the steward picks up.
@@ -56,6 +56,7 @@ DEC-012 proposes answers to the first four items below.
 ## Decisions taken
 
 - Agents run as the signed-in user's `gh` login, and every write is confirmed one action at a time: [DEC-008](../decisions/DEC-008-agent-identity-and-write-confirmation.md).
+- The first version is an on-demand command-line tool that agents call from a shell, with one idle limit and one confirmation rule: [DEC-012](../decisions/DEC-012-steward-first-version.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
 
@@ -69,7 +70,7 @@ Open decisions are recorded as `DEC-###` documents before the related tasks star
 - `TASK-048` Reconcile mismatches according to the steward tiers — [GitHub Issue #99](https://github.com/blcktgr73/Weaver/issues/99)
 - `TASK-049` Write the agent contract for the weaver tool — [GitHub Issue #100](https://github.com/blcktgr73/Weaver/issues/100)
 
-The approach for the first version is proposed in [DEC-012](../decisions/DEC-012-steward-first-version.md) and is not accepted yet. `TASK-043` and `TASK-044` come first; the write tasks follow `TASK-044`; `TASK-048` needs `TASK-045` to `TASK-047`. Scheduled runs and batch approval have no task until they are decided.
+The approach for the first version is [DEC-012](../decisions/DEC-012-steward-first-version.md). `TASK-043` and `TASK-044` come first; the write tasks follow `TASK-044`; `TASK-048` needs `TASK-045` to `TASK-047`. Scheduled runs and batch approval have no task until they are decided.
 
 ## Evidence policy
 

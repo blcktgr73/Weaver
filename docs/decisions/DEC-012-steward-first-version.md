@@ -1,14 +1,14 @@
 # DEC-012: The first version of the steward is an on-demand command-line tool
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-01
 - Related: `REQ-007`, [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md), `TASK-043` to `TASK-049`
 
 ## Context
 
-[REQ-007](../requirements/REQ-007-steward-agent-for-the-kanban.md) listed open decisions about the first version. [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md) already fixes identity and confirmation. This record proposes the rest so that the tasks can start; nothing here is accepted until a person says so.
+[REQ-007](../requirements/REQ-007-steward-agent-for-the-kanban.md) listed open decisions about the first version. [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md) already fixes identity and confirmation. This record settles the rest so that the tasks can start. It was proposed and accepted on 2026-11-01.
 
-## Proposal
+## Decision
 
 1. **Operations in the first version.** Read: `list`, `show`. Write: add Issues to the Project, create a task with its Issue and card, move a card, attach evidence, and `reconcile` as a dry run by default. Closing an Issue, deleting anything, and editing a requirement's meaning stay manual.
 2. **How a conversation hands over a ticket.** A direct command. An agent that can run a shell calls `weaver task create`. A Model Context Protocol (MCP) server can wrap the same logic later; it is not built first.
@@ -36,4 +36,4 @@
 
 ## Consequences
 
-- If accepted, `REQ-007` moves its open decisions 1 to 4 into "Decisions taken". The scheduling and batch-approval decisions stay open.
+- `REQ-007` lists these answers under "Decisions taken". The scheduling and batch-approval decisions stay open.
