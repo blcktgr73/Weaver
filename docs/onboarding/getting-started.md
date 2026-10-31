@@ -156,6 +156,10 @@ Keep the clones of all registered repositories under one folder, the *fabric roo
 
 Two registered repositories with the same name are cloned as `<owner>-<name>`.
 
+## 8. Let an agent keep the board (the weaver tool)
+
+The `weaver` command-line tool gives an agent, or you in a terminal, the Kanban operations: list and show cards, create a task with its Issue and Project card, move a card, link evidence, and reconcile what the Overview reports. Every write is shown first and runs only after you approve that one action. The commands, the JSON they print, the exit codes, and the rules an agent must follow are in [The weaver tool: the contract for agents](agent-contract.md).
+
 ## What Weaver does not do yet
 
 - A requirement view reads one repository at a time. The Overview shows the registered repositories together, read-only.
