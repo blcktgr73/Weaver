@@ -9,7 +9,7 @@ import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } fr
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   const view = new RequirementView();
-  const overview = new OverviewView(context.globalState);
+  const overview = new OverviewView(context.globalState, view);
 
   // Tells the menus whether the active file is a Weaver document (TASK-018).
   let latest: Loaded | undefined;
