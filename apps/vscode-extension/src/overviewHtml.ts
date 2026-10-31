@@ -184,7 +184,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </style>
 </head>
 <body>
-  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') : ''}</header>
+  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') : ''}</header>
   ${filter}
   <div class="scroll">${body}</div>
 <script nonce="${nonce}">

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
   buildLanes,
+  cloneDirectories,
   FabricRegistry,
   findMismatches,
   MergedPull,
@@ -13,6 +14,9 @@ import {
   ValidationIssue,
 } from '@palab/weaver-markdown';
 import { ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import { fabricRoot } from './fabricRoot';
 import { fetchEvidence, getGitHubToken } from './github';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
@@ -101,6 +105,7 @@ export class OverviewView {
       void this.store.update(HIDDEN_KEY, []);
       this.render();
     }
+    else if (message.type === 'cloneMissing') await vscode.commands.executeCommand('weaver.cloneRegistered');
     else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
     else if (message.type === 'openFile' && message.path) {
       const uri = this.loaded?.uris.get(message.path);
@@ -159,6 +164,15 @@ export class OverviewView {
       return f.name.toLowerCase() === name || f.uri.path.toLowerCase().endsWith(`/${name}`);
     });
 
+    // A clone under the fabric root counts as the repository folder, even when it is not open here.
+    const root = fabricRoot();
+    let clone: vscode.Uri | undefined;
+    if (!folder && root && this.registry.kind === 'ok') {
+      const directory = cloneDirectories(this.registry.registry.repositories.map((r) => r.repository)).get(card.repository);
+      const candidate = directory ? path.join(root, directory) : undefined;
+      if (candidate && (await fs.stat(candidate).then((s) => s.isDirectory(), () => false))) clone = vscode.Uri.file(candidate);
+    }
+
     const items: Item[] = [
       taskUri
         ? { label: `$(file) ${taskLabel}`, detail: link?.taskPath, run: () => vscode.window.showTextDocument(taskUri, { viewColumn: vscode.ViewColumn.Beside }) }
@@ -178,7 +192,9 @@ export class OverviewView {
       { label: `$(git-pull-request) ${text('ui.overview.menu.pull-request')}`, run: () => this.openPullRequest(card) },
       folder
         ? { label: `$(folder) ${text('ui.overview.menu.repository-folder', { repository: card.repository })}`, run: () => vscode.commands.executeCommand('revealInExplorer', folder.uri) }
-        : unavailable(text('ui.overview.menu.repository-folder', { repository: card.repository }), text('ui.overview.na.no-folder', { repository: card.repository })),
+        : clone
+          ? { label: `$(folder-opened) ${text('ui.overview.menu.repository-folder', { repository: card.repository })}`, detail: clone.fsPath, run: () => vscode.commands.executeCommand('vscode.openFolder', clone, { forceNewWindow: true }) }
+          : unavailable(text('ui.overview.menu.repository-folder', { repository: card.repository }), text('ui.overview.na.no-folder', { repository: card.repository })),
     ];
 
     const picked = await vscode.window.showQuickPick(items, { placeHolder: text('ui.overview.menu.placeholder') });
