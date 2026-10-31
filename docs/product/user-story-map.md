@@ -83,6 +83,9 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-019` — As a maintainer, I can hand a task to a remote agent (for example OpenClaw or Hermes) with durable context taken from the requirement, the task file, and prior evidence, and the agent's branch, pull request, and test results come back to the task. Other agents, such as Dot and Duet, are tried the same way afterwards, so the handoff contract must not depend on one agent.
 - `US-020` — As a first-time user, I can open a requirement file and see its Weaver view straight away, and I can open the matching view from other Weaver documents with one button, without it appearing on ordinary Markdown files.
 - `US-021` — As a new user, I can install a released Weaver build from a GitHub Release or a registry, without building it from source.
+- `US-022` — As a product person, I can draft a requirement in Notion and import it into the repository as a reviewed `REQ-###` Markdown file, so my discussion is not lost and the repository stays the source of truth.
+- `US-023` — As a stakeholder who works in Notion, I can see a requirement's current status, tasks, and evidence links on its Notion page, without opening the repository.
+- `US-024` — As a maintainer, I can tell which Notion page a requirement came from, and I can see when the page and the repository file have drifted apart.
 
 ### PALab project adoption
 
