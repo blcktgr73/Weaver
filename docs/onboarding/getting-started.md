@@ -122,7 +122,7 @@ The Overview shows the work of all registered repositories on one Kanban: the co
 
 Adjusting the lanes: the **Projects** chips above the board turn a project on or off (**Show all** brings them back), the ▾ beside a lane title folds it to its title (its card and blocked-card counts stay visible), and the ▲ ▼ beside it move it up or down among the lanes that are shown. These choices stay on your computer, survive a restart, and are never written to the repository. A repository you have not placed keeps the order of `fabric.yaml`.
 
-What a card opens:
+What a card opens (each opens as a new tab in the same editor group, so the screen is not split; close a tab or use the tab list to go back):
 
 - **The card title** opens its requirement view, scrolled to the task. For a card with no requirement file in the workspace, it opens the Issue on GitHub.
 - **The requirement tag** (for example `REQ-006`) opens the requirement view from the top.
