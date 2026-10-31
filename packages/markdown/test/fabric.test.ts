@@ -109,6 +109,11 @@ describe('parseFabric', () => {
 });
 
 describe('this repository', () => {
+  it('has a valid example registry for the development host', () => {
+    const text = readFileSync(resolve(__dirname, '../../../examples/overview/fabric.yaml'), 'utf8');
+    expect(parseFabric('fabric.yaml', text).issues).toEqual([]);
+  });
+
   it('has a valid fabric.yaml at its root', () => {
     const text = readFileSync(resolve(__dirname, '../../../fabric.yaml'), 'utf8');
     const { registry, issues } = parseFabric('fabric.yaml', text);

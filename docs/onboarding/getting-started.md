@@ -100,8 +100,28 @@ Problems in the Markdown files (a missing field, an unknown task) appear in the 
 
 Set `weaver.language` to `auto`, `en`, or `ko`. `auto` follows the VS Code display language and falls back to English ([DEC-004](../decisions/DEC-004-internationalization.md)).
 
+## 7. See every repository on one board (Overview)
+
+The Overview shows the work of all registered repositories on one Kanban: the columns are the stages, and each registered repository is a lane. A card shows its Issue, its task, and the requirement it belongs to when the files in your workspace say so. Pressing the requirement tag opens that requirement.
+
+1. Put a `fabric.yaml` at the root of the folder you open ([schema](../product/artifact-schema-v0.1.md#fabric-registry)):
+
+   ```yaml
+   project:
+     owner: your-login-or-organization
+     number: 1
+   repositories:
+     - your-org/your-repo
+   ```
+
+2. Open that folder in VS Code. The Overview opens by itself when the file exists, or run **Weaver: Open Overview**.
+3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
+4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (the example registry plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
+
+Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order in `fabric.yaml`. The Overview is read-only; to move a card, use a requirement view.
+
 ## What Weaver does not do yet
 
-- It reads one repository at a time. Several repositories in one workspace are not supported.
+- A requirement view reads one repository at a time. The Overview shows the registered repositories together, read-only.
 - Board Status is compared with the label only when the GitHub token has the `project` scope.
 - Owners and criteria are edited in Markdown; the view does not write them.
