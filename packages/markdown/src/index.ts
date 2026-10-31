@@ -16,3 +16,4 @@ export type { FabricParseResult, FabricProject, FabricRegistry, FabricRepository
 export * from './clone';
 export * from './stale';
 export * from './offline';
+export * from './snapshot';

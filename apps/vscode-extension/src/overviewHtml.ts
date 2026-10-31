@@ -9,6 +9,7 @@ import {
   Mismatch,
   Notice,
   RequirementLink,
+  SnapshotAge,
   t,
   ValidationIssue,
   validationKey,
@@ -38,7 +39,7 @@ export type OverviewState =
   | { kind: 'registry-invalid'; issues: ValidationIssue[] }
   | { kind: 'sign-in' }
   | { kind: 'loading' }
-  | { kind: 'error'; error: Notice; /** The board built from the files, shown under the notice. */ offline?: { lanes: Lane<OverviewCard>[]; collapsed: string[] } }
+  | { kind: 'error'; error: Notice; /** The board built from the files, shown under the notice. */ offline?: { lanes: Lane<OverviewCard>[]; collapsed: string[]; /** Set when the board is the last read from GitHub rather than built from files. */ snapshotAge?: SnapshotAge } }
   | {
       kind: 'ready';
       projectTitle: string;
@@ -112,7 +113,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       break;
     case 'error':
       body = `<p class="warn">${e(formatNotice(state.error, locale))}</p><div class="actions">${button('signIn', 'ui.overview.sign-in')}${button('refresh', 'ui.overview.refresh')}</div>`
-        + (state.offline ? `<p class="warn small">${e(tt('ui.overview.offline-note'))}</p>${boardOf(state.offline.lanes, new Set(state.offline.collapsed))}` : '');
+        + (state.offline ? `<p class="warn small">${e(state.offline.snapshotAge ? tt('ui.overview.snapshot-note', { age: tt(`ui.age.${state.offline.snapshotAge.unit}` as MessageKey, { count: state.offline.snapshotAge.count }) }) : tt('ui.overview.offline-note'))}</p>${boardOf(state.offline.lanes, new Set(state.offline.collapsed))}` : '');
       break;
     case 'ready': {
       const hidden = new Set(state.hidden);
