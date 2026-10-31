@@ -8,32 +8,15 @@ import {
   MessageArgs,
   MessageKey,
   parseFabric,
-  SourceFile,
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
-import { Fetch, readMergedPulls, readProject } from '@palab/weaver-github';
+import { readMergedPulls, readProject } from '@palab/weaver-github';
 import { Args, parseArgs } from './args';
 import { CliCard, findCards, toCliCards } from './cards';
+import { Deps, EXIT, SCHEMA } from './contract';
 
-/** The version of the JSON that every command prints. A change that breaks a reader raises it. */
-export const SCHEMA = 1;
-
-export const EXIT = { ok: 0, failed: 1, usage: 2, notFound: 3 } as const;
-
-/** Everything the commands touch outside the process, so a test can replace it. */
-export interface Deps {
-  cwd: string;
-  env: Record<string, string | undefined>;
-  out(text: string): void;
-  err(text: string): void;
-  /** The GitHub token of the signed-in `gh` login, or undefined. */
-  token(): Promise<string | undefined>;
-  fetch?: Fetch;
-  files(root: string): Promise<SourceFile[]>;
-  readText(file: string): Promise<string | undefined>;
-  now(): Date;
-}
+export { Deps, EXIT, SCHEMA } from './contract';
 
 export async function run(argv: readonly string[], deps: Deps): Promise<number> {
   const parsed = parseArgs(argv);

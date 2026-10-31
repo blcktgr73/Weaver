@@ -56,6 +56,10 @@ function setup(options: { token?: string | undefined; registry?: string; pullsFa
     files: async () => FILES,
     readText: async () => ('registry' in options ? options.registry : REGISTRY),
     now: () => new Date('2026-11-01T00:00:00Z'),
+    login: async () => 'me',
+    interactive: false,
+    ask: async () => false,
+    log: { append: async () => undefined },
   };
   return { deps, out, err };
 }

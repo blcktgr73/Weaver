@@ -18,8 +18,18 @@ Run it in the folder that holds `fabric.yaml`, or pass `--root <folder>`. Run `w
 | `weaver list [--repository o/n] [--column name]` | Every card of the Project, with its task, requirement, stale marks, and gaps |
 | `weaver show <card>` | One card with its task file, requirement, and the merged pull requests that close it or name its task. `<card>` is `owner/name#number`, an Issue address, or `TASK-###` |
 
-Output is one JSON document on standard output. `--text` prints readable lines instead. A failure prints `{"schema":1,"error":{"code","message"}}` (or a sentence on standard error with `--text`) and exits non-zero: 1 failed, 2 usage, 3 card not found. Messages follow `--lang en|ko` or `WEAVER_LANG`.
+Output is one JSON document on standard output. `--text` prints readable lines instead. A failure prints `{"schema":1,"error":{"code","message"}}` (or a sentence on standard error with `--text`) and exits non-zero: 1 failed, 2 usage, 3 card not found, 4 write not confirmed, 5 write declined. Messages follow `--lang en|ko` or `WEAVER_LANG`.
 
 `schema` is the version of the JSON. Fields are added, not renamed; a change that breaks a reader raises it.
 
-The write commands come with TASK-044 to TASK-047.
+## How every write is confirmed
+
+All write commands (they arrive with TASK-045 to TASK-047) share one path ([DEC-008](../../docs/decisions/DEC-008-agent-identity-and-write-confirmation.md)). A write is first a *plan*: each action names what it changes and why, and has an id made from that exact content. Nothing runs until that action is approved, one action at a time.
+
+- **At a terminal**, the tool shows each action and asks `[y/N]`.
+- **From an agent** (no terminal), the tool prints the plan, changes nothing, and exits with code 4. The agent shows the plan to the user and, once they agree, runs the same command again with `--approve <id>` (comma separated for several). An id is bound to the action's content, so an approval cannot be reused for a different change. There is no `--yes`.
+- A refusal at the terminal exits with code 5. A failure stops the actions that are left (they are reported as `skipped`) and exits with code 1.
+- Each executed action adds one line to the local log `~/.weaver/actions.jsonl` (`WEAVER_HOME` moves it; it is never inside a repository): time, actor, on whose behalf, action, target, reason, outcome.
+- Whatever the steward creates on GitHub carries the line "Made by the Weaver steward on behalf of @login." (`attribution()` in `src/actions.ts`).
+
+The output of a write command is `{"schema":1,"status":"done|failed|declined|unconfirmed|nothing","actions":[{id,kind,target,summary,reason,outcome,message?}]}`.
