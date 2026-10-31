@@ -178,22 +178,44 @@ export interface Skipped {
   reason: string;
 }
 
+/** Something found that no action fixes: it is listed for a person (or for a later task) to deal with. */
+export interface ReportItem {
+  /** `proposed`: DEC-012 proposes a fix that is not automated yet. `report`: a person has to judge it. */
+  tier: 'proposed' | 'report';
+  kind: string;
+  subject: string;
+  message: string;
+  automated: boolean;
+  path?: string;
+  url?: string;
+}
+
+export interface FinishOptions {
+  skipped?: readonly Skipped[];
+  report?: readonly ReportItem[];
+  /** The run only showed a plan, as asked: waiting for approval is then not a failure to act. */
+  dryRun?: boolean;
+}
+
 export function finishActions(
   results: readonly ActionResult[],
   deps: Pick<Deps, 'out' | 'err'>,
   locale: Locale,
   text: boolean,
-  skipped: readonly Skipped[] = [],
+  options: FinishOptions = {},
 ): number {
-  const code = exitCodeOf(results);
+  const { skipped = [], report = [], dryRun = false } = options;
+  const code = dryRun && exitCodeOf(results) === EXIT.unconfirmed ? EXIT.ok : exitCodeOf(results);
   if (text) {
     for (const s of skipped) deps.err(`${t(`cli.skip.${s.reason}` as MessageKey, locale)}\t${s.ref}\n`);
     for (const r of results) deps.out(`${t(`cli.outcome.${r.outcome}`, locale)}\t${r.kind}\t${r.target}${r.message ? `\t${r.message}` : ''}\n`);
+    for (const r of report) deps.out(`${r.tier}\t${r.kind}\t${r.subject}\t${r.message}\n`);
     const waiting = results.filter((r) => r.outcome === 'unconfirmed').map((r) => r.id);
     if (waiting.length) deps.err(`${t('cli.unconfirmed-hint', locale, { ids: waiting.join(',') })}\n`);
   } else {
-    const status = results.length === 0 ? 'nothing' : code === EXIT.failed ? 'failed' : code === EXIT.declined ? 'declined' : code === EXIT.unconfirmed ? 'unconfirmed' : 'done';
-    deps.out(`${JSON.stringify({ schema: SCHEMA, status, actions: results, skipped })}\n`);
+    const waiting = results.some((r) => r.outcome === 'unconfirmed');
+    const status = results.length === 0 ? 'nothing' : code === EXIT.failed ? 'failed' : code === EXIT.declined ? 'declined' : waiting ? (dryRun ? 'plan' : 'unconfirmed') : 'done';
+    deps.out(`${JSON.stringify({ schema: SCHEMA, status, actions: results, skipped, report })}\n`);
   }
   return code;
 }

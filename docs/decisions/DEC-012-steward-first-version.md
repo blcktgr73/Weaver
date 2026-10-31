@@ -23,7 +23,7 @@
 | --- | --- | --- |
 | Task whose Issue is not on the Project | Automatic | Add the Issue to the Project. |
 | Merged pull request names a task but does not close its Issue | Proposed | Comment the link on the Issue; closing it stays with a person. |
-| Board status differs from the label | Proposed | Set the board status to the label; if a person moved the card first, report instead. |
+| Board status differs from the label | Proposed | If the board is behind the label, set the board status to the label. If the board is ahead (a person or a board rule moved it first), report it: moving it back undoes progress, and making the label follow could close the Issue. `weaver card move` is the way to fix it by hand. |
 | Project card without a task file | Proposed | Draft the task file as a pull request. |
 | Task file without an Issue | Proposed | Create the Issue and link it, as a pull request for the file. |
 | Closed Issue without `status:verified` (shown as a card gap) | Proposed | Set the label to `status:verified`; an Issue closed by a pull request keeps its old label ([DEC-003](./DEC-003-board-status-mapping.md)). |

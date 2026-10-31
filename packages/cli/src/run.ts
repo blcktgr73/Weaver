@@ -13,12 +13,13 @@ import {
   t,
 } from '@palab/weaver-markdown';
 import { readMergedPulls, readProject, type FetchFn } from '@palab/weaver-github';
-import { executeActions, finishActions, parseApproved, PlannedAction, Skipped } from './actions';
+import { executeActions, finishActions, parseApproved, PlannedAction, ReportItem, Skipped } from './actions';
 import { Args, parseArgs } from './args';
 import { parseColumn, planCardMove, planEvidenceAttach } from './cardActions';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
+import { planReconcile } from './reconcile';
 import { nextTaskNumber, planTaskCreate, usedTaskTexts } from './taskCreate';
 
 export { Deps, EXIT, SCHEMA } from './contract';
@@ -46,7 +47,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence' && args.command !== 'reconcile') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
   }
@@ -80,11 +81,11 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   }
 
   /** Shows the plan, takes the confirmations, runs what was approved, and prints the result. */
-  const confirmAndRun = async (actions: PlannedAction[], skipped: Skipped[] = []): Promise<number> => {
+  const confirmAndRun = async (actions: PlannedAction[], skipped: Skipped[] = [], options: { report?: ReportItem[]; dryRun?: boolean } = {}): Promise<number> => {
     const results = await executeActions(actions, {
       locale,
       approved: parseApproved(args.options.approve),
-      interactive: deps.interactive,
+      interactive: deps.interactive && !options.dryRun,
       ask: deps.ask,
       log: deps.log,
       actor: deps.env.WEAVER_ACTOR ?? 'steward',
@@ -92,7 +93,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       now: () => deps.now(),
       note: (text) => deps.err(text),
     });
-    return finishActions(results, deps, locale, wantsText, skipped);
+    return finishActions(results, deps, locale, wantsText, { skipped, report: options.report, dryRun: options.dryRun });
   };
 
   if (args.command === 'project') {
@@ -143,6 +144,26 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   }
 
   const all = toCliCards(read.read.cards, artifacts, deps.now());
+
+  if (args.command === 'reconcile') {
+    const merged = await Promise.all(repositories.map((repository) => readMergedPulls(token, repository, 50, deps.fetch)));
+    const plan = await planReconcile({
+      token,
+      login: await deps.login(),
+      locale,
+      project: registry.project,
+      repositories,
+      cards: read.read.cards,
+      artifacts,
+      pulls: merged.flatMap((r) => (r.ok ? r.pulls : [])),
+      now: deps.now(),
+      fetch: deps.fetch,
+      fetchFn: deps.fetch as unknown as FetchFn | undefined,
+    });
+    // Without --apply (or --approve) this only shows the plan, even at a terminal.
+    const dryRun = !args.flags.has('apply') && !args.options.approve;
+    return confirmAndRun(plan.actions, [], { report: plan.reports, dryRun });
+  }
 
   if (args.command === 'card' || args.command === 'evidence') {
     const ref = args.positional[1];

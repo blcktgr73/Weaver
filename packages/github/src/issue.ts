@@ -164,30 +164,48 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan,
     return steps;
   }
 
-  await run({ code: 'step.set-board-status', args: { status: plan.projectStatus } }, async () => {
-    type Items = {
-      repository: {
-        issue: {
-          projectItems: {
-            nodes: { id: string; project: { id: string; title: string; field: { id: string; options: { id: string; name: string }[] } | null } }[];
-          };
+  await run({ code: 'step.set-board-status', args: { status: plan.projectStatus } }, () => setBoardStatus(token, issueUrl, plan.projectStatus, fetchFn));
+  return steps;
+}
+
+/**
+ * Sets the `Status` of the Issue on every Project board it is on. An Issue that is on no board has
+ * nothing to set (`step.skipped-no-board`). A board with no such option throws a notice error.
+ * Callers must have confirmed the change with the user first.
+ */
+export async function setBoardStatus(token: string, issueUrl: string, status: string, fetchFn: FetchFn = fetch): Promise<Notice | undefined> {
+  const ref = parseIssueUrl(issueUrl);
+  if (!ref) throw new WeaverError({ code: 'github.err.not-issue-url' });
+  const ctx: Ctx = { token, fetchFn };
+  type Items = {
+    repository: {
+      issue: {
+        projectItems: {
+          nodes: { id: string; project: { id: string; title: string; field: { id: string; options: { id: string; name: string }[] } | null } }[];
         };
       };
     };
-    const data = await graphql<Items>(ctx, PROJECT_ITEMS, { o: ref.owner, r: ref.repo, n: ref.number });
-    const items = data.repository.issue.projectItems.nodes;
-    if (items.length === 0) return { code: 'step.skipped-no-board' };
-    const updated: string[] = [];
-    for (const item of items) {
-      const field = item.project.field;
-      const option = field?.options.find((o) => o.name === plan.projectStatus);
-      if (!field || !option) throw new WeaverError({ code: 'step.no-status-option', args: { board: item.project.title, status: plan.projectStatus } });
-      await graphql(ctx, SET_STATUS, { p: item.project.id, i: item.id, f: field.id, o: option.id });
-      updated.push(item.project.title);
-    }
-    return { code: 'step.updated-boards', args: { boards: updated } };
-  });
-  return steps;
+  };
+  const data = await graphql<Items>(ctx, PROJECT_ITEMS, { o: ref.owner, r: ref.repo, n: ref.number });
+  const items = data.repository.issue.projectItems.nodes;
+  if (items.length === 0) return { code: 'step.skipped-no-board' };
+  const updated: string[] = [];
+  for (const item of items) {
+    const field = item.project.field;
+    const option = field?.options.find((o) => o.name === status);
+    if (!field || !option) throw new WeaverError({ code: 'step.no-status-option', args: { board: item.project.title, status } });
+    await graphql(ctx, SET_STATUS, { p: item.project.id, i: item.id, f: field.id, o: option.id });
+    updated.push(item.project.title);
+  }
+  return { code: 'step.updated-boards', args: { boards: updated } };
+}
+
+/** True when an Issue already has a comment that contains `marker`, so a note is not written twice. */
+export async function hasIssueComment(token: string, repository: string, number: number, marker: string, fetchFn: FetchFn = fetch): Promise<boolean> {
+  const response = await rest({ token, fetchFn }, 'GET', `/repos/${repository}/issues/${number}/comments?per_page=100`);
+  if (!response.ok) throw new Error(`GitHub answered ${response.status}.`);
+  const comments = (await response.json()) as { body?: string }[];
+  return comments.some((comment) => (comment.body ?? '').includes(marker));
 }
 
 const BOARD_ITEMS = `query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){issue(number:$n){projectItems(first:10){nodes{project{title} fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}`;
