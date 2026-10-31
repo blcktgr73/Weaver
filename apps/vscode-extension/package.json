@@ -27,6 +27,10 @@
         "title": "%weaver.command.openRequirementSource.title%"
       },
       {
+        "command": "weaver.openOverview",
+        "title": "%weaver.command.openOverview.title%"
+      },
+      {
         "command": "weaver.scanWorkspace",
         "title": "%weaver.command.scanWorkspace.title%"
       }
@@ -87,6 +91,7 @@
     "typescript": "^5.5.0"
   },
   "dependencies": {
+    "@palab/weaver-github": "0.0.1",
     "@palab/weaver-markdown": "0.0.1"
   },
   "repository": {

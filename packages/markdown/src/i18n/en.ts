@@ -43,6 +43,22 @@ export const en = {
   'project.rate-limited': 'GitHub is limiting requests. Try again later.',
   'project.too-large': 'The Project has more than {pages} pages of items, so reading stopped.',
 
+  // Overview Kanban
+  'ui.overview.title': 'Overview',
+  'ui.overview.project': 'Project: {title}',
+  'ui.overview.cards': { one: '{count} card', other: '{count} cards' },
+  'ui.overview.blocked': '{count} blocked',
+  'ui.overview.no-cards': 'no cards',
+  'ui.overview.skipped': '{count} Project items are not shown: pull requests, drafts, or repositories that are not registered.',
+  'ui.overview.sign-in': 'Sign in to GitHub',
+  'ui.overview.sign-in-note': 'The board is read from the GitHub Project with your VS Code sign-in. It needs the "repo" and "project" scopes.',
+  'ui.overview.refresh': 'Refresh',
+  'ui.overview.loading': 'Loading the Project…',
+  'ui.overview.no-registry': 'This workspace has no fabric.yaml at its root, so there is no Overview to show. Open the folder that holds it.',
+  'ui.overview.registry-problems': 'The registry has problems:',
+  'ui.overview.open-requirement': 'Open {id}: {title}',
+  'ui.overview.open-issue': 'Open Issue #{number} on GitHub',
+
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
   'gap.no-status-label': 'no status label',

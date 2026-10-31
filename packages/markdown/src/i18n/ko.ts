@@ -42,6 +42,22 @@ export const ko: Record<MessageKey, Message> = {
   'project.rate-limited': 'GitHub가 요청을 제한하고 있습니다. 잠시 뒤에 다시 시도해 주세요.',
   'project.too-large': 'Project 항목이 {pages}쪽을 넘어서 읽기를 멈췄습니다.',
 
+  // 전체 보기(Overview) 칸반
+  'ui.overview.title': '전체 보기',
+  'ui.overview.project': 'Project: {title}',
+  'ui.overview.cards': { one: '카드 {count}장', other: '카드 {count}장' },
+  'ui.overview.blocked': '막힘 {count}',
+  'ui.overview.no-cards': '카드 없음',
+  'ui.overview.skipped': 'Project 항목 {count}개는 보이지 않습니다. 풀 리퀘스트, 초안, 또는 등록되지 않은 저장소의 항목입니다.',
+  'ui.overview.sign-in': 'GitHub에 로그인',
+  'ui.overview.sign-in-note': '보드는 VS Code의 GitHub 로그인으로 GitHub Project에서 읽어 옵니다. "repo"와 "project" 권한이 필요합니다.',
+  'ui.overview.refresh': '새로 고침',
+  'ui.overview.loading': 'Project를 불러오는 중…',
+  'ui.overview.no-registry': '이 작업공간의 맨 위에 fabric.yaml이 없어 보여 줄 전체 보기가 없습니다. 이 파일이 있는 폴더를 열어 주세요.',
+  'ui.overview.registry-problems': '등록부에 문제가 있습니다:',
+  'ui.overview.open-requirement': '{id} 열기: {title}',
+  'ui.overview.open-issue': 'GitHub에서 Issue #{number} 열기',
+
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',
   'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',

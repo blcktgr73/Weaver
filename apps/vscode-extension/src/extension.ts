@@ -2,12 +2,14 @@ import * as vscode from 'vscode';
 import { documentKindOf, viewTargetOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
+import { OverviewView, readRegistry } from './overviewView';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   const view = new RequirementView();
+  const overview = new OverviewView();
 
   // Tells the menus whether the active file is a Weaver document (TASK-018).
   let latest: Loaded | undefined;
@@ -26,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
     publishDocumentKind();
     publishDiagnostics(diagnostics, loaded, currentLocale());
     view.update(loaded);
+    overview.update(loaded);
     return loaded;
   };
 
@@ -74,6 +77,10 @@ export function activate(context: vscode.ExtensionContext): void {
     if (requirement) view.show(loaded, requirement);
   });
 
+  const openOverview = vscode.commands.registerCommand('weaver.openOverview', async () => {
+    await overview.show(await refresh());
+  });
+
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
     const loaded = await refresh();
     const { errors, warnings } = publishDiagnostics(diagnostics, loaded, currentLocale());
@@ -112,8 +119,11 @@ export function activate(context: vscode.ExtensionContext): void {
     if (event.affectsConfiguration('weaver.language')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, editor, openSource, openView, scanWorkspace, onSave, onActiveEditor, onLanguage);
-  void refresh();
+  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  void refresh().then(async (loaded) => {
+    // With a registry at the workspace root, the Overview is where exploration starts (REQ-006).
+    if ((await readRegistry()).kind !== 'none') await overview.show(loaded);
+  });
 }
 
 export function deactivate(): void {
