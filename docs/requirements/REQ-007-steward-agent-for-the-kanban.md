@@ -44,6 +44,8 @@ The steward never commits to a default branch, never closes an Issue, and never 
 
 ## Open decisions
 
+DEC-012 proposes answers to the first four items below.
+
 - Which operations the first version of the tool supports and which stay manual.
 - How a conversation hands a ticket to the tool: a direct command, an agent-protocol (MCP) server, or a file the steward picks up.
 - How long a card may stay idle before it is marked stale, and whether this is set per repository.
@@ -59,7 +61,15 @@ Open decisions are recorded as `DEC-###` documents before the related tasks star
 
 ## Tasks
 
-Tasks are not created yet. This requirement starts after REQ-006 has settled the data structure, because the write rules depend on it.
+- `TASK-043` Create the weaver command-line tool with a JSON contract and list and show — [GitHub Issue #94](https://github.com/blcktgr73/Weaver/issues/94)
+- `TASK-044` Confirm each write and record it in a local action log — [GitHub Issue #95](https://github.com/blcktgr73/Weaver/issues/95)
+- `TASK-045` Add existing Issues to the Project from the command line — [GitHub Issue #96](https://github.com/blcktgr73/Weaver/issues/96)
+- `TASK-046` Create a task with its Issue and Project card in one operation — [GitHub Issue #97](https://github.com/blcktgr73/Weaver/issues/97)
+- `TASK-047` Move a card and attach evidence from the command line — [GitHub Issue #98](https://github.com/blcktgr73/Weaver/issues/98)
+- `TASK-048` Reconcile mismatches according to the steward tiers — [GitHub Issue #99](https://github.com/blcktgr73/Weaver/issues/99)
+- `TASK-049` Write the agent contract for the weaver tool — [GitHub Issue #100](https://github.com/blcktgr73/Weaver/issues/100)
+
+The approach for the first version is proposed in [DEC-012](../decisions/DEC-012-steward-first-version.md) and is not accepted yet. `TASK-043` and `TASK-044` come first; the write tasks follow `TASK-044`; `TASK-048` needs `TASK-045` to `TASK-047`. Scheduled runs and batch approval have no task until they are decided.
 
 ## Evidence policy
 
