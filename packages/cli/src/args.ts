@@ -6,7 +6,7 @@ export interface Args {
 }
 
 const VALUE_OPTIONS = new Set(['root', 'repository', 'column', 'lang', 'approve', 'title', 'requirement', 'criteria', 'assignee', 'assignee-type', 'area', 'to', 'pull']);
-const FLAGS = new Set(['text', 'help']);
+const FLAGS = new Set(['text', 'help', 'apply']);
 
 /** `--name value` for options, `--name` for flags. Anything else is a positional word. */
 export function parseArgs(argv: readonly string[]): Args | { unknown: string } {

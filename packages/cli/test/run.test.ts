@@ -560,3 +560,24 @@ describe('column and pull parsing', () => {
     expect(parsePullRef('seven', 'me/Weaver')).toBeUndefined();
   });
 });
+
+describe('weaver reconcile', () => {
+  it('only shows the plan and the report by default, even at a terminal, and exits 0', async () => {
+    const { deps, out } = setup();
+    deps.interactive = true;
+    deps.ask = async () => {
+      throw new Error('must not ask during a dry run');
+    };
+    expect(await run(['reconcile'], deps)).toBe(EXIT.ok);
+    const result = JSON.parse(out.join(''));
+    expect(result.schema).toBe(1);
+    expect(result.report.some((r: { kind: string }) => r.kind === 'card-without-file')).toBe(true);
+    expect(result.actions).toEqual([]);
+  });
+
+  it('prints a text report with --text', async () => {
+    const { deps, out } = setup();
+    expect(await run(['reconcile', '--text'], deps)).toBe(EXIT.ok);
+    expect(out.join('')).toMatch(/^proposed\tcard-without-file\t#11\t/m);
+  });
+});

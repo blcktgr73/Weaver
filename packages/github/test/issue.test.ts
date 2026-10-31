@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { planMove } from '@palab/weaver-markdown';
-import { addIssueComment, applyMove, fetchEvidence, fetchIssue, fetchPull, type FetchFn } from '../src';
+import { addIssueComment, applyMove, fetchEvidence, fetchIssue, fetchPull, hasIssueComment, setBoardStatus, type FetchFn } from '../src';
 
 const ISSUE = 'https://github.com/me/Weaver/issues/5';
 
@@ -127,5 +127,34 @@ describe('fetchPull and addIssueComment', () => {
     await addIssueComment('t', 'me/Weaver', 5, 'hello', fetchFn);
     expect(calls).toEqual([{ method: 'POST', url: 'https://api.github.com/repos/me/Weaver/issues/5/comments', body: { body: 'hello' } }]);
     await expect(addIssueComment('t', 'me/Weaver', 5, 'x', routes(() => ({ status: 403 })).fetchFn)).rejects.toThrow('403');
+  });
+});
+
+describe('setBoardStatus and hasIssueComment', () => {
+  const items = (options: { name: string }[]) => ({
+    json: { data: { repository: { issue: { projectItems: { nodes: [{ id: 'ITEM', project: { id: 'PROJECT', title: 'Board', field: { id: 'FIELD', options: options.map((o, i) => ({ id: `O${i}`, name: o.name })) } } }] } } } } },
+  });
+
+  it('sets the Status on the board the Issue is on', async () => {
+    const { fetchFn, calls } = routes((call) => ((call.body as { query?: string } | undefined)?.query?.includes('projectItems(first:10){nodes{id project') ? items([{ name: 'Todo' }, { name: 'Done' }]) : { json: { data: {} } }));
+    const notice = await setBoardStatus('t', ISSUE, 'Done', fetchFn);
+    expect(notice).toMatchObject({ code: 'step.updated-boards' });
+    expect(calls[1].body).toMatchObject({ variables: { p: 'PROJECT', i: 'ITEM', f: 'FIELD', o: 'O1' } });
+  });
+
+  it('has nothing to set for an Issue on no board, and fails when the board has no such option', async () => {
+    const none = routes(() => ({ json: { data: { repository: { issue: { projectItems: { nodes: [] } } } } } }));
+    expect(await setBoardStatus('t', ISSUE, 'Done', none.fetchFn)).toEqual({ code: 'step.skipped-no-board' });
+    const noOption = routes(() => items([{ name: 'Todo' }]));
+    await expect(setBoardStatus('t', ISSUE, 'Done', noOption.fetchFn)).rejects.toThrow();
+    await expect(setBoardStatus('t', 'nope', 'Done', none.fetchFn)).rejects.toThrow();
+  });
+
+  it('finds a marker among the comments of an Issue', async () => {
+    const { fetchFn, calls } = routes(() => ({ json: [{ body: 'hello' }, { body: 'note <!-- weaver:pull-7 -->' }] }));
+    expect(await hasIssueComment('t', 'me/Weaver', 5, '<!-- weaver:pull-7 -->', fetchFn)).toBe(true);
+    expect(await hasIssueComment('t', 'me/Weaver', 5, '<!-- weaver:pull-8 -->', fetchFn)).toBe(false);
+    expect(calls[0].url).toContain('/repos/me/Weaver/issues/5/comments');
+    await expect(hasIssueComment('t', 'me/Weaver', 5, 'x', routes(() => ({ status: 500 })).fetchFn)).rejects.toThrow('500');
   });
 });

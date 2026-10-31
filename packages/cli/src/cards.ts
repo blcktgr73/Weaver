@@ -1,6 +1,7 @@
 import {
   Artifact,
   DEFAULT_STALE_DAYS,
+  Notice,
   normalizeIssueUrl,
   RequirementLink,
   requirementsByIssue,
@@ -27,25 +28,38 @@ export interface CliCard {
   gaps: string[];
 }
 
-export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays = DEFAULT_STALE_DAYS): CliCard[] {
+/** The stale notices of each card, by normalized Issue address. */
+export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays = DEFAULT_STALE_DAYS): Map<string, Notice[]> {
   const links = requirementsByIssue(artifacts);
   const tasks = new Map(artifacts.flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])));
+  return new Map(
+    cards.map((card) => {
+      const link = links.get(normalizeIssueUrl(card.url));
+      const task = link?.taskPath ? tasks.get(link.taskPath) : undefined;
+      const notices = staleNotices(
+        {
+          column: card.placement.column,
+          state: card.state,
+          updatedAt: card.updatedAt,
+          pullCount: card.pullCount,
+          needsDecision: task?.status === 'needs-human-decision',
+          evidenceException: Boolean(task?.evidenceException),
+        },
+        now,
+        idleDays,
+      );
+      return [normalizeIssueUrl(card.url), notices] as const;
+    }),
+  );
+}
+
+export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays = DEFAULT_STALE_DAYS): CliCard[] {
+  const links = requirementsByIssue(artifacts);
+  const notices = cardNotices(cards, artifacts, now, idleDays);
   return cards.map((card) => {
     const link: RequirementLink | undefined = links.get(normalizeIssueUrl(card.url));
-    const task = link?.taskPath ? tasks.get(link.taskPath) : undefined;
     const taskId = link?.taskId ?? card.taskId;
-    const stale = staleNotices(
-      {
-        column: card.placement.column,
-        state: card.state,
-        updatedAt: card.updatedAt,
-        pullCount: card.pullCount,
-        needsDecision: task?.status === 'needs-human-decision',
-        evidenceException: Boolean(task?.evidenceException),
-      },
-      now,
-      idleDays,
-    ).map((notice) => notice.code.slice('stale.'.length));
+    const stale = (notices.get(normalizeIssueUrl(card.url)) ?? []).map((notice) => notice.code.slice('stale.'.length));
     return {
       repository: card.repository,
       number: card.number,

@@ -53,27 +53,37 @@ export async function planCardMove(input: MoveInput): Promise<Planned> {
     warnings = gaps.map((gap) => formatNotice(gap, locale));
   }
 
+  return { ok: true, actions: [moveAction(input.token, card, column, locale, input.fetchFn, warnings)] };
+}
+
+/** The action that applies `planMove` to a card; the editor runs the same `applyMove`. */
+export function moveAction(
+  token: string,
+  card: Pick<CliCard, 'repository' | 'number' | 'url' | 'state' | 'labels'>,
+  column: KanbanColumn,
+  locale: Locale,
+  fetchFn?: FetchFn,
+  warnings: string[] = [],
+  reason?: Notice,
+): PlannedAction {
+  const issue = { state: card.state, labels: card.labels };
+  const plan = planMove(issue, column);
   const ref = `${card.repository}#${card.number}`;
   const changes = describeMove(plan, issue).map((line) => formatNotice(line, locale));
   return {
-    ok: true,
-    actions: [
-      {
-        kind: 'card.move',
-        target: ref,
-        summary: { code: 'cli.card-move.summary', args: { ref, column, changes: changes.join('; '), warnings: warnings.length ? ` (${warnings.join('; ')})` : '' } },
-        reason: { code: 'cli.card-move.reason', args: { column } },
-        fingerprint: JSON.stringify(plan),
-        run: async () => {
-          const steps = await applyMove(input.token, card.url, plan, input.fetchFn);
-          const failed = steps.find((step) => !step.ok);
-          if (failed) {
-            const detail = failed.detail ? formatNotice(failed.detail, 'en') : '';
-            throw new Error(`${formatNotice(failed.name, 'en')} failed${detail ? `: ${detail}` : ''}. Steps done before: ${steps.filter((s) => s.ok).length}.`);
-          }
-        },
-      },
-    ],
+    kind: 'card.move',
+    target: ref,
+    summary: { code: 'cli.card-move.summary', args: { ref, column, changes: changes.join('; '), warnings: warnings.length ? ` (${warnings.join('; ')})` : '' } },
+    reason: reason ?? { code: 'cli.card-move.reason', args: { column } },
+    fingerprint: JSON.stringify(plan),
+    run: async () => {
+      const steps = await applyMove(token, card.url, plan, fetchFn);
+      const failed = steps.find((step) => !step.ok);
+      if (failed) {
+        const detail = failed.detail ? formatNotice(failed.detail, 'en') : '';
+        throw new Error(`${formatNotice(failed.name, 'en')} failed${detail ? `: ${detail}` : ''}. Steps done before: ${steps.filter((s) => s.ok).length}.`);
+      }
+    },
   };
 }
 
