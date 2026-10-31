@@ -117,10 +117,19 @@ export async function executeActions(actions: readonly PlannedAction[], ctx: Exe
     };
     results.set(action, result);
 
-    const blocked = stopped || (action.dependsOn ?? []).some((needed) => results.get(needed)?.outcome !== 'done');
-    if (blocked) continue;
+    // An action waits for its prerequisites. While a prerequisite is only waiting for approval, the
+    // action is still shown, so a person or an agent sees the whole plan and every id at once.
+    const needed = (action.dependsOn ?? []).map((other) => results.get(other)?.outcome);
+    const prerequisitesDone = needed.every((outcome) => outcome === 'done');
+    const prerequisitesWaiting = !prerequisitesDone && needed.every((outcome) => outcome === 'done' || outcome === 'unconfirmed');
+    if (stopped || (!prerequisitesDone && !prerequisitesWaiting)) continue;
 
     ctx.note(`${t('cli.action-line', ctx.locale, { id, kind: result.kind, target: result.target, summary: result.summary, reason: result.reason })}\n`);
+
+    if (prerequisitesWaiting) {
+      result.outcome = 'unconfirmed';
+      continue;
+    }
 
     let approved = ctx.approved.has(id);
     if (!approved && ctx.interactive) {

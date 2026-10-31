@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Fetch } from '@palab/weaver-github';
-import { actionId, Deps, EXIT, LogEntry, parseArgs, planProjectAdd, run } from '../src';
+import { addTaskToRequirement, actionId, Deps, EXIT, LogEntry, parseArgs, nextTaskNumber, planProjectAdd, renderTaskFile, run, slugOf, taskListLine } from '../src';
 
 const REGISTRY = 'project: {owner: me, number: 1}\nrepositories:\n  - me/Weaver\n';
 
@@ -25,7 +25,7 @@ const issue = (number: number, extra: Record<string, unknown> = {}) => ({
 const FILES = [
   {
     path: 'requirements/REQ-001.md',
-    text: '---\nid: REQ-001\ntype: requirement\ntitle: First\nstatus: draft\n---\n\n## Tasks\n\n- `TASK-010` Card ten — [GitHub Issue #10](https://github.com/me/Weaver/issues/10)\n',
+    text: '---\nid: REQ-001\ntype: requirement\ntitle: First\nstatus: draft\nrepository: me/Weaver\n---\n\n## Acceptance criteria\n\n- First thing\n- Second thing\n\n## Tasks\n\n- `TASK-010` Card ten — [GitHub Issue #10](https://github.com/me/Weaver/issues/10)\n',
   },
   {
     path: 'tasks/TASK-010.md',
@@ -38,7 +38,13 @@ function setup(options: { token?: string | undefined; registry?: string; pullsFa
   const err: string[] = [];
   const writes: string[] = [];
   const logged: LogEntry[] = [];
-  const fetchImpl: Fetch = async (_url, init) => {
+  const shell: { command: string; args: string[]; cwd?: string }[] = [];
+  const written: { file: string; text: string }[] = [];
+  const fetchImpl: Fetch = async (url, init) => {
+    if (url.includes('/repos/')) {
+      writes.push(`REST ${url}`);
+      return { ok: true, status: 201, json: async () => ({ number: 77, html_url: 'https://github.com/me/Weaver/issues/77' }) };
+    }
     const query = JSON.parse(init.body).query as string;
     writes.push(query);
     if (query.includes('resource(url')) {
@@ -67,8 +73,21 @@ function setup(options: { token?: string | undefined; registry?: string; pullsFa
     interactive: false,
     ask: async () => false,
     log: { append: async (entry) => void logged.push(entry) },
+    system: {
+      run: async (command, args, options) => {
+        shell.push({ command, args, cwd: options?.cwd });
+        if (command === 'gh' && args[0] === 'pr' && args[1] === 'create') return 'https://github.com/me/Weaver/pull/200\n';
+        if (command === 'gh' && args[0] === 'pr') return JSON.stringify([{ title: 'docs: add TASK-040 x', headRefName: 'docs/task-040-x' }]);
+        if (command === 'gh') return 'main\n';
+        if (args[0] === 'rev-parse') return '/work\n';
+        return '';
+      },
+      tempDir: async () => '/tmp/work',
+      readText: async (file) => (file.endsWith('REQ-001.md') ? FILES[0].text : undefined),
+      writeFile: async (file, text) => void written.push({ file, text }),
+    },
   };
-  return { deps, out, err, writes, logged };
+  return { deps, out, err, writes, logged, shell, written };
 }
 
 describe('parseArgs', () => {
@@ -254,5 +273,115 @@ describe('planProjectAdd', () => {
     });
     expect(plan.actions).toHaveLength(1);
     expect(actionId(plan.actions[0])).toMatch(/^[0-9a-f]{12}$/);
+  });
+});
+
+describe('weaver task create', () => {
+  const ARGS = ['task', 'create', '--title', 'Add the export button', '--requirement', 'REQ-001', '--criteria', 'AC-001,ac-002', '--assignee', 'claude-code'];
+
+  async function approvedIds() {
+    const first = setup();
+    await run(ARGS, first.deps);
+    return JSON.parse(first.out.join('')).actions.map((a: { id: string }) => a.id) as string[];
+  }
+
+  it('shows the three actions, with the next free number, and creates nothing until they are approved', async () => {
+    const { deps, out, err, writes, shell } = setup();
+    expect(await run(ARGS, deps)).toBe(EXIT.unconfirmed);
+    const result = JSON.parse(out.join(''));
+    expect(result.actions.map((a: { kind: string }) => a.kind)).toEqual(['issue.create', 'project.add', 'files.pull-request']);
+    expect(err.join('')).toContain('[TASK-041] Add the export button');
+    expect(err.join('')).toContain('tasks/TASK-041.md');
+    expect(writes.filter((w) => w.startsWith('REST') || w.includes('addProjectV2ItemById'))).toEqual([]);
+    expect(shell.filter((s) => s.args[0] === 'push' || s.args[0] === 'worktree')).toEqual([]);
+  });
+
+  it('creates the Issue, adds the card, and opens a pull request from a separate worktree once all three are approved', async () => {
+    const ids = (await approvedIds()).join(',');
+    const { deps, out, writes, shell, written, logged } = setup();
+    expect(await run([...ARGS, '--approve', ids], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('done');
+    expect(writes).toContain('REST https://api.github.com/repos/me/Weaver/issues');
+    expect(writes.some((w) => w.includes('addProjectV2ItemById'))).toBe(true);
+    expect(logged.map((l) => l.action)).toEqual(['issue.create', 'project.add', 'files.pull-request']);
+
+    const git = shell.filter((s) => s.command === 'git').map((s) => s.args.slice(0, 2).join(' '));
+    expect(git).toEqual(['rev-parse --show-toplevel', 'fetch origin', 'worktree add', 'add -A', 'commit -m', 'push -u', 'worktree remove']);
+    expect(shell.find((s) => s.args[0] === 'worktree' && s.args[1] === 'add')?.args).toContain('origin/main');
+    expect(shell.find((s) => s.args[0] === 'pr' && s.args[1] === 'create')?.args).toContain('docs/task-041-add-the-export-button');
+    expect(shell.find((s) => s.args[0] === 'commit')?.args[2]).toContain('Made by the Weaver steward on behalf of @me.');
+
+    const task = written.find((w) => w.file.endsWith('TASK-041.md'));
+    expect(task?.file.replace(/\\/g, '/')).toBe('/tmp/work/tasks/TASK-041.md');
+    expect(task?.text).toContain('issue: https://github.com/me/Weaver/issues/77');
+    expect(task?.text).toContain('criteria: [AC-001, AC-002]');
+    expect(task?.text).toContain('assignee: claude-code');
+    const requirement = written.find((w) => w.file.endsWith('REQ-001.md'));
+    expect(requirement?.text).toContain('- `TASK-041` Add the export button — [GitHub Issue #77](https://github.com/me/Weaver/issues/77)');
+  });
+
+  it('says what was already created when a later step fails, and cleans up the worktree', async () => {
+    const ids = (await approvedIds()).join(',');
+    const { deps, out, shell } = setup();
+    const original = deps.system.run;
+    deps.system.run = async (command, args, options) => {
+      if (command === 'git' && args[0] === 'push') throw new Error('push rejected');
+      return original(command, args, options);
+    };
+    expect(await run([...ARGS, '--approve', ids], deps)).toBe(EXIT.failed);
+    const result = JSON.parse(out.join(''));
+    expect(result.actions.map((a: { outcome: string }) => a.outcome)).toEqual(['done', 'done', 'failed']);
+    expect(result.actions[2].message).toBe('push rejected');
+    expect(shell.some((s) => s.args[0] === 'worktree' && s.args[1] === 'remove')).toBe(true);
+  });
+
+  it('skips the card and the pull request when the Issue was not created', async () => {
+    const ids = (await approvedIds()).join(',');
+    const { deps, out } = setup();
+    const original = deps.fetch as Fetch;
+    deps.fetch = async (url, init) => (url.includes('/repos/') ? { ok: false, status: 422, json: async () => ({ message: 'Validation Failed' }) } : original(url, init));
+    expect(await run([...ARGS, '--approve', ids], deps)).toBe(EXIT.failed);
+    expect(JSON.parse(out.join('')).actions.map((a: { outcome: string }) => a.outcome)).toEqual(['failed', 'skipped', 'skipped']);
+  });
+
+  it('refuses a missing requirement, a colon in the title, an unknown criterion, and a missing option', async () => {
+    const code = async (args: string[]) => {
+      const { deps, out } = setup();
+      const exit = await run(args, deps);
+      return [exit, JSON.parse(out.join('')).error.code];
+    };
+    expect(await code(['task', 'create', '--title', 'x', '--requirement', 'REQ-999'])).toEqual([EXIT.notFound, 'cli.requirement-not-found']);
+    expect(await code(['task', 'create', '--title', 'a: b', '--requirement', 'REQ-001'])).toEqual([EXIT.usage, 'cli.bad-title']);
+    expect(await code(['task', 'create', '--title', 'x', '--requirement', 'REQ-001', '--criteria', 'AC-009'])).toEqual([EXIT.usage, 'cli.unknown-criterion']);
+    expect(await code(['task', 'create', '--title', 'x', '--requirement', 'REQ-001', '--repository', 'me/Other'])).toEqual([EXIT.usage, 'cli.repository-unregistered']);
+    expect(await code(['task', 'create', '--title', 'x'])).toEqual([EXIT.usage, 'cli.missing-argument']);
+  });
+});
+
+describe('task file helpers', () => {
+  it('numbers after the largest task anywhere, ignoring other text', () => {
+    expect(nextTaskNumber(['TASK-009', '[TASK-012] x', 'docs/task-040-y', 'no task'])).toBe(41);
+    expect(nextTaskNumber([])).toBe(1);
+  });
+
+  it('makes a short branch slug', () => {
+    expect(slugOf('Add the export button!')).toBe('add-the-export-button');
+    expect(slugOf('???')).toBe('task');
+    expect(slugOf('x'.repeat(60)).length).toBeLessThanOrEqual(40);
+  });
+
+  it('renders the task file header, leaving out an assignee that was not given', () => {
+    const text = renderTaskFile({ id: 'TASK-041', title: 'Export', requirement: 'REQ-001', issueUrl: 'https://github.com/me/Weaver/issues/77', issueNumber: 77, repository: 'me/Weaver', criteria: ['AC-001'], assigneeType: 'agent' });
+    expect(text.startsWith('---\nid: TASK-041\ntype: task\ntitle: Export\n')).toBe(true);
+    expect(text).not.toContain('assignee:');
+  });
+
+  it('adds a task line at the end of the list under Tasks, or starts the list', () => {
+    const line = taskListLine('TASK-002', 'Two', 2, 'https://github.com/o/r/issues/2');
+    const withList = '# R\n\n## Tasks\n\n- `TASK-001` One\n\n## Evidence\n\ntext\n';
+    expect(addTaskToRequirement(withList, line)).toBe('# R\n\n## Tasks\n\n- `TASK-001` One\n' + line + '\n\n## Evidence\n\ntext\n');
+    expect(addTaskToRequirement('## Tasks\n\nNone yet.\n', line)).toBe('## Tasks\n\n' + line + '\n\nNone yet.\n');
+    expect(addTaskToRequirement('# no tasks section\n', line)).toBeUndefined();
+    expect(addTaskToRequirement('## Tasks\r\n\r\n- a\r\n', line)).toBe('## Tasks\r\n\r\n- a\r\n' + line + '\r\n');
   });
 });

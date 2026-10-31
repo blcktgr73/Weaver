@@ -128,13 +128,26 @@ describe('executeActions', () => {
     expect(exitCodeOf(results)).toBe(EXIT.failed);
   });
 
-  it('skips an action whose prerequisite did not run', async () => {
+  it('still shows an action whose prerequisite is only waiting for approval, so every id is known', async () => {
     const first = action('first');
     const second = action('second', { dependsOn: [first.planned] });
-    const { ctx } = context({ approved: [actionId(second.planned)] });
+    const { ctx, notes } = context({ approved: [actionId(second.planned)] });
     const results = await executeActions([first.planned, second.planned], ctx);
-    expect(results.map((r) => r.outcome)).toEqual(['unconfirmed', 'skipped']);
+    expect(results.map((r) => r.outcome)).toEqual(['unconfirmed', 'unconfirmed']);
     expect(second.ran).toEqual([]);
+    expect(notes.join('')).toContain(`id ${actionId(second.planned)}`);
+  });
+
+  it('skips an action whose prerequisite was refused or failed', async () => {
+    const first = action('first');
+    const second = action('second', { dependsOn: [first.planned] });
+    const refused = context({ interactive: true, answers: [false] });
+    expect((await executeActions([first.planned, second.planned], refused.ctx)).map((r) => r.outcome)).toEqual(['declined', 'skipped']);
+
+    const broken = action('broken', { fail: true });
+    const after = action('after', { dependsOn: [broken.planned] });
+    const failed = context({ approved: [actionId(broken.planned), actionId(after.planned)] });
+    expect((await executeActions([broken.planned, after.planned], failed.ctx)).map((r) => r.outcome)).toEqual(['failed', 'skipped']);
   });
 
   it('succeeds quietly when there is nothing to do', async () => {

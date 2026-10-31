@@ -2,7 +2,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import type { SourceFile } from '@palab/weaver-markdown';
 
-const SKIP = new Set(['node_modules', '.git', 'dist', 'out']);
+/** Folders that hold no work of the repository: dependencies, build output, and the sample workspaces. */
+const SKIP = new Set(['node_modules', '.git', 'dist', 'out', 'examples']);
 
 /** Every Markdown file under `root`, with `/`-separated paths relative to it. */
 export async function readMarkdownFiles(root: string): Promise<SourceFile[]> {
