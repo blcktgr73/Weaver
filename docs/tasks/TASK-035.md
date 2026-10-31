@@ -6,7 +6,7 @@ requirement: REQ-006
 issue: https://github.com/blcktgr73/Weaver/issues/67
 repository: blcktgr73/Weaver
 assignee_type: agent
-criteria: [AC-006]
+criteria: [AC-007]
 assignee: claude-code
 ---
 

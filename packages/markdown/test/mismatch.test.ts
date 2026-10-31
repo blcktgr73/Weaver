@@ -105,6 +105,11 @@ describe('findMismatches', () => {
       expect(run([pull({ closes: [65] })])).toEqual([]);
     });
 
+    it('is quiet when the Issue is already closed, because nothing is left to close', () => {
+      const closed = [card(65, { taskId: 'TASK-033', state: 'closed' })];
+      expect(findMismatches({ artifacts: files, cards: closed, repositories: [REPO], pulls: [pull({})] })).toEqual([]);
+    });
+
     it('is quiet for a task with an evidence exception', () => {
       const withException = artifacts({ 'REQ-001.md': req(), 'TASK-033.md': task('TASK-033', `issue: ${url(65)}\nevidence_exception: before the rule\n`) });
       expect(run([pull({})], withException)).toEqual([]);
