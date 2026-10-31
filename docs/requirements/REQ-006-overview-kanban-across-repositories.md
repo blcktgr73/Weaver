@@ -49,8 +49,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 
 ## Open decisions
 
-- **Registry location.** The registry file lives in the Weaver repository at first, or in a separate hub repository.
-- **Read access.** Which token scopes are enough to read a personal or an organization Project (see [DEC-008](../decisions/DEC-008-agent-identity-and-write-confirmation.md)).
+- **Read access.** A classic token with the `repo` and `project` scopes reads a personal Project ([DEC-010](../decisions/DEC-010-fabric-registry-location.md)). Organization Projects and fine-grained tokens are not verified yet.
 
 ## Decisions taken
 
@@ -60,6 +59,28 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 - The offline board is the last board read from GitHub, kept on the user's computer: [DEC-011](../decisions/DEC-011-offline-board-from-last-read.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
+
+## Review of remaining gaps (2026-11-01)
+
+Each criterion was checked against the code and its tests. The rows say where the proof is and what is still unproven.
+
+| Criterion | Proof | Not yet proven |
+| --- | --- | --- |
+| AC-001 registry | `fabric.yaml`, `parseFabric` tests, DEC-010 | Registry in a hub repository (the parser does not assume a location) |
+| AC-002 fabric root and clone | `clone.ts` tests, the commands in the extension | Clone run against a real remote from the editor |
+| AC-003 opens on the Overview, lanes in registry order | `overviewHtml` render checks, seen in the editor | none |
+| AC-004 reorder, collapse, hide, filter lanes | `applyLaneOrder`, `moveLane` tests, seen in the editor (chips, fold, scroll) | The up and down buttons |
+| AC-005 card actions | Seen in the editor: a card title opens its requirement view. `TASK-050` opens the views as tabs | The right-click menu, and the new-tab behavior after `TASK-050` |
+| AC-006 stale marks | `staleNotices` tests; the real Project gives the expected marks | Their look on the board |
+| AC-007 mismatches | `findMismatches` tests; seen in the editor, and fixed against real data | none |
+| AC-008 offline board | Snapshot and file-board tests, render checks | Run with the network switched off |
+| AC-009 repository without a folder | Cards come from the Project, not from open folders | none |
+| AC-010 messages in the catalog | en/ko parity test | none |
+| AC-011 requirement view without a board | Stage summary, seen in the editor | none |
+| AC-012 show on the Overview | `focusCards` tests | The button in the editor |
+| AC-013 last read kept | `snapshot` tests | A second launch after a successful read |
+
+The editor behaviors in the right column cannot be driven by the test suite; they are listed so that a person can check them in one pass in the development host (`npm run dev:overview`).
 
 ## Tasks
 
