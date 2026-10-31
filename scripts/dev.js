@@ -13,7 +13,8 @@ const folder = path.resolve(root, process.argv[2] || path.join('examples', 'samp
 // An installed copy (palab.weaver) registers the same commands as this checkout, so the host
 // would fail with "command ... already exists". Disable the installed copy in this window only.
 // `code` is a .cmd shim on Windows, so it needs a shell; quote the paths ourselves.
-const child = spawn(`code --new-window --disable-extension palab.weaver "--extensionDevelopmentPath=${extension}" "${folder}"`, {
+// The folder comes first and the option uses `=`, so no argument can be taken for another's value.
+const child = spawn(`code "${folder}" --new-window --disable-extension=palab.weaver "--extensionDevelopmentPath=${extension}"`, {
   shell: true,
   detached: true,
   stdio: 'ignore',
