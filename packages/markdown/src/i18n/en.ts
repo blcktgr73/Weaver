@@ -80,6 +80,20 @@ export const en = {
   'ui.overview.na.pull-request-failed': 'The pull requests could not be read.',
   'ui.overview.pick-pull-request': 'Which pull request?',
 
+  // Mismatches between files, Issues, and the Project
+  'mismatch.task-without-issue': '{task} has no Issue link.',
+  'mismatch.broken-issue-link': '{task} links to "{issue}", which is not a GitHub Issue address.',
+  'mismatch.issue-not-on-project': '{task} links to {issue}, which is not on the Project.',
+  'mismatch.card-without-file': '#{number} of {repository} is on the Project, but no task file or requirement lists it: {title}',
+  'mismatch.merged-pr-not-linked': 'Pull request #{pull} names {task} but does not close its Issue #{number}.',
+  'mismatch.board-status-differs': '#{number} of {repository} is {board} on the board, but its label puts it in {column} ({expected}).',
+  'pulls.failed': 'The merged pull requests of {repository} could not be read.',
+  'ui.overview.mismatches': 'Mismatches ({count})',
+  'ui.overview.mismatches-none': 'No mismatches between files, Issues, and the Project.',
+  'ui.overview.mismatches-note': 'Weaver only reports these and changes nothing.',
+  'ui.overview.mismatches-skipped': 'One check was skipped: {reasons}',
+  'ui.overview.open-file': 'Open {path}',
+
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
   'gap.no-status-label': 'no status label',

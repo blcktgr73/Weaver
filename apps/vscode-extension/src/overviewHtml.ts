@@ -6,6 +6,7 @@ import {
   Locale,
   MessageArgs,
   MessageKey,
+  Mismatch,
   Notice,
   RequirementLink,
   t,
@@ -40,6 +41,10 @@ export type OverviewState =
       /** Repositories the user turned off, and lanes folded to their header. Kept on this computer only. */
       hidden: string[];
       collapsed: string[];
+      /** Where files, Issues, and the Project disagree. Reported only. */
+      mismatches: Mismatch[];
+      /** Checks that could not run, such as unreadable pull requests. */
+      skippedChecks: Notice[];
     };
 
 const TASK_PREFIX = /^\[TASK-\d{3,}\]\s*/;
@@ -103,11 +108,24 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
         })
         .join('');
       filter = `<div class="filter"><span class="muted">${e(tt('ui.overview.projects'))}</span>${chips}${hidden.size ? button('showAll', 'ui.overview.show-all') : ''}</div>`;
-      body = shown.length
+      const mismatchHtml = state.mismatches.length
+        ? `<details class="mismatches" open><summary>\u26a0 ${e(tt('ui.overview.mismatches', { count: state.mismatches.length }))}</summary>
+        <p class="muted small">${e(tt('ui.overview.mismatches-note'))}</p>
+        <ul class="plain">${state.mismatches
+          .map(
+            (m) =>
+              `<li>${e(t(`mismatch.${m.kind}` as MessageKey, locale, m.args))}${m.path ? ` <a href="#" data-file="${e(m.path)}">${e(tt('ui.overview.open-file', { path: m.path }))}</a>` : ''}${m.url ? ` <a href="#" data-url="${e(m.url)}">\u2197</a>` : ''}</li>`,
+          )
+          .join('')}</ul></details>`
+        : `<p class="muted small">${e(tt('ui.overview.mismatches-none'))}</p>`;
+      const skippedChecks = state.skippedChecks.length
+        ? `<p class="muted small">${e(tt('ui.overview.mismatches-skipped', { reasons: state.skippedChecks.map((n) => formatNotice(n, locale)).join(' ') }))}</p>`
+        : '';
+      body = mismatchHtml + skippedChecks + (shown.length
         ? `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
       ${shown.map((lane) => laneHtml(lane, collapsed.has(lane.repository))).join('')}
       ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`
-        : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`;
+        : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`);
       break;
     }
   }
@@ -132,6 +150,9 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   .scroll::-webkit-scrollbar-thumb { background: var(--vscode-scrollbarSlider-background); }
   .scroll::-webkit-scrollbar-thumb:hover { background: var(--vscode-scrollbarSlider-hoverBackground); }
   .scroll::-webkit-scrollbar-corner { background: transparent; }
+  details.mismatches { margin: 4px 0 10px; }
+  details.mismatches summary { cursor: pointer; color: var(--vscode-editorWarning-foreground); font-weight: 600; }
+  details.mismatches li { padding: 2px 0; }
   .filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 0 8px; }
   button.chip { border-radius: 12px; padding: 2px 10px; border: 1px solid var(--vscode-panel-border); }
   button.chip.on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
@@ -169,12 +190,13 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold]');
+    const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold],[data-file]');
     if (!target) return;
     event.preventDefault();
     if (target.dataset.cmd) vscode.postMessage({ type: target.dataset.cmd });
     if (target.dataset.url) vscode.postMessage({ type: 'openUrl', url: target.dataset.url });
     if (target.dataset.open) vscode.postMessage({ type: 'openCard', url: target.dataset.open });
+    if (target.dataset.file) vscode.postMessage({ type: 'openFile', path: target.dataset.file });
     if (target.dataset.req) vscode.postMessage({ type: 'openRequirement', id: target.dataset.req });
     if (target.dataset.toggle) vscode.postMessage({ type: 'toggleLane', id: target.dataset.toggle });
     if (target.dataset.fold) vscode.postMessage({ type: 'foldLane', id: target.dataset.fold });
