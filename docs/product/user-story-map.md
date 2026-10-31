@@ -86,6 +86,13 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-022` — As a product person, I can draft a requirement in Notion and import it into the repository as a reviewed `REQ-###` Markdown file, so my discussion is not lost and the repository stays the source of truth.
 - `US-023` — As a stakeholder who works in Notion, I can see a requirement's current status, tasks, and evidence links on its Notion page, without opening the repository.
 - `US-024` — As a maintainer, I can tell which Notion page a requirement came from, and I can see when the page and the repository file have drifted apart.
+- `US-025` — As a team member, I open Weaver and see one Overview Kanban of every registered repository, and from a card I reach its requirement, task, evidence, and repository.
+- `US-026` — As a maintainer, I can register repositories in a shared registry, clone them under one local folder, and open that folder in VS Code, so that repositories I have not opened still appear on the board.
+- `US-027` — As an agent, I can read the Kanban and create, move, and annotate cards through one documented tool, and a human confirms only the moves that matter.
+- `US-028` — As a user talking with an agent, a ticket I create becomes a task file, an Issue, and a Project card in one step, so it is not forgotten when the conversation moves on.
+- `US-029` — As a team member, I can see stale cards on the board: idle for too long, without evidence, or waiting for a human decision.
+- `US-030` — As a maintainer, I can see where repository files, Issues, and the central Project disagree, so I know what needs fixing before anything is changed automatically.
+- `US-031` — As a maintainer, I can rely on a steward agent to register missing Issues and Project cards and attach evidence, so keeping the board current does not cost the team's energy.
 
 ### PALab project adoption
 
