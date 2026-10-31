@@ -51,13 +51,25 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 ## Decisions taken
 
 - The central Project is configuration. PALab keeps PALab Ops Kanban, and other teams register their own: [DEC-007](../decisions/DEC-007-central-project-is-configuration.md).
+- The registry is `fabric.yaml` at the root of the Weaver repository: [DEC-010](../decisions/DEC-010-fabric-registry-location.md).
 - The six columns stay derived from Issue labels, and no custom Project field is required: [DEC-009](../decisions/DEC-009-keep-labels-for-columns.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
 
 ## Tasks
 
-Tasks are not created yet. They are split from the acceptance criteria once the open decisions above are settled.
+- `TASK-029` Verify Project read access and record the registry decision — [GitHub Issue #61](https://github.com/blcktgr73/Weaver/issues/61)
+- `TASK-030` Define and validate the fabric registry — [GitHub Issue #62](https://github.com/blcktgr73/Weaver/issues/62)
+- `TASK-031` Read all items of the central Project — [GitHub Issue #63](https://github.com/blcktgr73/Weaver/issues/63)
+- `TASK-032` Show the Overview Kanban — [GitHub Issue #64](https://github.com/blcktgr73/Weaver/issues/64)
+- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card — [GitHub Issue #65](https://github.com/blcktgr73/Weaver/issues/65)
+- `TASK-034` Set a fabric root folder and clone the missing repositories — [GitHub Issue #66](https://github.com/blcktgr73/Weaver/issues/66)
+- `TASK-035` List mismatches between files, Issues, and the Project — [GitHub Issue #67](https://github.com/blcktgr73/Weaver/issues/67)
+- `TASK-036` Mark stale cards — [GitHub Issue #68](https://github.com/blcktgr73/Weaver/issues/68)
+- `TASK-037` Show a read-only board when GitHub is unreachable — [GitHub Issue #69](https://github.com/blcktgr73/Weaver/issues/69)
+- `TASK-038` Write the guide for registering your own Project — [GitHub Issue #70](https://github.com/blcktgr73/Weaver/issues/70)
+
+`TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
 ## Evidence policy
 
