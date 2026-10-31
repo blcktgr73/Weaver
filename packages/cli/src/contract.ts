@@ -11,6 +11,15 @@ export const SCHEMA = 1;
  */
 export const EXIT = { ok: 0, failed: 1, usage: 2, notFound: 3, unconfirmed: 4, declined: 5 } as const;
 
+/** The programs and files a write command uses, so a test can replace them. */
+export interface System {
+  /** Runs `git` or `gh` and returns what it printed; rejects when it fails. */
+  run(command: 'git' | 'gh', args: string[], options?: { cwd?: string }): Promise<string>;
+  tempDir(): Promise<string>;
+  readText(file: string): Promise<string | undefined>;
+  writeFile(file: string, text: string): Promise<void>;
+}
+
 /** Everything the commands touch outside the process, so a test can replace it. */
 export interface Deps {
   cwd: string;
@@ -31,4 +40,5 @@ export interface Deps {
   ask(question: string): Promise<boolean>;
   /** Where each executed action is recorded. */
   log: ActionLog;
+  system: System;
 }

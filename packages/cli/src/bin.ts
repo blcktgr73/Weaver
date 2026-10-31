@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as readline from 'readline';
 import { defaultLogPath, fileActionLog } from './actions';
 import { readMarkdownFiles } from './files';
@@ -10,6 +12,14 @@ import { run } from './run';
 function ghToken(): Promise<string | undefined> {
   return new Promise((resolve) => {
     execFile('gh', ['auth', 'token'], { timeout: 15000 }, (error, stdout) => resolve(error ? undefined : stdout.trim() || undefined));
+  });
+}
+
+function runProgram(command: 'git' | 'gh', args: string[], options?: { cwd?: string }): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(command, args, { cwd: options?.cwd, timeout: 120000, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }, (error, stdout, stderr) =>
+      error ? reject(new Error(`${command} ${args[0]} failed: ${(stderr || error.message).trim()}`)) : resolve(stdout),
+    );
   });
 }
 
@@ -41,6 +51,15 @@ void run(process.argv.slice(2), {
   interactive: Boolean(process.stdin.isTTY),
   ask,
   log: fileActionLog(defaultLogPath(process.env)),
+  system: {
+    run: runProgram,
+    tempDir: async () => path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'weaver-')), 'work'),
+    readText: (file) => fs.readFile(file, 'utf8').then((text) => text, () => undefined),
+    writeFile: async (file, text) => {
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.writeFile(file, text, 'utf8');
+    },
+  },
 }).then((code) => {
   process.exitCode = code;
 });

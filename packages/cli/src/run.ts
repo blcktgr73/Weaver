@@ -1,6 +1,7 @@
 import * as path from 'path';
 import {
   Artifact,
+  RequirementArtifact,
   formatNotice,
   Locale,
   LOCALES,
@@ -12,11 +13,12 @@ import {
   t,
 } from '@palab/weaver-markdown';
 import { readMergedPulls, readProject } from '@palab/weaver-github';
-import { executeActions, finishActions, parseApproved } from './actions';
+import { executeActions, finishActions, parseApproved, PlannedAction, Skipped } from './actions';
 import { Args, parseArgs } from './args';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
+import { nextTaskNumber, planTaskCreate, usedTaskTexts } from './taskCreate';
 
 export { Deps, EXIT, SCHEMA } from './contract';
 
@@ -43,13 +45,17 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
   }
 
   if (args.command === 'project' && (args.positional[0] !== 'add' || args.positional.length < 2)) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'project add', argument: 'an Issue address' });
+  }
+
+  if (args.command === 'task' && (args.positional[0] !== 'create' || !args.options.title || !args.options.requirement)) {
+    return fail(EXIT.usage, 'cli.missing-argument', { command: 'task create', argument: '--title and --requirement' });
   }
 
   const root = path.resolve(deps.cwd, args.options.root ?? '.');
@@ -65,15 +71,9 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     return EXIT.failed;
   }
 
-  if (args.command === 'project') {
-    const plan = planProjectAdd(args.positional.slice(1), {
-      token,
-      project: registry.project,
-      repositories,
-      onProject: read.read.cards.map((card) => card.url),
-      fetch: deps.fetch,
-    });
-    const results = await executeActions(plan.actions, {
+  /** Shows the plan, takes the confirmations, runs what was approved, and prints the result. */
+  const confirmAndRun = async (actions: PlannedAction[], skipped: Skipped[] = []): Promise<number> => {
+    const results = await executeActions(actions, {
       locale,
       approved: parseApproved(args.options.approve),
       interactive: deps.interactive,
@@ -84,10 +84,56 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       now: () => deps.now(),
       note: (text) => deps.err(text),
     });
-    return finishActions(results, deps, locale, wantsText, plan.skipped);
+    return finishActions(results, deps, locale, wantsText, skipped);
+  };
+
+  if (args.command === 'project') {
+    const plan = planProjectAdd(args.positional.slice(1), {
+      token,
+      project: registry.project,
+      repositories,
+      onProject: read.read.cards.map((card) => card.url),
+      fetch: deps.fetch,
+    });
+    return confirmAndRun(plan.actions, plan.skipped);
   }
 
   const artifacts: Artifact[] = loadWorkspace(await deps.files(root)).artifacts;
+  if (args.command === 'task') {
+    const requirement = artifacts.find((a): a is RequirementArtifact => a.kind === 'requirement' && a.id === args.options.requirement);
+    if (!requirement) return fail(EXIT.notFound, 'cli.requirement-not-found', { id: args.options.requirement });
+    const title = args.options.title.trim();
+    if (!title || /[:\n]/.test(title)) return fail(EXIT.usage, 'cli.bad-title');
+    const wanted = args.options.repository ?? requirement.repository ?? '';
+    const repository = repositories.find((name) => name.toLowerCase() === wanted.toLowerCase());
+    if (!repository) return fail(EXIT.usage, 'cli.repository-unregistered', { repository: wanted });
+    const criteria = (args.options.criteria ?? '').split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
+    const unknown = criteria.find((c) => !requirement.criteria.some((known) => known.id === c));
+    if (unknown) return fail(EXIT.usage, 'cli.unknown-criterion', { criterion: unknown, requirement: requirement.id });
+    const assigneeType = args.options['assignee-type'] ?? 'agent';
+    if (assigneeType !== 'human' && assigneeType !== 'agent') return fail(EXIT.usage, 'cli.bad-assignee-type');
+    const firstTask = artifacts.find((a) => a.kind === 'task');
+    const actions = planTaskCreate({
+      token,
+      login: await deps.login(),
+      locale,
+      project: registry.project,
+      requirement,
+      repository,
+      title,
+      criteria,
+      assigneeType,
+      assignee: args.options.assignee,
+      area: args.options.area,
+      number: nextTaskNumber(await usedTaskTexts(artifacts, read.read.cards, repository, deps.system)),
+      taskDirectory: firstTask ? path.posix.dirname(firstTask.path) : 'docs/tasks',
+      root,
+      system: deps.system,
+      fetch: deps.fetch,
+    });
+    return confirmAndRun(actions);
+  }
+
   const all = toCliCards(read.read.cards, artifacts, deps.now());
 
   if (args.command === 'list') {

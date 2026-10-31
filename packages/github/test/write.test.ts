@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addIssueToProject, type Fetch } from '../src';
+import { addIssueToProject, createIssue, type Fetch } from '../src';
 
 const project = { owner: 'me', number: 1 };
 
@@ -44,5 +44,24 @@ describe('addIssueToProject', () => {
     await expect(
       addIssueToProject('t', project, 'u', fake({ body: lookup() }, { body: { errors: [{ message: 'Resource not accessible' }] } }).fetchImpl),
     ).rejects.toThrow('Resource not accessible');
+  });
+});
+
+describe('createIssue', () => {
+  it('posts the Issue to its repository and returns its number and address', async () => {
+    const calls: { url: string; body: unknown }[] = [];
+    const fetchImpl: Fetch = async (url, init) => {
+      calls.push({ url, body: JSON.parse(init.body) });
+      return { ok: true, status: 201, json: async () => ({ number: 12, html_url: 'https://github.com/me/Weaver/issues/12' }) };
+    };
+    const made = await createIssue('t', 'me/Weaver', { title: 'T', body: 'B', labels: ['task'] }, fetchImpl);
+    expect(made).toEqual({ number: 12, url: 'https://github.com/me/Weaver/issues/12' });
+    expect(calls).toEqual([{ url: 'https://api.github.com/repos/me/Weaver/issues', body: { title: 'T', body: 'B', labels: ['task'] } }]);
+  });
+
+  it('reports a refusal with what GitHub said', async () => {
+    const refuse = (status: number, message: string): Fetch => async () => ({ ok: false, status, json: async () => ({ message }) });
+    await expect(createIssue('t', 'me/x', { title: '', body: '', labels: [] }, refuse(404, 'Not Found'))).rejects.toThrow('404: Not Found');
+    await expect(createIssue('t', 'me/x', { title: '', body: '', labels: [] }, refuse(401, 'Bad credentials'))).rejects.toThrow('401');
   });
 });
