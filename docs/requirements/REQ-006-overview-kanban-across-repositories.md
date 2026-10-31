@@ -35,7 +35,8 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 
 - A registry file in Git lists the registered repositories and the central Project they report to. Adding a repository to the registry is a normal reviewed change.
 - Each user can set a local fabric root folder, which is not shared. A command clones every registered repository that is missing under that folder and skips the ones already there. Opening the fabric root in VS Code shows all of them in one workspace.
-- Weaver opens on the Overview Kanban when a fabric is configured. Cards from different repositories sit on the same board and show their repository.
+- Weaver opens on the Overview Kanban when a fabric is configured. The columns are the Kanban stages and the lanes are the registered repositories, in the order of the registry, so a card shows which project it belongs to.
+- A user can reorder, collapse, hide, and filter lanes. These choices are stored on that user's computer and never in the repository. A collapsed lane still shows its card count and its blocked-card count.
 - From a card the user can open the task file, the requirement view, the Issue, the related pull request, and the repository folder.
 - Cards that have not moved for a set time, that have no evidence, or that wait for a human decision are marked on the board.
 - Weaver lists mismatches between the repository files, the Issues, and the central Project, using these kinds: task file without an Issue, Project card without a task file, broken Issue link, merged pull request not linked to its task, and board status that disagrees with the Issue. This check only reports; it changes nothing.
@@ -68,6 +69,7 @@ Open decisions are recorded as `DEC-###` documents before the related tasks star
 - `TASK-036` Mark stale cards — [GitHub Issue #68](https://github.com/blcktgr73/Weaver/issues/68)
 - `TASK-037` Show a read-only board when GitHub is unreachable — [GitHub Issue #69](https://github.com/blcktgr73/Weaver/issues/69)
 - `TASK-038` Write the guide for registering your own Project — [GitHub Issue #70](https://github.com/blcktgr73/Weaver/issues/70)
+- `TASK-039` Reorder, collapse, hide, and filter lanes — [GitHub Issue #73](https://github.com/blcktgr73/Weaver/issues/73)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
