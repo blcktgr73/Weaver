@@ -44,14 +44,9 @@ The steward never commits to a default branch, never closes an Issue, and never 
 
 ## Open decisions
 
-DEC-012 answers the first four items below; they stay listed until the tasks are done.
-
-- Which operations the first version of the tool supports and which stay manual.
-- How a conversation hands a ticket to the tool: a direct command, an agent-protocol (MCP) server, or a file the steward picks up.
-- How long a card may stay idle before it is marked stale, and whether this is set per repository.
-- How the steward is triggered on a schedule: a GitHub Action, a local job, or a remote agent.
+- How the steward is triggered on a schedule or a repository event: a GitHub Action, a local job, or a remote agent. The first version runs on demand only ([DEC-012](../decisions/DEC-012-steward-first-version.md)).
 - Approving several proposals at once, and a dedicated bot identity for unattended runs.
-- Token scopes for a personal Project versus an organization Project.
+- Token scopes for an organization Project, and whether a fine-grained token can replace a classic one.
 
 ## Decisions taken
 
@@ -59,6 +54,21 @@ DEC-012 answers the first four items below; they stay listed until the tasks are
 - The first version is an on-demand command-line tool that agents call from a shell, with one idle limit and one confirmation rule: [DEC-012](../decisions/DEC-012-steward-first-version.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
+
+## Review of remaining gaps (2026-11-01)
+
+| Criterion | Proof | Not yet proven or not done |
+| --- | --- | --- |
+| AC-001 the `weaver` tool, JSON, shared logic | `packages/cli` tests; the move, Issue, evidence, and board calls moved to `packages/github` and the editor calls the same functions | The editor's move was not driven again after that move of code |
+| AC-002 a ticket becomes a task, an Issue, and a card in one operation | `task create` tests with a fake GitHub and a fake `git` | A real run: it creates an Issue and a pull request, so it waits for a person to approve one |
+| AC-003 mismatches resolved by tier, each action recorded | `reconcile` tests, the action log tests, a dry run on the real Project | `task-without-issue` and `card-without-file` need a file-changing pull request and are only reported. No real `--apply` was run |
+| AC-004 files change only as a pull request, and only after confirmation | `task create` works in a separate worktree; confirmation tests | none |
+| AC-005 on demand and on a schedule, nothing to do leaves no change | On demand and the empty run are tested | **Schedule or repository event: not built** (open decision above) |
+| AC-006 not tied to one agent product | `agent-contract.md`, with a test that runs every documented command | Another agent product actually using it |
+| AC-007 token outside the repository, smallest scope | The token comes from `gh`; it is never stored | Smaller scopes for an organization Project are unverified |
+| AC-008 messages in the catalog | en/ko parity test for every message the tool writes | The error text that GitHub returns inside a failed action is English only |
+
+Also not covered by tests: the `[y/N]` question at a terminal (`readline` in `bin.ts`) and `git worktree` on Windows. The tool is built from a checkout; there is no installable package yet.
 
 ## Tasks
 
