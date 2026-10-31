@@ -174,7 +174,7 @@ export class OverviewView {
     else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
     else if (message.type === 'openFile' && message.path) {
       const uri = this.loaded?.uris.get(message.path);
-      if (uri) await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Beside });
+      if (uri) await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Active });
     }
     else if (message.type === 'cardMenu' && message.url) await this.cardMenu(message.url);
     else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {
@@ -182,7 +182,7 @@ export class OverviewView {
     } else if (message.type === 'openRequirement' && message.id) {
       const requirement = this.loaded?.artifacts.find((a) => a.kind === 'requirement' && a.id === message.id);
       const uri = requirement && this.loaded?.uris.get(requirement.path);
-      if (uri) await vscode.commands.executeCommand('vscode.openWith', uri, REQUIREMENT_EDITOR, vscode.ViewColumn.Beside);
+      if (uri) await vscode.commands.executeCommand('vscode.openWith', uri, REQUIREMENT_EDITOR, vscode.ViewColumn.Active);
     }
   }
 
@@ -254,13 +254,13 @@ export class OverviewView {
 
     const items: Item[] = [
       taskUri
-        ? { label: `$(file) ${taskLabel}`, detail: link?.taskPath, run: () => vscode.window.showTextDocument(taskUri, { viewColumn: vscode.ViewColumn.Beside }) }
+        ? { label: `$(file) ${taskLabel}`, detail: link?.taskPath, run: () => vscode.window.showTextDocument(taskUri, { viewColumn: vscode.ViewColumn.Active }) }
         : unavailable(taskLabel, link ? text('ui.overview.na.no-task-file', { task }) : text('ui.overview.na.no-requirement')),
       link && requirementUri
         ? {
             label: `$(markdown) ${text('ui.overview.menu.requirement-source', { id: link.id })}`,
             detail: link.path,
-            run: () => vscode.commands.executeCommand('vscode.openWith', requirementUri, 'default', vscode.ViewColumn.Beside),
+            run: () => vscode.commands.executeCommand('vscode.openWith', requirementUri, 'default', vscode.ViewColumn.Active),
           }
         : unavailable(text('ui.overview.menu.requirement-source', { id: link?.id ?? '' }).trim(), text('ui.overview.na.no-requirement')),
       {

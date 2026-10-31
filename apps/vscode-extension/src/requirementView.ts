@@ -48,7 +48,7 @@ export class RequirementView {
     const panel = vscode.window.createWebviewPanel(
       'weaver.requirement',
       requirement.id,
-      vscode.ViewColumn.Beside,
+      vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: false },
     );
     this.open({ panel, requirement, loaded, uri: loaded.uris.get(requirement.path), status: { byTask: {}, loading: false }, hosted: false, focusTask });
