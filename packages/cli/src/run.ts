@@ -12,9 +12,10 @@ import {
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
-import { readMergedPulls, readProject } from '@palab/weaver-github';
+import { readMergedPulls, readProject, type FetchFn } from '@palab/weaver-github';
 import { executeActions, finishActions, parseApproved, PlannedAction, Skipped } from './actions';
 import { Args, parseArgs } from './args';
+import { parseColumn, planCardMove, planEvidenceAttach } from './cardActions';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
@@ -45,7 +46,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
   }
@@ -56,6 +57,13 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
 
   if (args.command === 'task' && (args.positional[0] !== 'create' || !args.options.title || !args.options.requirement)) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'task create', argument: '--title and --requirement' });
+  }
+
+  if (args.command === 'card' && (args.positional[0] !== 'move' || args.positional.length < 2 || !args.options.to)) {
+    return fail(EXIT.usage, 'cli.missing-argument', { command: 'card move', argument: 'a card and --to <column>' });
+  }
+  if (args.command === 'evidence' && (args.positional[0] !== 'attach' || args.positional.length < 2 || !args.options.pull)) {
+    return fail(EXIT.usage, 'cli.missing-argument', { command: 'evidence attach', argument: 'a card and --pull <number or address>' });
   }
 
   const root = path.resolve(deps.cwd, args.options.root ?? '.');
@@ -135,6 +143,26 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   }
 
   const all = toCliCards(read.read.cards, artifacts, deps.now());
+
+  if (args.command === 'card' || args.command === 'evidence') {
+    const ref = args.positional[1];
+    const matches = findCards(all, ref);
+    if (matches.length === 0) return fail(EXIT.notFound, 'cli.not-found', { ref });
+    if (matches.length > 1) return fail(EXIT.usage, 'cli.ambiguous', { ref, matches: matches.map((c) => `${c.repository}#${c.number}`) });
+    const card = matches[0];
+    const fetchFn = deps.fetch as unknown as FetchFn | undefined;
+    let planned;
+    if (args.command === 'card') {
+      const column = parseColumn(args.options.to);
+      if (!column) return fail(EXIT.usage, 'cli.bad-column', { column: args.options.to });
+      const task = card.task?.path ? artifacts.find((a) => a.kind === 'task' && a.path === card.task?.path) : undefined;
+      planned = await planCardMove({ token, card, column, evidenceException: task?.kind === 'task' && Boolean(task.evidenceException), locale, fetchFn });
+    } else {
+      planned = await planEvidenceAttach({ token, login: await deps.login(), card, pull: args.options.pull, locale, fetchFn });
+    }
+    if (!planned.ok) return fail(EXIT.usage, planned.refusal.code, planned.refusal.args);
+    return confirmAndRun(planned.actions);
+  }
 
   if (args.command === 'list') {
     const repository = args.options.repository?.toLowerCase();

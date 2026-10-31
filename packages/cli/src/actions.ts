@@ -18,6 +18,11 @@ export interface PlannedAction {
   summary: Notice;
   /** Why the steward proposes it. */
   reason: Notice;
+  /**
+   * What the approval id is made from, when the summary reads differently by language or holds text
+   * that is not the change itself. Without it the id comes from the kind, target, and English summary.
+   */
+  fingerprint?: string;
   /** Actions that must have succeeded first; this one is skipped otherwise. */
   dependsOn?: PlannedAction[];
   run(): Promise<void>;
@@ -56,8 +61,8 @@ export interface ActionLog {
  * The approval token of an action: it names the kind, the target, and the exact change, so an
  * approval of one action cannot be reused for another.
  */
-export function actionId(action: Pick<PlannedAction, 'kind' | 'target' | 'summary'>): string {
-  const text = `${action.kind}\n${action.target}\n${formatNotice(action.summary, 'en')}`;
+export function actionId(action: Pick<PlannedAction, 'kind' | 'target' | 'summary' | 'fingerprint'>): string {
+  const text = `${action.kind}\n${action.target}\n${action.fingerprint ?? formatNotice(action.summary, 'en')}`;
   return createHash('sha256').update(text).digest('hex').slice(0, 12);
 }
 

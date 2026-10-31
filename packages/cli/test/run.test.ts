@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Fetch } from '@palab/weaver-github';
-import { addTaskToRequirement, actionId, Deps, EXIT, LogEntry, parseArgs, nextTaskNumber, planProjectAdd, renderTaskFile, run, slugOf, taskListLine } from '../src';
+import { addTaskToRequirement, actionId, Deps, parseColumn, parsePullRef, EXIT, LogEntry, parseArgs, nextTaskNumber, planProjectAdd, renderTaskFile, run, slugOf, taskListLine } from '../src';
 
 const REGISTRY = 'project: {owner: me, number: 1}\nrepositories:\n  - me/Weaver\n';
 
@@ -383,5 +383,180 @@ describe('task file helpers', () => {
     expect(addTaskToRequirement('## Tasks\n\nNone yet.\n', line)).toBe('## Tasks\n\n' + line + '\n\nNone yet.\n');
     expect(addTaskToRequirement('# no tasks section\n', line)).toBeUndefined();
     expect(addTaskToRequirement('## Tasks\r\n\r\n- a\r\n', line)).toBe('## Tasks\r\n\r\n- a\r\n' + line + '\r\n');
+  });
+});
+
+/** Answers the REST and board calls of a move or an evidence link, and records each one. */
+function withGitHub(deps: Deps, options: { linkedPull?: boolean; pullMerged?: boolean } = {}) {
+  const calls: string[] = [];
+  const bodies: unknown[] = [];
+  const original = deps.fetch as Fetch;
+  deps.fetch = async (url, init) => {
+    const reply = (json: unknown, status = 200) => ({ ok: status < 400, status, json: async () => json });
+    if (url.includes('/repos/')) {
+      const method = init?.method ?? 'GET';
+      calls.push(`${method} ${url.replace('https://api.github.com', '')}`);
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (url.includes('/timeline')) {
+        return reply(options.linkedPull
+          ? [{ event: 'cross-referenced', source: { issue: { number: 7, title: 'feat: ten (TASK-010)', html_url: 'https://github.com/me/Weaver/pull/7', repository_url: 'https://api.github.com/repos/me/Weaver', pull_request: {} } } }]
+          : []);
+      }
+      if (url.endsWith('/pulls/7')) return reply({ state: 'closed', merged_at: options.pullMerged === false ? null : '2026-11-01T00:00:00Z', body: 'Closes #10', head: { sha: 'abc' }, number: 7, title: 'feat: ten (TASK-010)', html_url: 'https://github.com/me/Weaver/pull/7' });
+      if (url.endsWith('/pulls/9')) return reply({}, 404);
+      if (url.includes('/check-runs')) return reply({ check_runs: [{ status: 'completed', conclusion: 'success' }] });
+      return reply({});
+    }
+    if (init?.body) {
+      const query = JSON.parse(init.body).query as string;
+      if (query.includes('projectItems(first:10){nodes{id project')) {
+        calls.push('POST graphql items');
+        return reply({ data: { repository: { issue: { projectItems: { nodes: [{ id: 'ITEM', project: { id: 'PROJECT', title: 'Board', field: { id: 'FIELD', options: [{ id: 'S', name: 'In Progress' }, { id: 'R', name: 'In Progress' }, { id: 'D', name: 'Done' }] } } }] } } } } });
+      }
+      if (query.includes('updateProjectV2ItemFieldValue')) {
+        calls.push('POST graphql status');
+        return reply({ data: {} });
+      }
+    }
+    return original(url, init);
+  };
+  return { calls, bodies };
+}
+
+describe('weaver card move', () => {
+  const MOVE = ['card', 'move', 'me/Weaver#10', '--to', 'review'];
+
+  it('shows what will change and changes nothing until that action is approved', async () => {
+    const { deps, out, err } = setup();
+    const gh = withGitHub(deps);
+    expect(await run(MOVE, deps)).toBe(EXIT.unconfirmed);
+    expect(err.join('')).toContain('Move me/Weaver#10 to Review:');
+    expect(err.join('')).toContain('status:review');
+    expect(JSON.parse(out.join('')).actions[0].kind).toBe('card.move');
+    expect(gh.calls).toEqual([]);
+  });
+
+  it('moves the labels, the state, and the board Status once approved, and logs it', async () => {
+    const first = setup();
+    withGitHub(first.deps);
+    await run(MOVE, first.deps);
+    const id = JSON.parse(first.out.join('')).actions[0].id;
+
+    const { deps, out, logged } = setup();
+    const gh = withGitHub(deps);
+    expect(await run([...MOVE, '--approve', id], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('done');
+    expect(gh.calls).toEqual([
+      'DELETE /repos/me/Weaver/issues/10/labels/status%3Ain-progress',
+      'POST /repos/me/Weaver/issues/10/labels',
+      'PATCH /repos/me/Weaver/issues/10',
+      'POST graphql items',
+      'POST graphql status',
+    ]);
+    expect(logged).toMatchObject([{ action: 'card.move', target: 'me/Weaver#10', outcome: 'done' }]);
+  });
+
+  it('gives the same approval id in every language', async () => {
+    const ids: string[] = [];
+    for (const lang of ['en', 'ko']) {
+      const { deps, out } = setup();
+      withGitHub(deps);
+      await run([...MOVE, '--lang', lang], deps);
+      ids.push(JSON.parse(out.join('')).actions[0].id);
+    }
+    expect(ids[0]).toBe(ids[1]);
+  });
+
+  it('does nothing when the card is already in that column', async () => {
+    const { deps, out } = setup();
+    withGitHub(deps);
+    expect(await run(['card', 'move', 'me/Weaver#10', '--to', 'in-progress'], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('nothing');
+  });
+
+  it('refuses a move to Verified when no pull request is linked and the task has no exception', async () => {
+    const { deps, out } = setup();
+    const gh = withGitHub(deps, { linkedPull: false });
+    expect(await run(['card', 'move', 'TASK-010', '--to', 'Verified'], deps)).toBe(EXIT.usage);
+    const result = JSON.parse(out.join(''));
+    expect(result.error.code).toBe('cli.move-refused');
+    expect(gh.calls.some((c) => c.startsWith('PATCH'))).toBe(false);
+  });
+
+  it('allows a move to Verified with a linked pull request, closing the Issue', async () => {
+    const { deps, out, err } = setup();
+    const gh = withGitHub(deps, { linkedPull: true });
+    expect(await run(['card', 'move', 'TASK-010', '--to', 'Verified'], deps)).toBe(EXIT.unconfirmed);
+    expect(JSON.parse(out.join('')).actions[0].kind).toBe('card.move');
+    expect(err.join('')).toContain('Close the Issue');
+    expect(gh.calls.some((c) => c.startsWith('PATCH'))).toBe(false);
+  });
+
+  it('allows a move to Verified for a task with an evidence exception, without asking GitHub for evidence', async () => {
+    const { deps, out } = setup();
+    deps.files = async () => [FILES[0], { path: FILES[1].path, text: FILES[1].text.replace('assignee: claude-code\n', 'assignee: claude-code\nevidence_exception: before the rule\n') }];
+    const gh = withGitHub(deps);
+    expect(await run(['card', 'move', 'TASK-010', '--to', 'Verified'], deps)).toBe(EXIT.unconfirmed);
+    expect(JSON.parse(out.join('')).actions).toHaveLength(1);
+    expect(gh.calls.filter((c) => c.includes('/timeline'))).toEqual([]);
+  });
+
+  it('refuses an unknown column and asks for what is missing', async () => {
+    let s = setup();
+    expect(await run(['card', 'move', 'me/Weaver#10', '--to', 'Done'], s.deps)).toBe(EXIT.usage);
+    expect(JSON.parse(s.out.join('')).error.code).toBe('cli.bad-column');
+    s = setup();
+    expect(await run(['card', 'move', 'me/Weaver#10'], s.deps)).toBe(EXIT.usage);
+    expect(JSON.parse(s.out.join('')).error.code).toBe('cli.missing-argument');
+    s = setup();
+    expect(await run(['card', 'move', 'TASK-999', '--to', 'Review'], s.deps)).toBe(EXIT.notFound);
+  });
+});
+
+describe('weaver evidence attach', () => {
+  const ATTACH = ['evidence', 'attach', 'me/Weaver#10', '--pull', '7'];
+
+  it('plans a comment for a merged pull request, and posts it in the steward\'s name once approved', async () => {
+    const first = setup();
+    withGitHub(first.deps);
+    expect(await run(ATTACH, first.deps)).toBe(EXIT.unconfirmed);
+    const id = JSON.parse(first.out.join('')).actions[0].id;
+
+    const { deps, out, logged } = setup();
+    const gh = withGitHub(deps);
+    expect(await run(['evidence', 'attach', 'me/Weaver#10', '--pull', 'https://github.com/me/Weaver/pull/7', '--approve', id], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('done');
+    expect(gh.calls).toContain('POST /repos/me/Weaver/issues/10/comments');
+    const comment = gh.bodies.find((b) => typeof (b as { body?: string }).body === 'string') as { body: string };
+    expect(comment.body).toContain('Made by the Weaver steward on behalf of @me.');
+    expect(comment.body).toContain('https://github.com/me/Weaver/pull/7');
+    expect(logged).toMatchObject([{ action: 'evidence.attach', target: 'me/Weaver#10', outcome: 'done' }]);
+  });
+
+  it('refuses a pull request that is not merged, one that is not found, and a bad reference', async () => {
+    const code = async (pull: string, options = {}) => {
+      const { deps, out } = setup();
+      withGitHub(deps, options);
+      const exit = await run(['evidence', 'attach', 'me/Weaver#10', '--pull', pull], deps);
+      return [exit, JSON.parse(out.join('')).error.code];
+    };
+    expect(await code('7', { pullMerged: false })).toEqual([EXIT.usage, 'cli.pull-not-merged']);
+    expect(await code('9')).toEqual([EXIT.usage, 'cli.pull-unreadable']);
+    expect(await code('seven')).toEqual([EXIT.usage, 'cli.bad-pull']);
+  });
+});
+
+describe('column and pull parsing', () => {
+  it('reads a column however it is spelled', () => {
+    expect(parseColumn('in-progress')).toBe('In progress');
+    expect(parseColumn(' REVIEW ')).toBe('Review');
+    expect(parseColumn('Done')).toBeUndefined();
+    expect(parseColumn(undefined)).toBeUndefined();
+  });
+
+  it('reads a pull request number or address', () => {
+    expect(parsePullRef('#7', 'me/Weaver')).toEqual({ repository: 'me/Weaver', number: 7 });
+    expect(parsePullRef('https://github.com/me/Other/pull/3/', 'me/Weaver')).toEqual({ repository: 'me/Other', number: 3 });
+    expect(parsePullRef('seven', 'me/Weaver')).toBeUndefined();
   });
 });
