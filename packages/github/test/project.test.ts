@@ -102,6 +102,28 @@ describe('readProject', () => {
     expect(card?.placement.gaps.map((g) => g.code)).toEqual(['gap.closed-without-verified']);
   });
 
+  it('reads when the Issue last changed and how many pull requests refer to it', async () => {
+    const { fetchImpl } = fake({
+      body: page(
+        [
+          issue('me/Weaver', 1, {
+            updatedAt: '2026-10-31T15:17:24Z',
+            closedByPullRequestsReferences: { totalCount: 1 },
+            timelineItems: { totalCount: 2 },
+          }),
+          issue('me/Weaver', 2),
+        ],
+        null,
+      ),
+    });
+    const result = await readProject('t', project, ['me/Weaver'], fetchImpl);
+    const cards = result.ok ? result.read.cards : [];
+    expect(cards[0]).toMatchObject({ updatedAt: '2026-10-31T15:17:24Z', pullCount: 3 });
+    // An answer without those fields leaves them out rather than guessing zero.
+    expect(cards[1] && 'updatedAt' in cards[1]).toBe(false);
+    expect(cards[1] && 'pullCount' in cards[1]).toBe(false);
+  });
+
   it('omits board status and task id when absent', async () => {
     const { fetchImpl } = fake({ body: page([{ ...issue('me/Weaver', 1), fieldValueByName: null }], null) });
     const result = await readProject('t', project, ['me/Weaver'], fetchImpl);

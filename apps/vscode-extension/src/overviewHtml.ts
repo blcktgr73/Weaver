@@ -25,6 +25,8 @@ export interface OverviewCard {
   taskId?: string;
   placement: KanbanPlacement;
   requirement?: RequirementLink;
+  /** Why the card needs a second look: idle, no pull request, or waiting for a decision. */
+  stale: Notice[];
 }
 
 export type OverviewState =
@@ -60,14 +62,17 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     const requirement = card.requirement
       ? `<button class="req" data-req="${e(card.requirement.id)}" title="${e(tt('ui.overview.open-requirement', { id: card.requirement.id, title: card.requirement.title }))}">${e(card.requirement.id)}</button>`
       : '';
+    const stale = card.stale.length
+      ? `<div class="stale">${card.stale.map((notice) => `<span class="stale-chip ${notice.code.slice('stale.'.length)}">${e(formatNotice(notice, locale))}</span>`).join('')}</div>`
+      : '';
     const assignees = card.assignees.length ? `<div class="muted small">@${e(card.assignees.join(', @'))}</div>` : '';
     const title = e(card.title.replace(TASK_PREFIX, ''));
     const titleHtml = card.requirement
       ? `<a class="title" href="#" data-open="${e(card.url)}" title="${e(tt('ui.overview.open-task', { id: card.requirement.id, task: card.requirement.taskId }))}">${title}</a>`
       : `<a class="title" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">${title}</a>`;
-    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}" data-card="${e(card.url)}">
+    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}${card.stale.length ? ' is-stale' : ''}" data-card="${e(card.url)}">
         <div class="top"><a class="tag" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">#${card.number}</a>${card.taskId ? ` <span class="muted small">${e(card.taskId)}</span>` : ''} ${requirement}</div>
-        <div>${titleHtml}</div>${gaps}${assignees}
+        <div>${titleHtml}</div>${gaps}${stale}${assignees}
       </div>`;
   };
 
@@ -164,6 +169,11 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   .col { min-height: 24px; }
   .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; background: var(--vscode-editor-background); }
   .card.has-gap { border-color: var(--vscode-editorWarning-foreground); }
+  .stale { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .stale-chip { font-size: 0.8em; padding: 0 7px; border-radius: 10px; border: 1px solid var(--vscode-panel-border); color: var(--vscode-descriptionForeground); }
+  .stale-chip.idle { border-color: var(--vscode-editorWarning-foreground); color: var(--vscode-editorWarning-foreground); }
+  .stale-chip.needs-decision { border-color: var(--vscode-editorInfo-foreground, var(--vscode-textLink-foreground)); color: var(--vscode-editorInfo-foreground, var(--vscode-textLink-foreground)); }
+  .stale-chip.no-evidence { border-color: var(--vscode-editorError-foreground); color: var(--vscode-editorError-foreground); }
   .top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   a.title { display: inline-block; margin-top: 2px; color: var(--vscode-foreground); text-decoration: none; }
   a.title:hover { text-decoration: underline; color: var(--vscode-textLink-foreground); }

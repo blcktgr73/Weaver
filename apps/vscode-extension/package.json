@@ -70,6 +70,12 @@
           "default": "",
           "scope": "machine",
           "markdownDescription": "%weaver.config.fabricRoot.description%"
+        },
+        "weaver.staleDays": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "markdownDescription": "%weaver.config.staleDays.description%"
         }
       }
     },

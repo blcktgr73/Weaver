@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);
 
   const onLanguage = vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration('weaver.language')) void refresh();
+    if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) void refresh();
   });
 
   context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
