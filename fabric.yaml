@@ -1,0 +1,10 @@
+# Weaver fabric registry (DEC-010, REQ-006).
+# The central GitHub Project and the repositories whose work appears on the Overview Kanban.
+# The order of `repositories` is the default lane order. Add a repository through a reviewed change.
+project:
+  owner: blcktgr73      # a user or an organization login
+  number: 1             # PALab Ops Kanban
+
+repositories:
+  - blcktgr73/Weaver
+  - blcktgr73/HowMuchToday
