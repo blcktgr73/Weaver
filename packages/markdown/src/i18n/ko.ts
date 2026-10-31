@@ -22,6 +22,17 @@ export const ko: Record<MessageKey, Message> = {
   'validation.unknown-requirement': '존재하지 않는 요구사항을 가리킵니다: {task} → {requirement}',
   'validation.task-listed-twice': '이미 다른 요구사항에 등록된 작업입니다: {task} (등록 위치: {owner})',
 
+  // 등록부(fabric.yaml)
+  'validation.fabric-invalid-yaml': '등록부가 올바른 YAML이 아닙니다: {detail}',
+  'validation.fabric-not-a-mapping': '등록부는 "project"와 "repositories"를 가진 항목 묶음이어야 합니다.',
+  'validation.fabric-project-not-a-mapping': '"project"에는 "owner"와 "number"가 있어야 합니다.',
+  'validation.fabric-invalid-project-owner': 'Project 소유자가 올바른 GitHub 사용자·조직 이름이 아닙니다: "{owner}"',
+  'validation.fabric-invalid-project-number': 'Project 번호는 1 이상의 정수여야 합니다: "{number}"',
+  'validation.fabric-repositories-not-a-list': '"repositories"는 목록이어야 합니다.',
+  'validation.fabric-no-repositories': '등록부에 저장소가 하나도 없습니다.',
+  'validation.fabric-invalid-repository-entry': '저장소 항목은 "owner/name" 형식이거나 "repository" 항목이 있어야 합니다.',
+  'validation.fabric-duplicate-repository': '같은 저장소가 두 번 이상 적혀 있습니다: "{repository}"',
+
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',
   'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',

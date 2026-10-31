@@ -23,6 +23,17 @@ export const en = {
   'validation.unknown-requirement': '{task} refers to {requirement}, which does not exist.',
   'validation.task-listed-twice': '{task} is already listed under {owner}.',
 
+  // Fabric registry (fabric.yaml, see docs/product/artifact-schema-v0.1.md)
+  'validation.fabric-invalid-yaml': 'The registry is not valid YAML: {detail}',
+  'validation.fabric-not-a-mapping': 'The registry must be a mapping with "project" and "repositories".',
+  'validation.fabric-project-not-a-mapping': '"project" must have "owner" and "number".',
+  'validation.fabric-invalid-project-owner': 'Project owner "{owner}" is not a valid GitHub user or organization name.',
+  'validation.fabric-invalid-project-number': 'Project number "{number}" must be a whole number of 1 or more.',
+  'validation.fabric-repositories-not-a-list': '"repositories" must be a list.',
+  'validation.fabric-no-repositories': 'The registry lists no repositories.',
+  'validation.fabric-invalid-repository-entry': 'A repository entry must be "owner/name" or have a "repository" field.',
+  'validation.fabric-duplicate-repository': 'Repository "{repository}" is listed more than once.',
+
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
   'gap.no-status-label': 'no status label',

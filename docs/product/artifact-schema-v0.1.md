@@ -101,3 +101,29 @@ Warnings (shown, but not invalid):
 13. A `## Tasks` list item does not start with a `TASK-###` ID.
 14. A task file is not listed under its requirement's `## Tasks`.
 15. A task file's `criteria` names a criterion the requirement does not have.
+
+## Fabric registry
+
+`fabric.yaml` lists the repositories that appear on the Overview Kanban and the central GitHub Project they report to ([DEC-007](../decisions/DEC-007-central-project-is-configuration.md), [DEC-010](../decisions/DEC-010-fabric-registry-location.md)). It is a plain YAML file, not Markdown with frontmatter. It sits at the root of the repository that owns the fabric, and the parser takes its path without assuming where it is.
+
+```yaml
+project:
+  owner: blcktgr73        # a user or an organization login
+  number: 1
+repositories:
+  - blcktgr73/Weaver
+  - repository: blcktgr73/HowMuchToday
+    title: How much today # optional label for the lane
+```
+
+| Field | Required | Type | Meaning |
+| --- | --- | --- | --- |
+| `project.owner` | yes | GitHub login | user or organization that owns the Project |
+| `project.number` | yes | integer, 1 or more | Project number in its URL |
+| `repositories` | yes | non-empty list | each entry is `owner/name` or `{repository, title?}` |
+
+The order of `repositories` is the default lane order. Rules:
+
+- Errors: the file is not valid YAML or not a mapping; `project`, `project.owner`, `project.number`, or `repositories` is missing or has the wrong type; the owner is not a valid login; the number is not a whole number of 1 or more; `repositories` is empty; an entry is not `owner/name` or lacks `repository`; a repository is listed twice (names are compared without case).
+- Warnings: an unknown field is kept but not interpreted.
+- The registry is returned only when there are no errors.
