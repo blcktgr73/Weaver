@@ -1,16 +1,35 @@
 import * as vscode from 'vscode';
+import { documentKindOf, viewTargetOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
+import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
+import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
+import { OverviewView, readRegistry } from './overviewView';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   const view = new RequirementView();
+  const overview = new OverviewView(context.globalState, view);
+
+  // Tells the menus whether the active file is a Weaver document (TASK-018).
+  let latest: Loaded | undefined;
+  const publishDocumentKind = (): void => {
+    const document = vscode.window.activeTextEditor?.document;
+    const kind =
+      document && latest
+        ? documentKindOf(latest.artifacts, vscode.workspace.asRelativePath(document.uri, false))
+        : 'none';
+    void vscode.commands.executeCommand('setContext', 'weaver.documentKind', kind);
+  };
 
   const refresh = async (): Promise<Loaded> => {
     const loaded = await loadWorkspaceArtifacts();
+    latest = loaded;
+    publishDocumentKind();
     publishDiagnostics(diagnostics, loaded, currentLocale());
     view.update(loaded);
+    overview.update(loaded);
     return loaded;
   };
 
@@ -36,24 +55,59 @@ export function activate(context: vscode.ExtensionContext): void {
     const loaded = await refresh();
     const requirement = await pickRequirement(loaded);
     const uri = requirement && loaded.uris.get(requirement.path);
-    if (uri) await vscode.window.showTextDocument(uri);
+    if (uri) await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
   });
 
   // From the editor title button the file is known; from the command palette the user picks one.
   const openView = vscode.commands.registerCommand('weaver.openRequirementView', async (resource?: vscode.Uri) => {
     const loaded = await refresh();
     if (resource instanceof vscode.Uri) {
-      const requirement = requirementsOf(loaded).find((r) => loaded.uris.get(r.path)?.toString() === resource.toString());
-      if (requirement) {
-        view.show(loaded, requirement);
-      } else {
+      const target = viewTargetOf(loaded.artifacts, vscode.workspace.asRelativePath(resource, false));
+      if (!target) {
         void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
+      } else if (target.taskId) {
+        // A task file: show its requirement, scrolled to the task.
+        view.show(loaded, target.requirement, target.taskId);
+      } else {
+        // The requirement file itself: show its view in place of the source.
+        await vscode.commands.executeCommand('vscode.openWith', resource, REQUIREMENT_EDITOR);
       }
       return;
     }
     const requirement = await pickRequirement(loaded);
     if (requirement) view.show(loaded, requirement);
   });
+
+  const openOverview = vscode.commands.registerCommand('weaver.openOverview', async () => {
+    await overview.show(await refresh());
+  });
+
+  // From a requirement view, a requirement file, or a task file: show its cards on the Overview (TASK-041).
+  const showOnOverview = vscode.commands.registerCommand(
+    'weaver.showOnOverview',
+    async (arg?: vscode.Uri | { requirementId: string; taskId?: string }) => {
+      const loaded = await refresh();
+      let target: { requirementId: string; taskId?: string } | undefined;
+      if (arg instanceof vscode.Uri) {
+        const found = viewTargetOf(loaded.artifacts, vscode.workspace.asRelativePath(arg, false));
+        if (found) target = { requirementId: found.requirement.id, ...(found.taskId ? { taskId: found.taskId } : {}) };
+      } else if (arg) {
+        target = arg;
+      } else {
+        const requirement = await pickRequirement(loaded);
+        if (requirement) target = { requirementId: requirement.id };
+      }
+      if (!target) {
+        void vscode.window.showInformationMessage(message('ui.msg.not-requirement'));
+        return;
+      }
+      await overview.showFocused(loaded, target);
+    },
+  );
+
+  const setRoot = vscode.commands.registerCommand('weaver.setFabricRoot', () => setFabricRoot());
+  const cloneAll = vscode.commands.registerCommand('weaver.cloneRegistered', () => cloneRegistered());
+  const openRoot = vscode.commands.registerCommand('weaver.openFabricRoot', () => openFabricRoot());
 
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
     const loaded = await refresh();
@@ -77,16 +131,27 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  const editor = vscode.window.registerCustomEditorProvider(
+    REQUIREMENT_EDITOR,
+    new RequirementEditorProvider(view, refresh),
+    { supportsMultipleEditorsPerDocument: true, webviewOptions: { retainContextWhenHidden: false } },
+  );
+
   const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
     if (document.languageId === 'markdown') void refresh();
   });
 
+  const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);
+
   const onLanguage = vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration('weaver.language')) void refresh();
+    if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, openSource, openView, scanWorkspace, onSave, onLanguage);
-  void refresh();
+  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  void refresh().then(async (loaded) => {
+    // With a registry at the workspace root, the Overview is where exploration starts (REQ-006).
+    if ((await readRegistry()).kind !== 'none') await overview.show(loaded);
+  });
 }
 
 export function deactivate(): void {

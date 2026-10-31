@@ -4,7 +4,6 @@ import {
   describePull,
   evidenceGaps,
   formatNotice,
-  groupByColumn,
   IssueSnapshot,
   KANBAN_COLUMNS,
   hasCriteriaMapping,
@@ -63,6 +62,7 @@ export function renderRequirementHtml(
   cspSource: string,
   status?: StatusState,
   locale: Locale = 'en',
+  focusTask?: string,
 ): string {
   const e = escapeHtml;
   const tt = (key: MessageKey, args?: MessageArgs): string => t(key, locale, args);
@@ -174,7 +174,7 @@ export function renderRequirementHtml(
               ? `<a href="#" data-url="${e(task.issueUrl)}">#${task.issueNumber ?? 'open'}</a>`
               : `<span class="warn">${e(tt('ui.issue.not-linked'))}</span>`;
           const owner = ownerHtml(task);
-          return `<tr><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
+          return `<tr id="task-${e(task.id)}"${task.id === focusTask ? ' class="focus-row"' : ''}><td><span class="tag">${e(task.id)}</span></td><td>${e(task.title)}</td><td>${link}</td><td>${statusCell(task.id)}</td><td>${evidenceCell(task.id)}</td><td>${owner}</td></tr>`;
         })
         .join('')}</tbody></table>
        <div class="actions"><button data-cmd="loadStatus"${status?.loading ? ' disabled' : ''}>${
@@ -183,24 +183,14 @@ export function renderRequirementHtml(
        <p class="muted small">${e(tt('ui.tasks.note'))}</p>`
     : `<p class="empty">${e(tt('ui.tasks.empty'))}</p>`;
 
+  // One line of stage counts. The board lives on the Overview; a column is changed from the Status cell above.
   let boardHtml = '';
   if (loaded) {
-    const cards = tasks.flatMap((task) => {
-      const entry = placed.get(task.id);
-      return entry ? [{ task, issue: entry.issue, placement: entry.placement }] : [];
-    });
-    const grouped = groupByColumn(cards);
+    const counts = Object.fromEntries(KANBAN_COLUMNS.map((name) => [name, 0])) as Record<string, number>;
+    for (const entry of placed.values()) counts[entry.placement.column] += 1;
     const off = tasks.filter((task) => !placed.has(task.id));
-    boardHtml = `<h2>${e(tt('ui.board.title'))}</h2>
-      <div class="board">${KANBAN_COLUMNS.map(
-        (name) => `<div class="lane"><h3>${e(column(name))} <span class="muted">${grouped[name].length}</span></h3>${grouped[name]
-          .map(
-            (c) => `<div class="card"><span class="tag">${e(c.task.id)}</span> ${e(c.task.title)}
-              <div class="muted small">${ownerHtml(c.task)}</div>
-              ${allGaps(c.task.id).map((g) => `<div class="warn small">${e(g)}</div>`).join('')}</div>`,
-          )
-          .join('')}</div>`,
-      ).join('')}</div>
+    boardHtml = `<h2>${e(tt('ui.stages.title'))}</h2>
+      <p class="stages">${KANBAN_COLUMNS.map((name) => `<span class="stage${counts[name] ? '' : ' zero'}">${e(column(name))} <strong>${counts[name]}</strong></span>`).join('')}${off.length ? `<span class="stage zero">${e(tt('ui.stages.not-read', { count: off.length }))}</span>` : ''}</p>
       ${off.length ? `<p class="muted small">${e(tt('ui.board.not-on-board', { tasks: off.map((task) => task.id) }))}</p>` : ''}`;
   }
 
@@ -247,6 +237,7 @@ export function renderRequirementHtml(
   dd { margin: 0; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--vscode-panel-border); }
+  tr.focus-row td { background: var(--vscode-editor-selectionHighlightBackground, transparent); }
   th { color: var(--vscode-descriptionForeground); font-weight: 500; }
   ol.plain, ul.plain { padding-left: 0; list-style: none; margin: 0; }
   ol.plain li, ul.plain li { padding: 3px 0; }
@@ -256,10 +247,9 @@ export function renderRequirementHtml(
   .ok { color: var(--vscode-testing-iconPassed, var(--vscode-foreground)); }
   .small { font-size: 0.85em; }
   .col-badge { padding: 1px 8px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-size: 0.85em; white-space: nowrap; }
-  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
-  .lane { background: var(--vscode-sideBar-background, transparent); border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 8px; min-height: 60px; }
-  .lane h3 { font-size: 0.9em; margin: 0 0 6px; }
-  .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px; margin-bottom: 6px; background: var(--vscode-editor-background); }
+  .stages { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+  .stage { padding: 2px 10px; border-radius: 12px; border: 1px solid var(--vscode-panel-border); }
+  .stage.zero { color: var(--vscode-descriptionForeground); opacity: 0.75; }
   select { background: var(--vscode-dropdown-background); color: var(--vscode-dropdown-foreground); border: 1px solid var(--vscode-dropdown-border); margin-top: 4px; }
   button:disabled { opacity: 0.6; cursor: default; }
   .actions { margin-top: 14px; display: flex; gap: 8px; }
@@ -276,6 +266,7 @@ export function renderRequirementHtml(
   <div class="actions">
     <button data-cmd="openSource">${e(tt('ui.button.open-source'))}</button>
     <button data-cmd="openPreview">${e(tt('ui.button.open-preview'))}</button>
+    <button data-cmd="showOnOverview">${e(tt('ui.button.show-on-overview'))}</button>
     ${requirement.status === 'accepted' ? '' : `<button data-cmd="acceptRequirement">${e(tt('ui.button.accept'))}</button>`}
   </div>
 
@@ -295,6 +286,7 @@ export function renderRequirementHtml(
 
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
+  ${focusTask && /^TASK-\d+$/.test(focusTask) ? `document.getElementById('task-${focusTask}')?.scrollIntoView({ block: 'center' });` : ''}
   document.addEventListener('change', (event) => {
     const select = event.target.closest('select[data-move]');
     if (select) vscode.postMessage({ type: 'moveTask', taskId: select.dataset.move, column: select.value });

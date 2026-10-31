@@ -2,7 +2,7 @@
   "name": "@palab/weaver-vscode-extension",
   "displayName": "PALab Weaver",
   "description": "Repository-native requirements and task traceability for humans and AI agents.",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "publisher": "palab",
   "license": "MIT",
   "engines": {
@@ -27,8 +27,29 @@
         "title": "%weaver.command.openRequirementSource.title%"
       },
       {
+        "command": "weaver.openOverview",
+        "title": "%weaver.command.openOverview.title%"
+      },
+      {
         "command": "weaver.scanWorkspace",
         "title": "%weaver.command.scanWorkspace.title%"
+      },
+      {
+        "command": "weaver.setFabricRoot",
+        "title": "%weaver.command.setFabricRoot.title%"
+      },
+      {
+        "command": "weaver.cloneRegistered",
+        "title": "%weaver.command.cloneRegistered.title%"
+      },
+      {
+        "command": "weaver.openFabricRoot",
+        "title": "%weaver.command.openFabricRoot.title%"
+      },
+      {
+        "command": "weaver.showOnOverview",
+        "title": "%weaver.command.showOnOverview.title%",
+        "icon": "$(project)"
       }
     ],
     "configuration": {
@@ -48,6 +69,18 @@
             "%weaver.config.language.en%",
             "%weaver.config.language.ko%"
           ]
+        },
+        "weaver.fabricRoot": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "%weaver.config.fabricRoot.description%"
+        },
+        "weaver.staleDays": {
+          "type": "number",
+          "default": 14,
+          "minimum": 1,
+          "markdownDescription": "%weaver.config.staleDays.description%"
         }
       }
     },
@@ -55,11 +88,28 @@
       "editor/title": [
         {
           "command": "weaver.openRequirementView",
-          "when": "resourceExtname == .md",
+          "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
+          "group": "navigation"
+        },
+        {
+          "command": "weaver.showOnOverview",
+          "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
           "group": "navigation"
         }
       ]
-    }
+    },
+    "customEditors": [
+      {
+        "viewType": "weaver.requirementEditor",
+        "displayName": "%weaver.editor.requirement.displayName%",
+        "selector": [
+          {
+            "filenamePattern": "REQ-*.md"
+          }
+        ],
+        "priority": "default"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",
@@ -75,6 +125,7 @@
     "typescript": "^5.5.0"
   },
   "dependencies": {
+    "@palab/weaver-github": "0.0.1",
     "@palab/weaver-markdown": "0.0.1"
   },
   "repository": {

@@ -1,0 +1,10 @@
+# Example registry for trying the Overview (npm run dev:overview).
+# It mirrors the fabric.yaml at the repository root; the development host cannot open the
+# repository root while it is already open in another VS Code window, so this folder holds the registry.
+project:
+  owner: blcktgr73
+  number: 1
+
+repositories:
+  - blcktgr73/Weaver
+  - blcktgr73/HowMuchToday

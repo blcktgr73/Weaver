@@ -1,0 +1,226 @@
+import { createHash } from 'crypto';
+import { promises as fs } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { formatNotice, Locale, MessageKey, Notice, t } from '@palab/weaver-markdown';
+import { Deps, EXIT, SCHEMA } from './contract';
+
+/**
+ * One write, described before it runs (DEC-008). Nothing in `run` happens until the action is
+ * approved, so a plan can be built, shown, and thrown away without touching GitHub or a file.
+ */
+export interface PlannedAction {
+  /** What kind of change, such as `project.add`. */
+  kind: string;
+  /** What it changes, such as `me/Weaver#12`. */
+  target: string;
+  /** The exact change, as a person should read it. */
+  summary: Notice;
+  /** Why the steward proposes it. */
+  reason: Notice;
+  /**
+   * What the approval id is made from, when the summary reads differently by language or holds text
+   * that is not the change itself. Without it the id comes from the kind, target, and English summary.
+   */
+  fingerprint?: string;
+  /** Actions that must have succeeded first; this one is skipped otherwise. */
+  dependsOn?: PlannedAction[];
+  run(): Promise<void>;
+}
+
+export type Outcome = 'done' | 'failed' | 'declined' | 'unconfirmed' | 'skipped';
+
+export interface ActionResult {
+  id: string;
+  kind: string;
+  target: string;
+  summary: string;
+  reason: string;
+  outcome: Outcome;
+  /** The error of a failed action. */
+  message?: string;
+}
+
+/** One line of the local action log: who or what did it, to what, and why. */
+export interface LogEntry {
+  time: string;
+  actor: string;
+  onBehalfOf?: string;
+  action: string;
+  target: string;
+  reason: string;
+  outcome: 'done' | 'failed';
+  message?: string;
+}
+
+export interface ActionLog {
+  append(entry: LogEntry): Promise<void>;
+}
+
+/**
+ * The approval token of an action: it names the kind, the target, and the exact change, so an
+ * approval of one action cannot be reused for another.
+ */
+export function actionId(action: Pick<PlannedAction, 'kind' | 'target' | 'summary' | 'fingerprint'>): string {
+  const text = `${action.kind}\n${action.target}\n${action.fingerprint ?? formatNotice(action.summary, 'en')}`;
+  return createHash('sha256').update(text).digest('hex').slice(0, 12);
+}
+
+/** `~/.weaver/actions.jsonl`, or under `WEAVER_HOME`. Never inside a repository. */
+export function defaultLogPath(env: Record<string, string | undefined>): string {
+  return path.join(env.WEAVER_HOME ?? path.join(os.homedir(), '.weaver'), 'actions.jsonl');
+}
+
+export function fileActionLog(file: string): ActionLog {
+  return {
+    async append(entry) {
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.appendFile(file, `${JSON.stringify(entry)}\n`, 'utf8');
+    },
+  };
+}
+
+/** The line that anything created on GitHub carries, so the steward's work is told from the user's. */
+export function attribution(locale: Locale, login: string | undefined): string {
+  return login ? t('steward.attribution', locale, { login }) : t('steward.attribution-anonymous', locale);
+}
+
+export interface ExecuteContext {
+  locale: Locale;
+  /** Ids the user approved ahead of time, from `--approve`. */
+  approved: ReadonlySet<string>;
+  interactive: boolean;
+  ask(question: string): Promise<boolean>;
+  log: ActionLog;
+  actor: string;
+  onBehalfOf?: string;
+  now(): Date;
+  /** Where the plan is shown while it waits: the error stream, so standard output stays JSON. */
+  note(text: string): void;
+}
+
+const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * Runs the plan one action at a time. An action runs only when its id was approved up front or the
+ * person says yes to it. An action that was neither approved nor answered is `unconfirmed`, one
+ * that was refused is `declined`, and neither changes anything. The first failure stops the rest.
+ */
+export async function executeActions(actions: readonly PlannedAction[], ctx: ExecuteContext): Promise<ActionResult[]> {
+  const results = new Map<PlannedAction, ActionResult>();
+  let stopped = false;
+
+  for (const action of actions) {
+    const id = actionId(action);
+    const result: ActionResult = {
+      id,
+      kind: action.kind,
+      target: action.target,
+      summary: formatNotice(action.summary, ctx.locale),
+      reason: formatNotice(action.reason, ctx.locale),
+      outcome: 'skipped',
+    };
+    results.set(action, result);
+
+    // An action waits for its prerequisites. While a prerequisite is only waiting for approval, the
+    // action is still shown, so a person or an agent sees the whole plan and every id at once.
+    const needed = (action.dependsOn ?? []).map((other) => results.get(other)?.outcome);
+    const prerequisitesDone = needed.every((outcome) => outcome === 'done');
+    const prerequisitesWaiting = !prerequisitesDone && needed.every((outcome) => outcome === 'done' || outcome === 'unconfirmed');
+    if (stopped || (!prerequisitesDone && !prerequisitesWaiting)) continue;
+
+    ctx.note(`${t('cli.action-line', ctx.locale, { id, kind: result.kind, target: result.target, summary: result.summary, reason: result.reason })}\n`);
+
+    if (prerequisitesWaiting) {
+      result.outcome = 'unconfirmed';
+      continue;
+    }
+
+    let approved = ctx.approved.has(id);
+    if (!approved && ctx.interactive) {
+      approved = await ctx.ask(t('cli.confirm', ctx.locale));
+      if (!approved) {
+        result.outcome = 'declined';
+        continue;
+      }
+    }
+    if (!approved) {
+      result.outcome = 'unconfirmed';
+      continue;
+    }
+
+    const entry = { time: ctx.now().toISOString(), actor: ctx.actor, ...(ctx.onBehalfOf ? { onBehalfOf: ctx.onBehalfOf } : {}), action: action.kind, target: action.target, reason: formatNotice(action.reason, 'en') };
+    try {
+      await action.run();
+      result.outcome = 'done';
+      await ctx.log.append({ ...entry, outcome: 'done' });
+    } catch (error) {
+      result.outcome = 'failed';
+      result.message = errorText(error);
+      stopped = true;
+      await ctx.log.append({ ...entry, outcome: 'failed', message: result.message }).catch(() => undefined);
+    }
+  }
+  return [...results.values()];
+}
+
+/** A failure comes first, then a refusal, then waiting for approval; nothing to do is a success. */
+export function exitCodeOf(results: readonly ActionResult[]): number {
+  if (results.some((r) => r.outcome === 'failed')) return EXIT.failed;
+  if (results.some((r) => r.outcome === 'declined')) return EXIT.declined;
+  if (results.some((r) => r.outcome === 'unconfirmed')) return EXIT.unconfirmed;
+  return EXIT.ok;
+}
+
+/** Everything a write command prints at the end, and the exit code it returns. */
+export interface Skipped {
+  ref: string;
+  reason: string;
+}
+
+/** Something found that no action fixes: it is listed for a person (or for a later task) to deal with. */
+export interface ReportItem {
+  /** `proposed`: DEC-012 proposes a fix that is not automated yet. `report`: a person has to judge it. */
+  tier: 'proposed' | 'report';
+  kind: string;
+  subject: string;
+  message: string;
+  automated: boolean;
+  path?: string;
+  url?: string;
+}
+
+export interface FinishOptions {
+  skipped?: readonly Skipped[];
+  report?: readonly ReportItem[];
+  /** The run only showed a plan, as asked: waiting for approval is then not a failure to act. */
+  dryRun?: boolean;
+}
+
+export function finishActions(
+  results: readonly ActionResult[],
+  deps: Pick<Deps, 'out' | 'err'>,
+  locale: Locale,
+  text: boolean,
+  options: FinishOptions = {},
+): number {
+  const { skipped = [], report = [], dryRun = false } = options;
+  const code = dryRun && exitCodeOf(results) === EXIT.unconfirmed ? EXIT.ok : exitCodeOf(results);
+  if (text) {
+    for (const s of skipped) deps.err(`${t(`cli.skip.${s.reason}` as MessageKey, locale)}\t${s.ref}\n`);
+    for (const r of results) deps.out(`${t(`cli.outcome.${r.outcome}`, locale)}\t${r.kind}\t${r.target}${r.message ? `\t${r.message}` : ''}\n`);
+    for (const r of report) deps.out(`${r.tier}\t${r.kind}\t${r.subject}\t${r.message}\n`);
+    const waiting = results.filter((r) => r.outcome === 'unconfirmed').map((r) => r.id);
+    if (waiting.length) deps.err(`${t('cli.unconfirmed-hint', locale, { ids: waiting.join(',') })}\n`);
+  } else {
+    const waiting = results.some((r) => r.outcome === 'unconfirmed');
+    const status = results.length === 0 ? 'nothing' : code === EXIT.failed ? 'failed' : code === EXIT.declined ? 'declined' : waiting ? (dryRun ? 'plan' : 'unconfirmed') : 'done';
+    deps.out(`${JSON.stringify({ schema: SCHEMA, status, actions: results, skipped, report })}\n`);
+  }
+  return code;
+}
+
+/** The ids of `--approve a,b,c`. */
+export function parseApproved(value: string | undefined): Set<string> {
+  return new Set((value ?? '').split(',').map((id) => id.trim()).filter(Boolean));
+}

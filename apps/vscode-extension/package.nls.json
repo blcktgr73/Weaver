@@ -2,8 +2,16 @@
   "weaver.command.openRequirementView.title": "Weaver: Open Requirement View",
   "weaver.command.openRequirementSource.title": "Weaver: Open Requirement Source",
   "weaver.command.scanWorkspace.title": "Weaver: Scan Workspace",
+  "weaver.command.openOverview.title": "Weaver: Open Overview",
   "weaver.config.language.description": "Language of Weaver messages inside the extension. Command titles follow the VS Code display language.",
   "weaver.config.language.auto": "Follow the VS Code display language; English if it is not supported.",
   "weaver.config.language.en": "English",
-  "weaver.config.language.ko": "Korean (한국어)"
+  "weaver.config.language.ko": "Korean (한국어)",
+  "weaver.editor.requirement.displayName": "Weaver Requirement View",
+  "weaver.command.setFabricRoot.title": "Weaver: Set Fabric Root Folder",
+  "weaver.command.cloneRegistered.title": "Weaver: Clone Registered Repositories",
+  "weaver.command.openFabricRoot.title": "Weaver: Open Fabric Root Folder",
+  "weaver.config.fabricRoot.description": "Local folder that holds the clones of the repositories in `fabric.yaml`. It stays on this computer and is never written to the repository.",
+  "weaver.config.staleDays.description": "Days without a change after which a card in Ready, In progress, Blocked, or Review is marked idle on the Overview.",
+  "weaver.command.showOnOverview.title": "Weaver: Show on the Overview"
 }
