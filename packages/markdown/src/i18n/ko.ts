@@ -33,6 +33,15 @@ export const ko: Record<MessageKey, Message> = {
   'validation.fabric-invalid-repository-entry': '저장소 항목은 "owner/name" 형식이거나 "repository" 항목이 있어야 합니다.',
   'validation.fabric-duplicate-repository': '같은 저장소가 두 번 이상 적혀 있습니다: "{repository}"',
 
+  // 중앙 Project 읽기
+  'project.unreachable': 'GitHub에 연결하지 못해 Project를 보여 줄 수 없습니다.',
+  'project.unauthorized': 'GitHub가 로그인을 받아 주지 않았습니다. 다시 로그인해 주세요.',
+  'project.missing-scope': 'GitHub 로그인에 Project를 읽는 데 필요한 "project" 권한이 없습니다.',
+  'project.forbidden': 'GitHub가 Project 접근을 거부했습니다.',
+  'project.not-found': '{owner}의 Project {number}번을 찾을 수 없거나, 이 로그인으로는 볼 수 없습니다.',
+  'project.rate-limited': 'GitHub가 요청을 제한하고 있습니다. 잠시 뒤에 다시 시도해 주세요.',
+  'project.too-large': 'Project 항목이 {pages}쪽을 넘어서 읽기를 멈췄습니다.',
+
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',
   'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',

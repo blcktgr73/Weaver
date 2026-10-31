@@ -1,0 +1,21 @@
+{
+  "name": "@palab/weaver-github",
+  "version": "0.0.1",
+  "description": "Reads the central GitHub Project for Weaver. No editor dependency, so a command-line tool can reuse it.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ./",
+    "check": "tsc -p ./ --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@palab/weaver-markdown": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
