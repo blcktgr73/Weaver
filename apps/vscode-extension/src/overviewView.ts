@@ -9,6 +9,7 @@ import {
   findMismatches,
   MergedPull,
   normalizeIssueUrl,
+  offlineCards,
   Notice,
   parseFabric,
   RequirementLink,
@@ -166,8 +167,22 @@ export class OverviewView {
 
   /** The main action of a card: its requirement scrolled to the task, or the Issue when no file is visible. */
   private async openCard(url: string): Promise<void> {
+    // A card built from the files has no Issue address; it is named by its requirement and task.
+    const named = /^task:([^/]+)\/(.+)$/.exec(url);
+    if (named) {
+      const requirement = this.loaded?.artifacts.find((a) => a.kind === 'requirement' && a.id === named[1]);
+      if (requirement?.kind === 'requirement' && this.loaded) this.requirements.show(this.loaded, requirement, named[2]);
+      return;
+    }
     const found = this.find(url);
-    if (!found) return;
+    if (!found) {
+      // The board was built from files: the Issue address still names the requirement.
+      const link = requirementsByIssue(this.loaded?.artifacts ?? []).get(normalizeIssueUrl(url));
+      const requirement = link && this.loaded?.artifacts.find((a) => a.kind === 'requirement' && a.id === link.id);
+      if (link && requirement?.kind === 'requirement' && this.loaded) this.requirements.show(this.loaded, requirement, link.taskId);
+      else if (isOpenableUrl(url)) await vscode.env.openExternal(vscode.Uri.parse(url));
+      return;
+    }
     const { card, link } = found;
     const requirement = link && this.loaded?.artifacts.find((a) => a.kind === 'requirement' && a.id === link.id);
     if (link && requirement?.kind === 'requirement' && this.loaded) {
@@ -307,7 +322,27 @@ export class OverviewView {
     if (this.registry.kind === 'invalid') return { kind: 'registry-invalid', issues: this.registry.issues };
     if (this.phase === 'sign-in') return { kind: 'sign-in' };
     if (this.phase === 'loading') return { kind: 'loading' };
-    if (this.phase === 'error' && this.error) return { kind: 'error', error: this.error };
+    if (this.phase === 'error' && this.error) {
+      // GitHub could not be read: show the board the files give, marked as not current.
+      const lanes = buildLanes(
+        this.registry.registry,
+        offlineCards(this.loaded?.artifacts ?? [], this.registry.registry).map(
+          (c): OverviewCard => ({
+            repository: c.repository,
+            number: c.issueNumber ?? 0,
+            title: c.title,
+            url: c.issueUrl ?? '',
+            assignees: [],
+            taskId: c.taskId,
+            placement: { column: c.column, gaps: c.statusUnknown ? [{ code: 'gap.offline-no-status' }] : [] },
+            requirement: c.requirement,
+            stale: [],
+            fromFiles: true,
+          }),
+        ),
+      );
+      return { kind: 'error', error: this.error, offline: { lanes, collapsed: [...this.collapsed] } };
+    }
     if (!this.read) return { kind: 'loading' };
 
     const links = requirementsByIssue(this.loaded?.artifacts ?? []);
