@@ -51,13 +51,25 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 ## Decisions taken
 
 - The central Project is configuration. PALab keeps PALab Ops Kanban, and other teams register their own: [DEC-007](../decisions/DEC-007-central-project-is-configuration.md).
+- The registry is `fabric.yaml` at the root of the Weaver repository: [DEC-010](../decisions/DEC-010-fabric-registry-location.md).
 - The six columns stay derived from Issue labels, and no custom Project field is required: [DEC-009](../decisions/DEC-009-keep-labels-for-columns.md).
 
 Open decisions are recorded as `DEC-###` documents before the related tasks start.
 
 ## Tasks
 
-Tasks are not created yet. They are split from the acceptance criteria once the open decisions above are settled.
+- `TASK-029` Verify Project read access and record the registry decision
+- `TASK-030` Define and validate the fabric registry
+- `TASK-031` Read all items of the central Project
+- `TASK-032` Show the Overview Kanban
+- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card
+- `TASK-034` Set a fabric root folder and clone the missing repositories
+- `TASK-035` List mismatches between files, Issues, and the Project
+- `TASK-036` Mark stale cards
+- `TASK-037` Show a read-only board when GitHub is unreachable
+- `TASK-038` Write the guide for registering your own Project
+
+`TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
 ## Evidence policy
 
