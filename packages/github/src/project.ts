@@ -18,6 +18,10 @@ export interface ProjectCard {
   assignees: string[];
   /** The board `Status` field, when the item has one. */
   boardStatus?: string;
+  /** When the Issue last changed, as an ISO date. */
+  updatedAt?: string;
+  /** Pull requests that close or mention the Issue. */
+  pullCount?: number;
   /** `TASK-###` when the Issue title starts with `[TASK-###]`. */
   taskId?: string;
   placement: KanbanPlacement;
@@ -36,7 +40,7 @@ const API = 'https://api.github.com/graphql';
 const PAGE = 100;
 const MAX_PAGES = 50;
 
-const QUERY = `query($o:String!,$n:Int!,$c:String){repositoryOwner(login:$o){... on ProjectV2Owner{projectV2(number:$n){title items(first:${PAGE},after:$c){pageInfo{hasNextPage endCursor} nodes{fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} content{__typename ... on Issue{number title url state repository{nameWithOwner} labels(first:20){nodes{name}} assignees(first:10){nodes{login}}}}}}}}}}`;
+const QUERY = `query($o:String!,$n:Int!,$c:String){repositoryOwner(login:$o){... on ProjectV2Owner{projectV2(number:$n){title items(first:${PAGE},after:$c){pageInfo{hasNextPage endCursor} nodes{fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} content{__typename ... on Issue{number title url state updatedAt closedByPullRequestsReferences(first:1,includeClosedPrs:true){totalCount} timelineItems(first:0,itemTypes:[CROSS_REFERENCED_EVENT]){totalCount} repository{nameWithOwner} labels(first:20){nodes{name}} assignees(first:10){nodes{login}}}}}}}}}}`;
 
 interface ItemNode {
   fieldValueByName: { name?: string } | null;
@@ -46,6 +50,9 @@ interface ItemNode {
     title?: string;
     url?: string;
     state?: string;
+    updatedAt?: string;
+    closedByPullRequestsReferences?: { totalCount: number };
+    timelineItems?: { totalCount: number };
     repository?: { nameWithOwner: string };
     labels?: { nodes: { name: string }[] };
     assignees?: { nodes: { login: string }[] };
@@ -128,6 +135,10 @@ export async function readProject(
         assignees: (issue.assignees?.nodes ?? []).map((a) => a.login),
         ...(node.fieldValueByName?.name ? { boardStatus: node.fieldValueByName.name } : {}),
         ...(taskId ? { taskId } : {}),
+        ...(issue.updatedAt ? { updatedAt: issue.updatedAt } : {}),
+        ...(issue.closedByPullRequestsReferences && issue.timelineItems
+          ? { pullCount: issue.closedByPullRequestsReferences.totalCount + issue.timelineItems.totalCount }
+          : {}),
         placement: placeIssue({ state, labels }),
       });
     }

@@ -11,6 +11,7 @@ import {
   parseFabric,
   RequirementLink,
   requirementsByIssue,
+  staleNotices,
   ValidationIssue,
 } from '@palab/weaver-markdown';
 import { ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
@@ -274,10 +275,31 @@ export class OverviewView {
     if (!this.read) return { kind: 'loading' };
 
     const links = requirementsByIssue(this.loaded?.artifacts ?? []);
-    const cards: OverviewCard[] = this.read.cards.map((card) => ({
-      ...card,
-      requirement: links.get(normalizeIssueUrl(card.url)),
-    }));
+    const now = new Date();
+    const idleDays = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
+    const tasks = new Map(
+      (this.loaded?.artifacts ?? []).flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])),
+    );
+    const cards: OverviewCard[] = this.read.cards.map((card) => {
+      const requirement = links.get(normalizeIssueUrl(card.url));
+      const task = requirement?.taskPath ? tasks.get(requirement.taskPath) : undefined;
+      return {
+        ...card,
+        requirement,
+        stale: staleNotices(
+          {
+            column: card.placement.column,
+            state: card.state,
+            updatedAt: card.updatedAt,
+            pullCount: card.pullCount,
+            needsDecision: task?.status === 'needs-human-decision',
+            evidenceException: Boolean(task?.evidenceException),
+          },
+          now,
+          idleDays,
+        ),
+      };
+    });
     return {
       kind: 'ready',
       projectTitle: this.read.title,

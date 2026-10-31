@@ -94,6 +94,11 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.open-file': '{path} 열기',
   'ui.overview.clone': '없는 저장소 클론',
 
+  // 정체된 카드
+  'stale.idle': { one: '{days}일째 변동 없음', other: '{days}일째 변동 없음' },
+  'stale.no-evidence': '연결된 풀 리퀘스트 없음',
+  'stale.needs-decision': '사람의 결정을 기다림',
+
   // 작업 폴더와 등록된 저장소 클론
   'ui.fabric.root-prompt': '클론을 모아 둘 폴더를 고르세요',
   'ui.fabric.root-button': '이 폴더 사용',
