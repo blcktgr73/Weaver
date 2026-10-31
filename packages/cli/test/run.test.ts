@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Fetch } from '@palab/weaver-github';
-import { Deps, EXIT, parseArgs, run } from '../src';
+import { actionId, Deps, EXIT, LogEntry, parseArgs, planProjectAdd, run } from '../src';
 
 const REGISTRY = 'project: {owner: me, number: 1}\nrepositories:\n  - me/Weaver\n';
 
@@ -36,8 +36,15 @@ const FILES = [
 function setup(options: { token?: string | undefined; registry?: string; pullsFail?: boolean } = {}) {
   const out: string[] = [];
   const err: string[] = [];
+  const writes: string[] = [];
+  const logged: LogEntry[] = [];
   const fetchImpl: Fetch = async (_url, init) => {
     const query = JSON.parse(init.body).query as string;
+    writes.push(query);
+    if (query.includes('resource(url')) {
+      return { ok: true, status: 200, json: async () => ({ data: { repositoryOwner: { projectV2: { id: 'PROJECT' } }, resource: { id: 'ISSUE' } } }) };
+    }
+    if (query.includes('addProjectV2ItemById')) return { ok: true, status: 200, json: async () => ({ data: { addProjectV2ItemById: { item: { id: 'ITEM' } } } }) };
     if (query.includes('projectV2')) {
       const body = { data: { repositoryOwner: { projectV2: { title: 'Board', items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [issue(10), issue(11)] } } } } };
       return { ok: true, status: 200, json: async () => body };
@@ -59,9 +66,9 @@ function setup(options: { token?: string | undefined; registry?: string; pullsFa
     login: async () => 'me',
     interactive: false,
     ask: async () => false,
-    log: { append: async () => undefined },
+    log: { append: async (entry) => void logged.push(entry) },
   };
-  return { deps, out, err };
+  return { deps, out, err, writes, logged };
 }
 
 describe('parseArgs', () => {
@@ -176,5 +183,76 @@ describe('failures', () => {
     s.deps.env.WEAVER_LANG = 'ko';
     await run(['list'], s.deps);
     expect(JSON.parse(s.out.join('')).error.message).toContain('토큰');
+  });
+});
+
+describe('weaver project add', () => {
+  const ISSUE = 'https://github.com/me/Weaver/issues/12';
+  const mutations = (writes: string[]) => writes.filter((q) => q.includes('addProjectV2ItemById'));
+
+  it('shows the plan and adds nothing until the user approved that action', async () => {
+    const { deps, out, err, writes } = setup();
+    expect(await run(['project', 'add', ISSUE], deps)).toBe(EXIT.unconfirmed);
+    const result = JSON.parse(out.join(''));
+    expect(result).toMatchObject({ status: 'unconfirmed', actions: [{ kind: 'project.add', target: 'me/Weaver#12', outcome: 'unconfirmed' }] });
+    expect(err.join('')).toContain('Add Issue me/Weaver#12 to the Project me/1.');
+    expect(mutations(writes)).toEqual([]);
+  });
+
+  it('adds the Issue after the id of that action was approved, and records it in the log', async () => {
+    const first = setup();
+    await run(['project', 'add', ISSUE], first.deps);
+    const id = JSON.parse(first.out.join('')).actions[0].id;
+
+    const { deps, out, writes, logged } = setup();
+    expect(await run(['project', 'add', 'me/Weaver#12', '--approve', id], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('done');
+    expect(mutations(writes)).toHaveLength(1);
+    expect(logged).toMatchObject([{ actor: 'steward', onBehalfOf: 'me', action: 'project.add', target: 'me/Weaver#12', outcome: 'done' }]);
+  });
+
+  it('does not take an approval of another Issue', async () => {
+    const { deps, writes } = setup();
+    expect(await run(['project', 'add', ISSUE, '--approve', 'deadbeef0000'], deps)).toBe(EXIT.unconfirmed);
+    expect(mutations(writes)).toEqual([]);
+  });
+
+  it('asks at a terminal and honors a no', async () => {
+    const { deps, writes } = setup();
+    deps.interactive = true;
+    deps.ask = async () => false;
+    expect(await run(['project', 'add', ISSUE], deps)).toBe(EXIT.declined);
+    expect(mutations(writes)).toEqual([]);
+  });
+
+  it('leaves out an Issue already on the Project, of another repository, or not an Issue', async () => {
+    const { deps, out } = setup();
+    expect(await run(['project', 'add', 'me/Weaver#10', 'me/Other#1', 'not-an-issue'], deps)).toBe(EXIT.ok);
+    const result = JSON.parse(out.join(''));
+    expect(result.status).toBe('nothing');
+    expect(result.skipped).toEqual([
+      { ref: 'me/Weaver#10', reason: 'already-on-project' },
+      { ref: 'me/Other#1', reason: 'not-registered' },
+      { ref: 'not-an-issue', reason: 'invalid' },
+    ]);
+  });
+
+  it('asks for an Issue', async () => {
+    const { deps, out } = setup();
+    expect(await run(['project', 'add'], deps)).toBe(EXIT.usage);
+    expect(JSON.parse(out.join('')).error.code).toBe('cli.missing-argument');
+  });
+});
+
+describe('planProjectAdd', () => {
+  it('plans each Issue once, whichever way it is written', () => {
+    const plan = planProjectAdd(['me/Weaver#12', 'https://github.com/me/Weaver/issues/12/', 'me/weaver#12'], {
+      token: 't',
+      project: { owner: 'me', number: 1 },
+      repositories: ['me/Weaver'],
+      onProject: [],
+    });
+    expect(plan.actions).toHaveLength(1);
+    expect(actionId(plan.actions[0])).toMatch(/^[0-9a-f]{12}$/);
   });
 });

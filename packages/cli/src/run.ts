@@ -12,9 +12,11 @@ import {
   t,
 } from '@palab/weaver-markdown';
 import { readMergedPulls, readProject } from '@palab/weaver-github';
+import { executeActions, finishActions, parseApproved } from './actions';
 import { Args, parseArgs } from './args';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
+import { planProjectAdd } from './projectAdd';
 
 export { Deps, EXIT, SCHEMA } from './contract';
 
@@ -41,9 +43,13 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
+  }
+
+  if (args.command === 'project' && (args.positional[0] !== 'add' || args.positional.length < 2)) {
+    return fail(EXIT.usage, 'cli.missing-argument', { command: 'project add', argument: 'an Issue address' });
   }
 
   const root = path.resolve(deps.cwd, args.options.root ?? '.');
@@ -57,6 +63,28 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   if (!read.ok) {
     report(read.error.code, formatNotice(read.error, locale));
     return EXIT.failed;
+  }
+
+  if (args.command === 'project') {
+    const plan = planProjectAdd(args.positional.slice(1), {
+      token,
+      project: registry.project,
+      repositories,
+      onProject: read.read.cards.map((card) => card.url),
+      fetch: deps.fetch,
+    });
+    const results = await executeActions(plan.actions, {
+      locale,
+      approved: parseApproved(args.options.approve),
+      interactive: deps.interactive,
+      ask: deps.ask,
+      log: deps.log,
+      actor: deps.env.WEAVER_ACTOR ?? 'steward',
+      onBehalfOf: await deps.login(),
+      now: () => deps.now(),
+      note: (text) => deps.err(text),
+    });
+    return finishActions(results, deps, locale, wantsText, plan.skipped);
   }
 
   const artifacts: Artifact[] = loadWorkspace(await deps.files(root)).artifacts;
