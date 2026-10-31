@@ -75,11 +75,22 @@ describe('requirementsByIssue', () => {
   const map = requirementsByIssue(loadWorkspace(files).artifacts);
 
   it('reads the Issue of a task listed under its requirement', () => {
-    expect(map.get('https://github.com/o/a/issues/1')).toEqual({ id: 'REQ-001', title: 'First' });
+    expect(map.get('https://github.com/o/a/issues/1')).toEqual({ id: 'REQ-001', title: 'First', path: 'REQ-001.md', taskId: 'TASK-001' });
   });
 
   it('reads the Issue of a task file, ignoring case and a trailing slash', () => {
-    expect(map.get('https://github.com/o/a/issues/2')).toEqual({ id: 'REQ-002', title: 'Second' });
+    expect(map.get('https://github.com/o/a/issues/2')).toEqual({
+      id: 'REQ-002',
+      title: 'Second',
+      path: 'REQ-002.md',
+      taskId: 'TASK-002',
+      taskPath: 'TASK-002.md',
+    });
+  });
+
+  it('takes the task file path when the task has a file, and leaves it out when it has none', () => {
+    expect(map.get('https://github.com/o/a/issues/2')?.taskPath).toBe('TASK-002.md');
+    expect(map.get('https://github.com/o/a/issues/1')).not.toHaveProperty('taskPath');
   });
 
   it('has no entry for a task whose requirement does not exist, or for an unknown Issue', () => {

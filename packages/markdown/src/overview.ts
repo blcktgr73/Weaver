@@ -5,6 +5,12 @@ import type { Artifact } from './types';
 export interface RequirementLink {
   id: string;
   title: string;
+  /** Workspace-relative path of the requirement file. */
+  path: string;
+  /** The task this Issue stands for, so a view can scroll to it. */
+  taskId: string;
+  /** Workspace-relative path of the task file, when the task has one. */
+  taskPath?: string;
 }
 
 /** Issue URLs compare without case and without a trailing slash. */
@@ -19,19 +25,32 @@ export function normalizeIssueUrl(url: string): string {
  */
 export function requirementsByIssue(artifacts: readonly Artifact[]): Map<string, RequirementLink> {
   const byIssue = new Map<string, RequirementLink>();
-  const requirements = new Map<string, RequirementLink>();
+  const requirements = new Map<string, Artifact & { kind: 'requirement' }>();
   for (const artifact of artifacts) {
     if (artifact.kind !== 'requirement') continue;
-    const link = { id: artifact.id, title: artifact.title };
-    requirements.set(artifact.id, link);
+    requirements.set(artifact.id, artifact);
     for (const task of artifact.tasks) {
-      if (task.issueUrl) byIssue.set(normalizeIssueUrl(task.issueUrl), link);
+      if (task.issueUrl) {
+        byIssue.set(normalizeIssueUrl(task.issueUrl), {
+          id: artifact.id,
+          title: artifact.title,
+          path: artifact.path,
+          taskId: task.id,
+        });
+      }
     }
   }
   for (const artifact of artifacts) {
     if (artifact.kind !== 'task' || !artifact.issue) continue;
-    const link = requirements.get(artifact.requirement);
-    if (link) byIssue.set(normalizeIssueUrl(artifact.issue), link);
+    const requirement = requirements.get(artifact.requirement);
+    if (!requirement) continue;
+    byIssue.set(normalizeIssueUrl(artifact.issue), {
+      id: requirement.id,
+      title: requirement.title,
+      path: requirement.path,
+      taskId: artifact.id,
+      taskPath: artifact.path,
+    });
   }
   return byIssue;
 }

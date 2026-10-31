@@ -56,9 +56,13 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       ? `<button class="req" data-req="${e(card.requirement.id)}" title="${e(tt('ui.overview.open-requirement', { id: card.requirement.id, title: card.requirement.title }))}">${e(card.requirement.id)}</button>`
       : '';
     const assignees = card.assignees.length ? `<div class="muted small">@${e(card.assignees.join(', @'))}</div>` : '';
-    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}">
+    const title = e(card.title.replace(TASK_PREFIX, ''));
+    const titleHtml = card.requirement
+      ? `<a class="title" href="#" data-open="${e(card.url)}" title="${e(tt('ui.overview.open-task', { id: card.requirement.id, task: card.requirement.taskId }))}">${title}</a>`
+      : `<a class="title" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">${title}</a>`;
+    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}" data-card="${e(card.url)}">
         <div class="top"><a class="tag" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">#${card.number}</a>${card.taskId ? ` <span class="muted small">${e(card.taskId)}</span>` : ''} ${requirement}</div>
-        <div class="title">${e(card.title.replace(TASK_PREFIX, ''))}</div>${gaps}${assignees}
+        <div>${titleHtml}</div>${gaps}${assignees}
       </div>`;
   };
 
@@ -140,7 +144,8 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   .card { overflow-wrap: anywhere; border: 1px solid var(--vscode-panel-border); border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; background: var(--vscode-editor-background); }
   .card.has-gap { border-color: var(--vscode-editorWarning-foreground); }
   .top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .title { margin-top: 2px; }
+  a.title { display: inline-block; margin-top: 2px; color: var(--vscode-foreground); text-decoration: none; }
+  a.title:hover { text-decoration: underline; color: var(--vscode-textLink-foreground); }
   .tag { white-space: nowrap; font-family: var(--vscode-editor-font-family); font-size: 0.9em; color: var(--vscode-textLink-foreground); }
   .badge { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 0.8em; font-weight: normal; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
   .badge.blocked { background: var(--vscode-inputValidation-warningBackground, var(--vscode-badge-background)); color: var(--vscode-editorWarning-foreground); }
@@ -164,14 +169,21 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-cmd],[data-url],[data-req],[data-toggle],[data-fold]');
+    const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold]');
     if (!target) return;
     event.preventDefault();
     if (target.dataset.cmd) vscode.postMessage({ type: target.dataset.cmd });
     if (target.dataset.url) vscode.postMessage({ type: 'openUrl', url: target.dataset.url });
+    if (target.dataset.open) vscode.postMessage({ type: 'openCard', url: target.dataset.open });
     if (target.dataset.req) vscode.postMessage({ type: 'openRequirement', id: target.dataset.req });
     if (target.dataset.toggle) vscode.postMessage({ type: 'toggleLane', id: target.dataset.toggle });
     if (target.dataset.fold) vscode.postMessage({ type: 'foldLane', id: target.dataset.fold });
+  });
+  document.addEventListener('contextmenu', (event) => {
+    const card = event.target.closest('[data-card]');
+    if (!card) return;
+    event.preventDefault();
+    vscode.postMessage({ type: 'cardMenu', url: card.dataset.card });
   });
 </script>
 </body>

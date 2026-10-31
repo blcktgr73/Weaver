@@ -6,15 +6,17 @@ import {
   normalizeIssueUrl,
   Notice,
   parseFabric,
+  RequirementLink,
   requirementsByIssue,
   ValidationIssue,
 } from '@palab/weaver-markdown';
-import { ProjectRead, readProject } from '@palab/weaver-github';
-import { getGitHubToken } from './github';
-import { currentLocale } from './locale';
+import { ProjectCard, ProjectRead, readProject } from '@palab/weaver-github';
+import { fetchEvidence, getGitHubToken } from './github';
+import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { isOpenableUrl } from './requirementHtml';
 import { REQUIREMENT_EDITOR } from './requirementEditor';
+import type { RequirementView } from './requirementView';
 import { Loaded } from './workspace';
 
 const REGISTRY_FILE = 'fabric.yaml';
@@ -49,7 +51,10 @@ export class OverviewView {
   private hidden: Set<string>;
   private collapsed: Set<string>;
 
-  constructor(private readonly store: vscode.Memento) {
+  constructor(
+    private readonly store: vscode.Memento,
+    private readonly requirements: RequirementView,
+  ) {
     this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
     this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
   }
@@ -91,6 +96,8 @@ export class OverviewView {
       void this.store.update(HIDDEN_KEY, []);
       this.render();
     }
+    else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
+    else if (message.type === 'cardMenu' && message.url) await this.cardMenu(message.url);
     else if (message.type === 'openUrl' && message.url && isOpenableUrl(message.url)) {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
     } else if (message.type === 'openRequirement' && message.id) {
@@ -98,6 +105,105 @@ export class OverviewView {
       const uri = requirement && this.loaded?.uris.get(requirement.path);
       if (uri) await vscode.commands.executeCommand('vscode.openWith', uri, REQUIREMENT_EDITOR, vscode.ViewColumn.Beside);
     }
+  }
+
+  private find(url: string): { card: ProjectCard; link?: RequirementLink } | undefined {
+    const wanted = normalizeIssueUrl(url);
+    const card = this.read?.cards.find((c) => normalizeIssueUrl(c.url) === wanted);
+    if (!card) return undefined;
+    return { card, link: requirementsByIssue(this.loaded?.artifacts ?? []).get(wanted) };
+  }
+
+  /** The main action of a card: its requirement scrolled to the task, or the Issue when no file is visible. */
+  private async openCard(url: string): Promise<void> {
+    const found = this.find(url);
+    if (!found) return;
+    const { card, link } = found;
+    const requirement = link && this.loaded?.artifacts.find((a) => a.kind === 'requirement' && a.id === link.id);
+    if (link && requirement?.kind === 'requirement' && this.loaded) {
+      this.requirements.show(this.loaded, requirement, link.taskId);
+    } else if (isOpenableUrl(card.url)) {
+      await vscode.env.openExternal(vscode.Uri.parse(card.url));
+    }
+  }
+
+  /** Every place a card can lead to. A place that cannot open says why instead of disappearing. */
+  private async cardMenu(url: string): Promise<void> {
+    const found = this.find(url);
+    if (!found) return;
+    const { card, link } = found;
+    const loaded = this.loaded;
+    type Item = vscode.QuickPickItem & { run?: () => Thenable<unknown> | void; reason?: string };
+    const unavailable = (label: string, reason: string): Item => ({
+      label: `$(circle-slash) ${label}`,
+      description: text('ui.overview.menu.unavailable'),
+      detail: reason,
+      reason,
+    });
+    const task = link?.taskId ?? card.taskId ?? card.title;
+
+    const taskLabel = text('ui.overview.menu.task-file', { task });
+    const taskUri = link?.taskPath ? loaded?.uris.get(link.taskPath) : undefined;
+    const requirementUri = link ? loaded?.uris.get(link.path) : undefined;
+    const folder = vscode.workspace.workspaceFolders?.find((f) => {
+      const name = card.repository.split('/')[1].toLowerCase();
+      return f.name.toLowerCase() === name || f.uri.path.toLowerCase().endsWith(`/${name}`);
+    });
+
+    const items: Item[] = [
+      taskUri
+        ? { label: `$(file) ${taskLabel}`, detail: link?.taskPath, run: () => vscode.window.showTextDocument(taskUri, { viewColumn: vscode.ViewColumn.Beside }) }
+        : unavailable(taskLabel, link ? text('ui.overview.na.no-task-file', { task }) : text('ui.overview.na.no-requirement')),
+      link && requirementUri
+        ? {
+            label: `$(markdown) ${text('ui.overview.menu.requirement-source', { id: link.id })}`,
+            detail: link.path,
+            run: () => vscode.commands.executeCommand('vscode.openWith', requirementUri, 'default', vscode.ViewColumn.Beside),
+          }
+        : unavailable(text('ui.overview.menu.requirement-source', { id: link?.id ?? '' }).trim(), text('ui.overview.na.no-requirement')),
+      {
+        label: `$(link-external) ${text('ui.overview.menu.issue', { number: card.number })}`,
+        detail: card.url,
+        run: () => (isOpenableUrl(card.url) ? vscode.env.openExternal(vscode.Uri.parse(card.url)) : undefined),
+      },
+      { label: `$(git-pull-request) ${text('ui.overview.menu.pull-request')}`, run: () => this.openPullRequest(card) },
+      folder
+        ? { label: `$(folder) ${text('ui.overview.menu.repository-folder', { repository: card.repository })}`, run: () => vscode.commands.executeCommand('revealInExplorer', folder.uri) }
+        : unavailable(text('ui.overview.menu.repository-folder', { repository: card.repository }), text('ui.overview.na.no-folder', { repository: card.repository })),
+    ];
+
+    const picked = await vscode.window.showQuickPick(items, { placeHolder: text('ui.overview.menu.placeholder') });
+    if (!picked) return;
+    if (picked.reason) void vscode.window.showInformationMessage(picked.reason);
+    else await picked.run?.();
+  }
+
+  private async openPullRequest(card: ProjectCard): Promise<void> {
+    const token = await getGitHubToken(false, ['repo', 'project']);
+    if (!token) {
+      void vscode.window.showInformationMessage(text('ui.overview.na.sign-in'));
+      return;
+    }
+    const result = await fetchEvidence(token, card.url);
+    if (!result.ok) {
+      void vscode.window.showWarningMessage(text('ui.overview.na.pull-request-failed'));
+      return;
+    }
+    const pulls = result.evidence.pulls.filter((pull) => isOpenableUrl(pull.url));
+    if (pulls.length === 0) {
+      void vscode.window.showInformationMessage(text('ui.overview.na.no-pull-request'));
+      return;
+    }
+    const pull =
+      pulls.length === 1
+        ? pulls[0]
+        : (
+            await vscode.window.showQuickPick(
+              pulls.map((p) => ({ label: `#${p.number} ${p.title}`, description: `${p.state}, ${p.link}`, pull: p })),
+              { placeHolder: text('ui.overview.pick-pull-request') },
+            )
+          )?.pull;
+    if (pull) await vscode.env.openExternal(vscode.Uri.parse(pull.url));
   }
 
   private async load(interactive: boolean): Promise<void> {
