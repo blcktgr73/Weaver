@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
+  applyLaneOrder,
   buildLanes,
   cloneDirectories,
   FabricRegistry,
@@ -8,6 +9,7 @@ import {
   focusCards,
   findMismatches,
   MergedPull,
+  moveLane,
   normalizeIssueUrl,
   offlineCards,
   Notice,
@@ -32,6 +34,7 @@ import { Loaded } from './workspace';
 const REGISTRY_FILE = 'fabric.yaml';
 const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
 const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
+const ORDER_KEY = 'weaver.overview.laneOrder';
 
 type Registry =
   | { kind: 'none' }
@@ -65,6 +68,8 @@ export class OverviewView {
   /** Which projects are shown and which lanes are folded. Stored on this computer, never in the repository. */
   private hidden: Set<string>;
   private collapsed: Set<string>;
+  /** The lane order the user chose, on this computer only. Lanes not in it keep the registry order. */
+  private order: string[];
 
   constructor(
     private readonly store: vscode.Memento,
@@ -72,6 +77,21 @@ export class OverviewView {
   ) {
     this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
     this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
+    this.order = store.get<string[]>(ORDER_KEY, []);
+  }
+
+  /** The registered repositories in the order the user chose, then the registry order. */
+  private repositories(): string[] {
+    if (this.registry.kind !== 'ok') return [];
+    return applyLaneOrder(this.registry.registry.repositories, this.order).map((r) => r.repository);
+  }
+
+  private move(repository: string, delta: -1 | 1): void {
+    const full = this.repositories();
+    const shown = full.filter((name) => !this.hidden.has(name));
+    this.order = moveLane(full, shown, repository, delta);
+    void this.store.update(ORDER_KEY, this.order);
+    this.render();
   }
 
   private flip(set: Set<string>, key: string, id: string): void {
@@ -90,7 +110,7 @@ export class OverviewView {
         retainContextWhenHidden: true,
       });
       this.panel.onDidDispose(() => (this.panel = undefined));
-      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string }) => this.onMessage(message));
+      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string; delta?: number }) => this.onMessage(message));
     }
     await this.load(false);
   }
@@ -129,7 +149,7 @@ export class OverviewView {
     if (this.panel) this.render();
   }
 
-  private async onMessage(message: { type: string; url?: string; id?: string; path?: string }): Promise<void> {
+  private async onMessage(message: { type: string; url?: string; id?: string; path?: string; delta?: number }): Promise<void> {
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
     else if (message.type === 'toggleLane' && message.id) this.flip(this.hidden, HIDDEN_KEY, message.id);
@@ -142,6 +162,8 @@ export class OverviewView {
     else if (message.type === 'clearFocus') {
       this.focus = undefined;
       this.render();
+    } else if (message.type === 'moveLane' && message.id && (message.delta === -1 || message.delta === 1)) {
+      this.move(message.id, message.delta);
     } else if (message.type === 'cloneMissing') await vscode.commands.executeCommand('weaver.cloneRegistered');
     else if (message.type === 'openCard' && message.url) await this.openCard(message.url);
     else if (message.type === 'openFile' && message.path) {
@@ -341,7 +363,7 @@ export class OverviewView {
           }),
         ),
       );
-      return { kind: 'error', error: this.error, offline: { lanes, collapsed: [...this.collapsed] } };
+      return { kind: 'error', error: this.error, offline: { lanes: applyLaneOrder(lanes, this.order), collapsed: [...this.collapsed] } };
     }
     if (!this.read) return { kind: 'loading' };
 
@@ -376,7 +398,7 @@ export class OverviewView {
     return {
       kind: 'ready',
       projectTitle: this.read.title,
-      lanes: buildLanes(this.registry.registry, cards),
+      lanes: applyLaneOrder(buildLanes(this.registry.registry, cards), this.order),
       skipped: this.read.skipped,
       hidden: [...this.hidden],
       collapsed: [...this.collapsed],

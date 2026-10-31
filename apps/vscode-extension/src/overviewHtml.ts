@@ -82,15 +82,16 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       </div>`;
   };
 
-  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean): string => `<section class="lane">
+  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean, index: number, count: number): string => `<section class="lane">
       <h2><button class="fold" data-fold="${e(lane.repository)}" aria-expanded="${!folded}" title="${e(tt(folded ? 'ui.overview.unfold' : 'ui.overview.fold', { title: lane.title }))}">${folded ? '\u25b8' : '\u25be'}</button>${e(lane.title)} <span class="muted small">${e(lane.repository)}</span>
+        <span class="lane-move">${index > 0 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="-1" title="${e(tt('ui.overview.move-up', { title: lane.title }))}">\u25b2</button>` : ''}${index < count - 1 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="1" title="${e(tt('ui.overview.move-down', { title: lane.title }))}">\u25bc</button>` : ''}</span>
         <span class="badge">${e(tt('ui.overview.cards', { count: lane.total }))}</span>${lane.blocked ? `<span class="badge blocked">${e(tt('ui.overview.blocked', { count: lane.blocked }))}</span>` : ''}</h2>
       ${folded ? '' : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
     </section>`;
 
   const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>): string =>
     `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
-      ${lanes.map((lane) => laneHtml(lane, collapsed.has(lane.repository))).join('')}`;
+      ${lanes.map((lane, index) => laneHtml(lane, collapsed.has(lane.repository), index, lanes.length)).join('')}`;
 
   let body: string;
   let filter = '';
@@ -173,6 +174,9 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   button.chip.on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
   button.chip.off { background: transparent; color: var(--vscode-descriptionForeground); text-decoration: line-through; }
   button.chip .n { opacity: 0.8; font-size: 0.85em; }
+  .lane-move { margin-left: 8px; }
+  button.mv { background: transparent; color: var(--vscode-descriptionForeground); padding: 0 4px; font-size: 0.8em; }
+  button.mv:hover { color: var(--vscode-foreground); }
   button.fold { background: transparent; color: var(--vscode-foreground); padding: 0 6px 0 0; font-size: 1em; }
   .cols { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 8px; min-width: 1040px; }
   .colhead { position: sticky; top: 0; z-index: 2; background: var(--vscode-editor-background); padding: 6px 0; font-weight: 600; color: var(--vscode-descriptionForeground); }
@@ -212,7 +216,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   const vscode = acquireVsCodeApi();
   document.querySelector('.card.focus')?.scrollIntoView({ block: 'center', inline: 'center' });
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold],[data-file]');
+    const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold],[data-file],[data-move-lane]');
     if (!target) return;
     event.preventDefault();
     if (target.dataset.cmd) vscode.postMessage({ type: target.dataset.cmd });
@@ -222,6 +226,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     if (target.dataset.req) vscode.postMessage({ type: 'openRequirement', id: target.dataset.req });
     if (target.dataset.toggle) vscode.postMessage({ type: 'toggleLane', id: target.dataset.toggle });
     if (target.dataset.fold) vscode.postMessage({ type: 'foldLane', id: target.dataset.fold });
+    if (target.dataset.moveLane) vscode.postMessage({ type: 'moveLane', id: target.dataset.moveLane, delta: Number(target.dataset.delta) });
   });
   document.addEventListener('contextmenu', (event) => {
     const card = event.target.closest('[data-card]');

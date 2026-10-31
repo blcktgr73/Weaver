@@ -94,6 +94,8 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.open-file': '{path} 열기',
   'ui.overview.clone': '없는 저장소 클론',
   'ui.overview.clear-focus': '강조 해제',
+  'ui.overview.move-up': '{title} 위로 옮기기',
+  'ui.overview.move-down': '{title} 아래로 옮기기',
   'ui.overview.offline-note': '이 보드는 GitHub가 아니라 이 작업공간의 파일로 만들었습니다. 현재 상태와 다를 수 있습니다.',
   'gap.offline-no-status': '상태를 알 수 없음: 태스크 파일에 상태가 없습니다(상태는 Issue에 있음)',
   'ui.overview.focus-none': '{target}의 카드가 전체 보기에 없습니다. 그 Issue가 Project에 없을 수 있습니다.',
