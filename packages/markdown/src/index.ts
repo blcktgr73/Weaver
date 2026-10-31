@@ -10,5 +10,6 @@ export * from './acceptance';
 export * from './i18n';
 export * from './target';
 export * from './overview';
+export * from './mismatch';
 export { parseFabric } from './fabric';
 export type { FabricParseResult, FabricProject, FabricRegistry, FabricRepository } from './fabric';

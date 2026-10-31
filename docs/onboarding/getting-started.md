@@ -125,6 +125,8 @@ What a card opens:
 - **`#62`** opens the Issue on GitHub.
 - **Right-click a card** to choose among the task file, the requirement source, the Issue, a pull request that refers to the Issue (needs the GitHub sign-in), and the repository folder. A place that cannot open is listed with the reason.
 
+The **Mismatches** list above the board shows where the files, the Issues, and the Project disagree: a task file with no Issue, a task whose Issue is not on the Project, a card that no task file or requirement lists, a merged pull request that names a task but does not close its Issue, and a board Status that its label does not give. Weaver only reports these; it changes nothing. A card is judged against files only for repositories whose files are in your workspace.
+
 Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order in `fabric.yaml`. The Overview is read-only; to move a card, use a requirement view.
 
 ## What Weaver does not do yet
