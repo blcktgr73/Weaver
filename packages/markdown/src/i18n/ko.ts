@@ -93,6 +93,9 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.mismatches-skipped': '점검 하나를 건너뛰었습니다: {reasons}',
   'ui.overview.open-file': '{path} 열기',
   'ui.overview.clone': '없는 저장소 클론',
+  'ui.overview.clear-focus': '강조 해제',
+  'ui.overview.focus-none': '{target}의 카드가 전체 보기에 없습니다. 그 Issue가 Project에 없을 수 있습니다.',
+  'ui.button.show-on-overview': '전체 보기에서 보기',
 
   // 정체된 카드
   'stale.idle': { one: '{days}일째 변동 없음', other: '{days}일째 변동 없음' },

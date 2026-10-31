@@ -12,5 +12,6 @@
   "weaver.command.cloneRegistered.title": "Weaver: Clone Registered Repositories",
   "weaver.command.openFabricRoot.title": "Weaver: Open Fabric Root Folder",
   "weaver.config.fabricRoot.description": "Local folder that holds the clones of the repositories in `fabric.yaml`. It stays on this computer and is never written to the repository.",
-  "weaver.config.staleDays.description": "Days without a change after which a card in Ready, In progress, Blocked, or Review is marked idle on the Overview."
+  "weaver.config.staleDays.description": "Days without a change after which a card in Ready, In progress, Blocked, or Review is marked idle on the Overview.",
+  "weaver.command.showOnOverview.title": "Weaver: Show on the Overview"
 }
