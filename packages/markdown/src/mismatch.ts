@@ -31,6 +31,8 @@ export interface MismatchCard {
   url: string;
   taskId?: string;
   boardStatus?: string;
+  /** A closed Issue has nothing left to close, so a pull request that did not close it is not a mismatch. */
+  state?: 'open' | 'closed';
   placement: KanbanPlacement;
 }
 
@@ -139,7 +141,7 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
     for (const taskId of taskIdsOfPull(pull)) {
       if (exceptions.has(taskId)) continue;
       const card = cards.find((c) => c.taskId === taskId && c.repository.toLowerCase() === pull.repository.toLowerCase());
-      if (card && !pull.closes.includes(card.number)) {
+      if (card && card.state !== 'closed' && !pull.closes.includes(card.number)) {
         found.push({
           kind: 'merged-pr-not-linked',
           subject: taskId,

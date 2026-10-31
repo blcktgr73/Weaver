@@ -26,6 +26,7 @@
 | Board status differs from the label | Proposed | Set the board status to the label; if a person moved the card first, report instead. |
 | Project card without a task file | Proposed | Draft the task file as a pull request. |
 | Task file without an Issue | Proposed | Create the Issue and link it, as a pull request for the file. |
+| Closed Issue without `status:verified` (shown as a card gap) | Proposed | Set the label to `status:verified`; an Issue closed by a pull request keeps its old label ([DEC-003](./DEC-003-board-status-mapping.md)). |
 | Issue link that is not an Issue address | Report only | List it. |
 | Card idle, without evidence, or waiting for a decision | Report only | List it. |
 
