@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildLanes, focusCards, loadWorkspace, parseFabric, placeIssue, requirementsByIssue } from '../src';
+import { applyLaneOrder, buildLanes, focusCards, loadWorkspace, parseFabric, placeIssue, requirementsByIssue, moveLane } from '../src';
 
 const registry = (text: string) => {
   const { registry: parsed } = parseFabric('fabric.yaml', text);
@@ -50,6 +50,48 @@ describe('buildLanes', () => {
   it('counts blocked cards so a collapsed lane can still show them', () => {
     const lanes = buildLanes(reg, [card('o/Zed', 1, ['status:blocked']), card('o/Zed', 2, ['status:blocked']), card('o/Zed', 3)]);
     expect(lanes[0]).toMatchObject({ total: 3, blocked: 2 });
+  });
+});
+
+describe('applyLaneOrder', () => {
+  const lanes = ['o/A', 'o/B', 'o/C', 'o/D'].map((repository) => ({ repository }));
+  const names = (list: { repository: string }[]) => list.map((l) => l.repository);
+
+  it('keeps the registry order when nothing was chosen', () => {
+    expect(names(applyLaneOrder(lanes, []))).toEqual(['o/A', 'o/B', 'o/C', 'o/D']);
+  });
+
+  it('puts the chosen lanes first in the chosen order and leaves the rest in registry order', () => {
+    expect(names(applyLaneOrder(lanes, ['o/C', 'o/A']))).toEqual(['o/C', 'o/A', 'o/B', 'o/D']);
+  });
+
+  it('ignores a name that is no longer registered and compares without case', () => {
+    expect(names(applyLaneOrder(lanes, ['o/gone', 'O/d']))).toEqual(['o/D', 'o/A', 'o/B', 'o/C']);
+  });
+});
+
+describe('moveLane', () => {
+  const full = ['o/A', 'o/B', 'o/C', 'o/D'];
+
+  it('moves a lane up or down by one step', () => {
+    expect(moveLane(full, full, 'o/B', -1)).toEqual(['o/B', 'o/A', 'o/C', 'o/D']);
+    expect(moveLane(full, full, 'o/B', 1)).toEqual(['o/A', 'o/C', 'o/B', 'o/D']);
+  });
+
+  it('does nothing at either end', () => {
+    expect(moveLane(full, full, 'o/A', -1)).toEqual(full);
+    expect(moveLane(full, full, 'o/D', 1)).toEqual(full);
+  });
+
+  it('swaps with the neighbor that is shown, skipping a hidden lane', () => {
+    // B is hidden: moving C up swaps it with A, so the move is visible.
+    expect(moveLane(full, ['o/A', 'o/C', 'o/D'], 'o/C', -1)).toEqual(['o/C', 'o/B', 'o/A', 'o/D']);
+  });
+
+  it('leaves the order alone for a lane that is not shown, and does not change its input', () => {
+    const copy = [...full];
+    expect(moveLane(full, ['o/A', 'o/C'], 'o/B', 1)).toEqual(full);
+    expect(full).toEqual(copy);
   });
 });
 
