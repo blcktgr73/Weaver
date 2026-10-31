@@ -100,6 +100,7 @@ The editor behaviors in the right column cannot be driven by the test suite; the
 
 - `TASK-042` Show the last read board when GitHub is unreachable — [GitHub Issue #92](https://github.com/blcktgr73/Weaver/issues/92)
 - `TASK-050` Open the views a card leads to as new tabs instead of a split — [GitHub Issue #102](https://github.com/blcktgr73/Weaver/issues/102)
+- `TASK-055` Register the maintainer's other projects in the fabric — [GitHub Issue #117](https://github.com/blcktgr73/Weaver/issues/117)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
