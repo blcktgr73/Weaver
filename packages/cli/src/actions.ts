@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { formatNotice, Locale, Notice, t } from '@palab/weaver-markdown';
+import { formatNotice, Locale, MessageKey, Notice, t } from '@palab/weaver-markdown';
 import { Deps, EXIT, SCHEMA } from './contract';
 
 /**
@@ -159,15 +159,27 @@ export function exitCodeOf(results: readonly ActionResult[]): number {
 }
 
 /** Everything a write command prints at the end, and the exit code it returns. */
-export function finishActions(results: readonly ActionResult[], deps: Pick<Deps, 'out' | 'err'>, locale: Locale, text: boolean): number {
+export interface Skipped {
+  ref: string;
+  reason: string;
+}
+
+export function finishActions(
+  results: readonly ActionResult[],
+  deps: Pick<Deps, 'out' | 'err'>,
+  locale: Locale,
+  text: boolean,
+  skipped: readonly Skipped[] = [],
+): number {
   const code = exitCodeOf(results);
   if (text) {
+    for (const s of skipped) deps.err(`${t(`cli.skip.${s.reason}` as MessageKey, locale)}\t${s.ref}\n`);
     for (const r of results) deps.out(`${t(`cli.outcome.${r.outcome}`, locale)}\t${r.kind}\t${r.target}${r.message ? `\t${r.message}` : ''}\n`);
     const waiting = results.filter((r) => r.outcome === 'unconfirmed').map((r) => r.id);
     if (waiting.length) deps.err(`${t('cli.unconfirmed-hint', locale, { ids: waiting.join(',') })}\n`);
   } else {
     const status = results.length === 0 ? 'nothing' : code === EXIT.failed ? 'failed' : code === EXIT.declined ? 'declined' : code === EXIT.unconfirmed ? 'unconfirmed' : 'done';
-    deps.out(`${JSON.stringify({ schema: SCHEMA, status, actions: results })}\n`);
+    deps.out(`${JSON.stringify({ schema: SCHEMA, status, actions: results, skipped })}\n`);
   }
   return code;
 }
