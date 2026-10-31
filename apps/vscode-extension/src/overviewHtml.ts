@@ -29,6 +29,8 @@ export interface OverviewCard {
   stale: Notice[];
   /** The card a requirement view or task file asked to see. */
   focus?: boolean;
+  /** Built from the repository files because GitHub could not be read; it has no menu. */
+  fromFiles?: boolean;
 }
 
 export type OverviewState =
@@ -36,7 +38,7 @@ export type OverviewState =
   | { kind: 'registry-invalid'; issues: ValidationIssue[] }
   | { kind: 'sign-in' }
   | { kind: 'loading' }
-  | { kind: 'error'; error: Notice }
+  | { kind: 'error'; error: Notice; /** The board built from the files, shown under the notice. */ offline?: { lanes: Lane<OverviewCard>[]; collapsed: string[] } }
   | {
       kind: 'ready';
       projectTitle: string;
@@ -72,10 +74,10 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     const assignees = card.assignees.length ? `<div class="muted small">@${e(card.assignees.join(', @'))}</div>` : '';
     const title = e(card.title.replace(TASK_PREFIX, ''));
     const titleHtml = card.requirement
-      ? `<a class="title" href="#" data-open="${e(card.url)}" title="${e(tt('ui.overview.open-task', { id: card.requirement.id, task: card.requirement.taskId }))}">${title}</a>`
+      ? `<a class="title" href="#" data-open="${e(card.url || `task:${card.requirement.id}/${card.requirement.taskId}`)}" title="${e(tt('ui.overview.open-task', { id: card.requirement.id, task: card.requirement.taskId }))}">${title}</a>`
       : `<a class="title" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">${title}</a>`;
-    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}${card.stale.length ? ' is-stale' : ''}${card.focus ? ' focus' : ''}" data-card="${e(card.url)}">
-        <div class="top"><a class="tag" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">#${card.number}</a>${card.taskId ? ` <span class="muted small">${e(card.taskId)}</span>` : ''} ${requirement}</div>
+    return `<div class="card${card.placement.gaps.length ? ' has-gap' : ''}${card.stale.length ? ' is-stale' : ''}${card.focus ? ' focus' : ''}"${card.url && !card.fromFiles ? ` data-card="${e(card.url)}"` : ''}>
+        <div class="top">${card.url ? `<a class="tag" href="#" data-url="${e(card.url)}" title="${e(tt('ui.overview.open-issue', { number: card.number }))}">#${card.number}</a>` : ''}${card.taskId ? ` <span class="muted small">${e(card.taskId)}</span>` : ''} ${requirement}</div>
         <div>${titleHtml}</div>${gaps}${stale}${assignees}
       </div>`;
   };
@@ -85,6 +87,10 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
         <span class="badge">${e(tt('ui.overview.cards', { count: lane.total }))}</span>${lane.blocked ? `<span class="badge blocked">${e(tt('ui.overview.blocked', { count: lane.blocked }))}</span>` : ''}</h2>
       ${folded ? '' : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
     </section>`;
+
+  const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>): string =>
+    `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
+      ${lanes.map((lane) => laneHtml(lane, collapsed.has(lane.repository))).join('')}`;
 
   let body: string;
   let filter = '';
@@ -104,7 +110,8 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       body = `<p class="muted">${e(tt('ui.overview.loading'))}</p>`;
       break;
     case 'error':
-      body = `<p class="warn">${e(formatNotice(state.error, locale))}</p><div class="actions">${button('signIn', 'ui.overview.sign-in')}${button('refresh', 'ui.overview.refresh')}</div>`;
+      body = `<p class="warn">${e(formatNotice(state.error, locale))}</p><div class="actions">${button('signIn', 'ui.overview.sign-in')}${button('refresh', 'ui.overview.refresh')}</div>`
+        + (state.offline ? `<p class="warn small">${e(tt('ui.overview.offline-note'))}</p>${boardOf(state.offline.lanes, new Set(state.offline.collapsed))}` : '');
       break;
     case 'ready': {
       const hidden = new Set(state.hidden);
@@ -131,8 +138,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
         ? `<p class="muted small">${e(tt('ui.overview.mismatches-skipped', { reasons: state.skippedChecks.map((n) => formatNotice(n, locale)).join(' ') }))}</p>`
         : '';
       body = mismatchHtml + skippedChecks + (shown.length
-        ? `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
-      ${shown.map((lane) => laneHtml(lane, collapsed.has(lane.repository))).join('')}
+        ? `${boardOf(shown, collapsed)}
       ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`
         : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`);
       break;

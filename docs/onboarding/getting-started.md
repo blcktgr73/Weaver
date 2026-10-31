@@ -127,6 +127,8 @@ What a card opens:
 - **`#62`** opens the Issue on GitHub.
 - **Right-click a card** to choose among the task file, the requirement source, the Issue, a pull request that refers to the Issue (needs the GitHub sign-in), and the repository folder. A place that cannot open is listed with the reason.
 
+**When GitHub cannot be read** (no network, a rejected sign-in, a missing scope), the Overview says why and, under the message, shows a board built from the files in your workspace, with a note that its state may be out of date. A task's column comes from the `status` in its task file. A task whose file gives no status (the Issue has it, [DEC-005](../decisions/DEC-005-task-files.md)) is shown in Backlog marked *state unknown*, and a cancelled task is left out. Cards from files have no right-click menu, but their titles still open the requirement.
+
 **Show on the Overview** goes the other way. Press it in a requirement view, or in the editor title bar of a requirement or task file, and the Overview opens with that requirement's cards (or that task's card) outlined and scrolled into view. A project that was turned off is turned on and its lane is unfolded. **Clear highlight** removes the outline. When the requirement has no card, Weaver says so; its Issues may not be on the Project.
 
 A card can carry up to three **stale marks**, each shown on its own:
