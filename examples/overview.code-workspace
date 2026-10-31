@@ -1,0 +1,6 @@
+{
+  "folders": [
+    { "path": "overview", "name": "overview (fabric.yaml)" },
+    { "path": "../docs", "name": "docs (requirements and tasks)" }
+  ]
+}

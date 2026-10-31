@@ -116,7 +116,7 @@ The Overview shows the work of all registered repositories on one Kanban: the co
 
 2. Open that folder in VS Code. The Overview opens by itself when the file exists, or run **Weaver: Open Overview**.
 3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
-4. To try it from a checkout of this repository, run `npm run dev:overview`.
+4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (the example registry plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
 
 Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order in `fabric.yaml`. The Overview is read-only; to move a card, use a requirement view.
 
