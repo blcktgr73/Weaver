@@ -33,6 +33,18 @@
       {
         "command": "weaver.scanWorkspace",
         "title": "%weaver.command.scanWorkspace.title%"
+      },
+      {
+        "command": "weaver.setFabricRoot",
+        "title": "%weaver.command.setFabricRoot.title%"
+      },
+      {
+        "command": "weaver.cloneRegistered",
+        "title": "%weaver.command.cloneRegistered.title%"
+      },
+      {
+        "command": "weaver.openFabricRoot",
+        "title": "%weaver.command.openFabricRoot.title%"
       }
     ],
     "configuration": {
@@ -52,6 +64,12 @@
             "%weaver.config.language.en%",
             "%weaver.config.language.ko%"
           ]
+        },
+        "weaver.fabricRoot": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "%weaver.config.fabricRoot.description%"
         }
       }
     },

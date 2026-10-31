@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { documentKindOf, viewTargetOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
+import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
 import { OverviewView, readRegistry } from './overviewView';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
@@ -81,6 +82,10 @@ export function activate(context: vscode.ExtensionContext): void {
     await overview.show(await refresh());
   });
 
+  const setRoot = vscode.commands.registerCommand('weaver.setFabricRoot', () => setFabricRoot());
+  const cloneAll = vscode.commands.registerCommand('weaver.cloneRegistered', () => cloneRegistered());
+  const openRoot = vscode.commands.registerCommand('weaver.openFabricRoot', () => openFabricRoot());
+
   const scanWorkspace = vscode.commands.registerCommand('weaver.scanWorkspace', async () => {
     const loaded = await refresh();
     const { errors, warnings } = publishDiagnostics(diagnostics, loaded, currentLocale());
@@ -119,7 +124,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (event.affectsConfiguration('weaver.language')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // With a registry at the workspace root, the Overview is where exploration starts (REQ-006).
     if ((await readRegistry()).kind !== 'none') await overview.show(loaded);

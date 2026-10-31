@@ -74,7 +74,7 @@ export const en = {
   'ui.overview.menu.unavailable': 'not available',
   'ui.overview.na.no-requirement': 'No requirement file for this card is in the workspace. Open or clone the repository that has it.',
   'ui.overview.na.no-task-file': '{task} has no task file. It is only listed in its requirement.',
-  'ui.overview.na.no-folder': '{repository} is not a folder of this workspace. Cloning registered repositories is planned (TASK-034).',
+  'ui.overview.na.no-folder': '{repository} is not a folder of this workspace and is not under the fabric root. Use Clone missing repositories.',
   'ui.overview.na.no-pull-request': 'No pull request refers to this Issue.',
   'ui.overview.na.sign-in': 'Sign in to GitHub first (press Refresh in the Overview).',
   'ui.overview.na.pull-request-failed': 'The pull requests could not be read.',
@@ -93,6 +93,24 @@ export const en = {
   'ui.overview.mismatches-note': 'Weaver only reports these and changes nothing.',
   'ui.overview.mismatches-skipped': 'One check was skipped: {reasons}',
   'ui.overview.open-file': 'Open {path}',
+  'ui.overview.clone': 'Clone missing repositories',
+
+  // Fabric root and cloning the registered repositories
+  'ui.fabric.root-prompt': 'Choose the folder that holds your clones',
+  'ui.fabric.root-button': 'Use this folder',
+  'ui.fabric.root-set': 'Weaver: clones go under {root}.',
+  'ui.fabric.root-missing': 'Weaver: choose the fabric root folder first.',
+  'ui.fabric.no-registry': 'Weaver: there is no valid fabric.yaml to clone from.',
+  'ui.fabric.nothing-to-clone': 'Weaver: every registered repository is already under {root}.',
+  'ui.fabric.pick': 'Clone into {root}. Untick what you want to skip.',
+  'ui.fabric.pick-item-exists': 'exists, but is not a Git repository',
+  'ui.fabric.git-missing': 'Weaver: Git was not found. Install Git to clone.',
+  'ui.fabric.cloning': 'Cloning {repository} ({done} of {total})',
+  'ui.fabric.summary': 'Weaver: cloned {cloned}, already there {present}, skipped {skipped}, failed {failed}.',
+  'ui.fabric.failed': 'Could not clone {repository}: {detail}',
+  'ui.fabric.open-offer': 'Open {root} in VS Code?',
+  'ui.fabric.open-button': 'Open folder',
+  'ui.fabric.show-failures': 'Show details',
 
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
