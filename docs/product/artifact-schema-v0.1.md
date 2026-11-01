@@ -130,18 +130,19 @@ The order of `repositories` is the default lane order. Rules:
 
 ## Contributor roster
 
-`roster.yaml` lists the people and agents that tasks can be given to ([DEC-013](../decisions/DEC-013-contributor-roster.md)). It is plain YAML, read from the root of the folder that holds `fabric.yaml`.
+The `roster` entry of the [user configuration](#user-configuration) lists the people and agents that tasks can be given to ([DEC-013](../decisions/DEC-013-contributor-roster.md)). It is not committed.
 
 ```yaml
-contributors:
-  - id: maria            # the name task files use
-    kind: human          # human | agent
-    github: maria-dev    # optional; becomes the Issue assignee for a human
-  - id: claude-code
-    kind: agent
-    tool: Claude Code    # for an agent: the tool or product
-    model: opus          # optional
-    reach: runs in the maintainer's session
+roster:
+  contributors:
+    - id: maria            # the name task files use
+      kind: human        # human | agent
+      github: maria-dev  # optional; becomes the Issue assignee for a human
+    - id: claude-code
+      kind: agent
+      tool: Claude Code  # for an agent: the tool or product
+      model: opus        # optional
+      reach: runs in the maintainer's session
 ```
 
 | Field | Required | Meaning |

@@ -44,7 +44,7 @@ describe('parseRoster', () => {
   it('warns about a field it does not know and keeps the roster', () => {
     const result = parseRoster('roster.yaml', yaml('  - id: a\n    kind: human\n    nickname: x\n'));
     expect(result.roster).toBeDefined();
-    expect(result.issues.map((i) => i.args?.field)).toEqual(['contributors.nickname']);
+    expect(result.issues.map((i) => i.args?.field)).toEqual(['roster.contributors.nickname']);
   });
 });
 
