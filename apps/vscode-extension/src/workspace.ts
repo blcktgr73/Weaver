@@ -3,12 +3,14 @@ import {
   Artifact,
   loadWorkspace,
   parseProcess,
+  rosterGaps,
   Locale,
   t,
   ValidationIssue,
   validationKey,
   WorkspaceResult,
 } from '@palab/weaver-markdown';
+import { readUserConfig } from './userConfig';
 
 const EXCLUDE = '**/{node_modules,.git,dist,out}/**';
 const MAX_FILES = 2000;
@@ -43,6 +45,18 @@ export async function loadWorkspaceArtifacts(): Promise<Loaded> {
     const path = vscode.workspace.asRelativePath(uri, false);
     uris.set(path, uri);
     loaded.issues.push(...parseProcess(path, decoder.decode(await vscode.workspace.fs.readFile(uri))).issues);
+  }
+
+  // Who works on, reviews, and approves a task is judged against the roster of the personal configuration
+  // (DEC-013, DEC-014). With no roster there is nothing to judge against, so no problem is raised.
+  const user = await readUserConfig();
+  if (user.kind === 'ok' && user.config.roster) {
+    for (const artifact of loaded.artifacts) {
+      if (artifact.kind !== 'task') continue;
+      for (const gap of rosterGaps(artifact, undefined, user.config.roster)) {
+        loaded.issues.push({ severity: 'warning', code: gap.code.replace(/^gap\./, ''), ...(gap.args ? { args: gap.args } : {}), path: artifact.path });
+      }
+    }
   }
   return { ...loaded, uris, markdownFileCount: files.length };
 }
