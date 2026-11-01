@@ -1,8 +1,19 @@
 import type * as vscode from 'vscode';
-import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig } from '@palab/weaver-markdown';
+import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig, ProcessSection, SectionSource, defaultProcess } from '@palab/weaver-markdown';
 import { ProcessCacheEntry, refreshProcessFiles } from '@palab/weaver-github';
 
 const KEY = 'weaver.process.cache';
+
+/** How one repository tracks its work, for the page that shows it: the file's state and where each section comes from. */
+export interface ProcessSummary {
+  repository: string;
+  /** `read`: the repository has the file. `missing`: it has none. `unknown`: it was not asked yet. */
+  file: 'read' | 'missing' | 'unknown';
+  sources: Record<ProcessSection, SectionSource>;
+  process: ProcessConfig;
+}
+
+type Parsed = ProcessConfig & { sources: Record<ProcessSection, SectionSource> };
 
 /**
  * The process of each repository (DEC-015), kept between runs so the Overview can draw its first
@@ -12,7 +23,7 @@ const KEY = 'weaver.process.cache';
 export class ProcessStore {
   private memento: vscode.Memento | undefined;
   private entries = new Map<string, ProcessCacheEntry>();
-  private parsed = new Map<string, ProcessConfig & { staleFromFile: boolean }>();
+  private parsed = new Map<string, Parsed>();
 
   init(memento: vscode.Memento): void {
     this.memento = memento;
@@ -41,26 +52,34 @@ export class ProcessStore {
   }
 
   /** What the repository's file sets, with the defaults for the rest. None when it has no file. */
-  private config(repository: string): (ProcessConfig & { staleFromFile: boolean }) | undefined {
+  private config(repository: string): Parsed | undefined {
     const key = repository.toLowerCase();
     const known = this.parsed.get(key);
     if (known) return known;
     const entry = this.entries.get(key);
     if (!entry || entry.missing) return undefined;
     const result = parseProcess(`${repository}/.weaver/process.yaml`, entry.text);
-    const config = { ...result.process, staleFromFile: result.sources.stale === 'repository' };
+    const config = { ...result.process, sources: result.sources };
     this.parsed.set(key, config);
     return config;
   }
 
   rulesFor = (repository: string): ColumnRules | undefined => this.config(repository)?.columns;
 
+  /** What the page shows for a repository: whether it has a file and where each section comes from. */
+  summary(repository: string): ProcessSummary {
+    const config = this.config(repository);
+    if (config) return { repository, file: 'read', sources: config.sources, process: config };
+    const entry = this.entries.get(repository.toLowerCase());
+    return { repository, file: entry ? 'missing' : 'unknown', sources: { columns: 'default', evidence: 'default', stale: 'default' }, process: defaultProcess() };
+  }
+
   evidenceFor = (repository: string): EvidenceRules | undefined => this.config(repository)?.evidence;
 
   /** The idle days the repository's file sets, or none when it leaves them to the default. */
   staleDaysFor = (repository: string): number | undefined => {
     const config = this.config(repository);
-    return config?.staleFromFile ? config.stale.idleDays : undefined;
+    return config?.sources.stale === 'repository' ? config.stale.idleDays : undefined;
   };
 }
 

@@ -158,7 +158,13 @@ export class RequirementView {
       );
       const byTask: StatusState['byTask'] = {};
       for (const item of results) if (item) byTask[item[0]] = item[1];
-      entry.status = { byTask, loading: false };
+      // Where each setting of the process comes from. The idle days a repository leaves to the default are the user's setting.
+      const staleSetting = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
+      const processes = repositories.map((name) => {
+        const summary = processStore.summary(name);
+        return summary.sources.stale === 'default' ? { ...summary, process: { ...summary.process, stale: { idleDays: staleSetting } } } : summary;
+      });
+      entry.status = { byTask, loading: false, processes };
     } catch (error) {
       entry.status = { byTask: entry.status.byTask, loading: false };
       void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
