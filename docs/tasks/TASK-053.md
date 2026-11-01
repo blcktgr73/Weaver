@@ -22,3 +22,9 @@ DEC-012 proposes a fix for a task file without an Issue (create the Issue and li
 - A card without a file gets a pull request that drafts the task file from the Issue, listed under its requirement when one can be named; when none can, it stays a report.
 - Each is one confirmed action set; nothing is committed to the default branch.
 - Tests cover both, with a fake `git` and GitHub.
+
+## Progress
+
+- `weaver reconcile` now offers both fixes as actions: a task file without an Issue (create the Issue, put it on the Project, open a pull request that writes the link into the task file and the requirement's task line; an existing card of the Project is linked instead of creating a duplicate), and a card without a file (a pull request that drafts the task file from the Issue and lists it under the requirement the Issue names). Each is one confirmed action set run in a separate worktree, nothing is committed to the default branch, and a fix whose pull request is already open is not offered again.
+- A card whose requirement cannot be named (no `REQ-###` of the same repository in its title or body) stays a report.
+- Tests use a fake `git`, `gh`, and GitHub. `weaver reconcile` was run (dry run only) against the real Project; no file fix was applied for real.

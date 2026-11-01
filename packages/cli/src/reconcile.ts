@@ -8,6 +8,8 @@ import {
   MergedPull,
   MessageKey,
   normalizeIssueUrl,
+  RequirementArtifact,
+  TaskArtifact,
   planMove,
   Mismatch,
 } from '@palab/weaver-markdown';
@@ -15,6 +17,7 @@ import { addIssueComment, hasIssueComment, setBoardStatus, type Fetch, type Fetc
 import { attribution, PlannedAction, ReportItem } from './actions';
 import { cardNotices } from './cards';
 import { moveAction } from './cardActions';
+import { FilesContext, planDraftTask, planLinkIssue } from './reconcileFiles';
 import { planProjectAdd } from './projectAdd';
 
 /** How far along the board Status values are, so "behind" and "ahead" can be told apart. */
@@ -33,6 +36,8 @@ export interface ReconcileInput {
   rulesFor?: (repository: string) => ColumnRules | undefined;
   idleDaysFor?: (repository: string) => number;
   evidenceFor?: (repository: string) => EvidenceRules | undefined;
+  /** What the two fixes that change repository files need; without it they stay reports. */
+  files?: FilesContext;
   now: Date;
   fetch?: Fetch;
   fetchFn?: FetchFn;
@@ -139,11 +144,22 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
         });
         break;
       }
-      case 'task-without-issue':
-      case 'card-without-file':
-        // Proposed in DEC-012, but they need a file change as a pull request, which is not automated yet.
-        reports.push(item('proposed', false));
+      case 'task-without-issue': {
+        // A change to repository files, so it is offered as a pull request (DEC-012, TASK-053).
+        const task = input.artifacts.find((a): a is TaskArtifact => a.kind === 'task' && a.id === m.args.task);
+        const requirement = task && input.artifacts.find((a): a is RequirementArtifact => a.kind === 'requirement' && a.id === task.requirement);
+        const planned = input.files && task ? await planLinkIssue(input.files, task, requirement, input.cards) : undefined;
+        if (planned) actions.push(...planned);
+        else reports.push(item('proposed', false));
         break;
+      }
+      case 'card-without-file': {
+        const card = byUrl.get(normalizeIssueUrl(m.url ?? ''));
+        const planned = input.files && card ? await planDraftTask(input.files, card, input.artifacts) : undefined;
+        if (planned) actions.push(...planned);
+        else reports.push(item('proposed', false));
+        break;
+      }
       case 'broken-issue-link':
         reports.push(item('report', false));
         break;
