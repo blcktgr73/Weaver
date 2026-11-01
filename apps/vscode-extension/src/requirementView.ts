@@ -140,12 +140,14 @@ export class RequirementView {
           ]);
           const ref = parseIssueUrl(task.issueUrl);
           const rules = ref ? processStore.rulesFor(`${ref.owner}/${ref.repo}`) : undefined;
+          const evidenceRules = ref ? processStore.evidenceFor(`${ref.owner}/${ref.repo}`) : undefined;
           const boardStatus = (board?.find((item) => item.project === entry.requirement.githubProject) ?? board?.[0])?.status;
           const status: TaskStatus = issue.ok
             ? {
                 ok: true,
                 issue: issue.issue,
                 ...(rules ? { rules } : {}),
+                ...(evidenceRules ? { evidenceRules } : {}),
                 ...(boardStatus ? { boardStatus } : {}),
                 ...(evidence.ok ? { evidence: evidence.evidence } : { evidenceError: evidence.error }),
                 ...(board ? { board } : {}),
@@ -186,7 +188,7 @@ export class RequirementView {
     const locale = currentLocale();
     const lines = describeMove(plan, current.issue).map((line) => formatNotice(line, locale));
     const missing =
-      column === 'Verified' ? evidenceGaps('Verified', current.evidence).map((gap) => formatNotice(gap, locale)) : [];
+      column === 'Verified' ? evidenceGaps('Verified', current.evidence, current.evidenceRules).map((gap) => formatNotice(gap, locale)) : [];
     const warning =
       column === 'Verified'
         ? `\n\n${message('ui.dialog.verified-warning')}${

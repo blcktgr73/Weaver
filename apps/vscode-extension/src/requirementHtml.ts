@@ -3,7 +3,9 @@ import {
   boardGaps,
   ColumnRules,
   describePull,
+  EvidenceRules,
   evidenceGaps,
+  honoredException,
   formatNotice,
   IssueSnapshot,
   KANBAN_COLUMNS,
@@ -28,7 +30,7 @@ import {
 import { coverageOf } from './coverage';
 
 export type TaskStatus =
-  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[]; rules?: ColumnRules; boardStatus?: string }
+  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[]; rules?: ColumnRules; evidenceRules?: EvidenceRules; boardStatus?: string }
   | { ok: false; error: Notice };
 
 export interface StatusState {
@@ -96,11 +98,11 @@ export function renderRequirementHtml(
     const entry = placed.get(taskId);
     if (!result?.ok || !entry) return [];
     const task = tasks.find((candidate) => candidate.id === taskId);
-    const evidence = task?.file?.evidenceException
+    const evidence = honoredException(task?.file?.evidenceException, result.evidenceRules)
       ? []
       : result.evidenceError
         ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
-        : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
+        : evidenceGaps(entry.placement.column, result.evidence, result.evidenceRules).map((gap) => formatNotice(gap, locale));
     const board = boardGaps(entry.placement.column, result.board, requirement.githubProject, result.rules).map((gap) => formatNotice(gap, locale));
     const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
     const blockers = (task?.file?.blockers ?? []).map((text) => tt('gap.blocker', { text }));
@@ -136,7 +138,7 @@ export function renderRequirementHtml(
     const entry = placed.get(taskId);
     if (!entry) return '<span class="muted">—</span>';
     const gaps = allGaps(taskId).map((g) => `<div class="warn small">${e(g)}</div>`).join('');
-    const reason = tasks.find((task) => task.id === taskId)?.file?.evidenceException;
+    const reason = honoredException(tasks.find((task) => task.id === taskId)?.file?.evidenceException, result.evidenceRules);
     const exception = reason ? `<div class="muted small">${e(tt('ui.evidence.exception', { reason }))}</div>` : '';
     const options = KANBAN_COLUMNS.map(
       (c) => `<option value="${e(c)}"${c === entry.placement.column ? ' selected' : ''}>${e(column(c))}</option>`,

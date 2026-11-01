@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode';
-import { ColumnRules, parseProcess, ProcessConfig } from '@palab/weaver-markdown';
+import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig } from '@palab/weaver-markdown';
 import { ProcessCacheEntry, refreshProcessFiles } from '@palab/weaver-github';
 
 const KEY = 'weaver.process.cache';
@@ -54,6 +54,8 @@ export class ProcessStore {
   }
 
   rulesFor = (repository: string): ColumnRules | undefined => this.config(repository)?.columns;
+
+  evidenceFor = (repository: string): EvidenceRules | undefined => this.config(repository)?.evidence;
 
   /** The idle days the repository's file sets, or none when it leaves them to the default. */
   staleDaysFor = (repository: string): number | undefined => {
