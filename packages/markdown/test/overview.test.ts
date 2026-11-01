@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyLaneOrder, buildLanes, focusCards, loadWorkspace, parseFabric, placeIssue, requirementsByIssue, moveLane } from '../src';
+import { applyLaneOrder, buildLanes, foldFinished, focusCards, loadWorkspace, parseFabric, placeIssue, requirementsByIssue, moveLane } from '../src';
 
 const registry = (text: string) => {
   const { registry: parsed } = parseFabric('fabric.yaml', text);
@@ -162,5 +162,37 @@ describe('requirementsByIssue', () => {
   it('has no entry for a task whose requirement does not exist, or for an unknown Issue', () => {
     expect(map.get('https://github.com/o/a/issues/3')).toBeUndefined();
     expect(map.get('https://github.com/o/a/issues/99')).toBeUndefined();
+  });
+});
+
+describe('foldFinished', () => {
+  const lane = () => {
+    const reg = registry('project:\n  owner: o\n  number: 1\nrepositories:\n  - o/a\n');
+    const cards = [
+      { ...card('o/a', 1, ['status:backlog']), state: 'open' as const },
+      { ...card('o/a', 2, ['status:verified'], 'closed'), state: 'closed' as const },
+      { ...card('o/a', 3, ['status:review'], 'closed'), state: 'closed' as const },
+    ];
+    return buildLanes(reg, cards)[0];
+  };
+
+  it('takes out the Verified cards and keeps the totals', () => {
+    const { lane: shown, folded } = foldFinished(lane());
+    expect(folded).toBe(1);
+    expect(shown.total).toBe(3);
+    expect(shown.columns.Verified).toHaveLength(0);
+    expect(shown.columns.Backlog).toHaveLength(1);
+  });
+
+  it('keeps a closed card that carries a gap in view', () => {
+    // A closed Issue outside Verified is a gap, so it must not be folded away.
+    const { lane: shown } = foldFinished(lane());
+    expect(shown.columns.Review).toHaveLength(1);
+  });
+
+  it('counts a closed card in another column as finished when it has no gap', () => {
+    const base = lane();
+    base.columns.Review[0].placement.gaps = [];
+    expect(foldFinished(base).folded).toBe(2);
   });
 });
