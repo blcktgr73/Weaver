@@ -1,4 +1,4 @@
-import { placeIssue, type KanbanPlacement, type Notice } from '@palab/weaver-markdown';
+import { placeIssue, type ColumnRules, type KanbanPlacement, type Notice } from '@palab/weaver-markdown';
 
 export type Fetch = (url: string, init: { method: string; headers: Record<string, string>; body: string }) => Promise<{
   ok: boolean;
@@ -71,6 +71,17 @@ interface Page {
 const TASK_TITLE = /^\[(TASK-\d{3,})\]/;
 
 /**
+ * Places the cards again with the rules of each repository's process (DEC-015). A repository with
+ * no rules keeps the placement it has, which is the default. The cards are not changed; new ones come back.
+ */
+export function placeWithRules(cards: readonly ProjectCard[], rulesFor: (repository: string) => ColumnRules | undefined): ProjectCard[] {
+  return cards.map((card) => {
+    const rules = rulesFor(card.repository);
+    return rules ? { ...card, placement: placeIssue(card, rules) } : card;
+  });
+}
+
+/**
  * Reads every item of a Project, page by page, and turns the Issues of the
  * registered repositories into cards. Failures come back as notices, never as
  * exceptions, so the caller can show the reason and fall back to files.
@@ -140,7 +151,7 @@ export async function readProject(
         ...(issue.closedByPullRequestsReferences && issue.timelineItems
           ? { pullCount: issue.closedByPullRequestsReferences.totalCount + issue.timelineItems.totalCount }
           : {}),
-        placement: placeIssue({ state, labels }),
+        placement: placeIssue({ state, labels, ...(node.fieldValueByName?.name ? { boardStatus: node.fieldValueByName.name } : {}) }),
       });
     }
 

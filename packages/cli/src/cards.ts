@@ -20,6 +20,8 @@ export interface CliCard {
   labels: string[];
   assignees: string[];
   updatedAt?: string;
+  /** The board `Status`, when the card has one. */
+  boardStatus?: string;
   task?: { id: string; path?: string };
   requirement?: { id: string; title: string; path: string };
   /** Why the card needs a second look: `idle`, `no-evidence`, `needs-decision`. */
@@ -29,7 +31,10 @@ export interface CliCard {
 }
 
 /** The stale notices of each card, by normalized Issue address. */
-export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays = DEFAULT_STALE_DAYS): Map<string, Notice[]> {
+/** Days of no change before a card is idle: one number for all, or one per repository (DEC-015). */
+export type IdleDays = number | ((repository: string) => number);
+
+export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays: IdleDays = DEFAULT_STALE_DAYS): Map<string, Notice[]> {
   const links = requirementsByIssue(artifacts);
   const tasks = new Map(artifacts.flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])));
   return new Map(
@@ -46,14 +51,14 @@ export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly A
           evidenceException: Boolean(task?.evidenceException),
         },
         now,
-        idleDays,
+        typeof idleDays === 'function' ? idleDays(card.repository) : idleDays,
       );
       return [normalizeIssueUrl(card.url), notices] as const;
     }),
   );
 }
 
-export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays = DEFAULT_STALE_DAYS): CliCard[] {
+export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays: IdleDays = DEFAULT_STALE_DAYS): CliCard[] {
   const links = requirementsByIssue(artifacts);
   const notices = cardNotices(cards, artifacts, now, idleDays);
   return cards.map((card) => {
@@ -70,6 +75,7 @@ export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Ar
       labels: card.labels,
       assignees: card.assignees,
       ...(card.updatedAt ? { updatedAt: card.updatedAt } : {}),
+      ...(card.boardStatus ? { boardStatus: card.boardStatus } : {}),
       ...(taskId ? { task: { id: taskId, ...(link?.taskPath ? { path: link.taskPath } : {}) } } : {}),
       ...(link ? { requirement: { id: link.id, title: link.title, path: link.path } } : {}),
       stale,

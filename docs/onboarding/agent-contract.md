@@ -63,6 +63,7 @@ This page is the contract. Every JSON example below is checked by a test against
       ],
       "assignees": [],
       "updatedAt": "2026-10-01T00:00:00Z",
+      "boardStatus": "In Progress",
       "task": {
         "id": "TASK-010",
         "path": "tasks/TASK-010.md"
@@ -100,6 +101,7 @@ This page is the contract. Every JSON example below is checked by a test against
     ],
     "assignees": [],
     "updatedAt": "2026-10-01T00:00:00Z",
+    "boardStatus": "In Progress",
     "task": {
       "id": "TASK-010",
       "path": "tasks/TASK-010.md"

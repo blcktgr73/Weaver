@@ -139,11 +139,14 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan,
     });
     if (!ok) return steps;
   }
-  const labeled = await run({ code: 'step.add-label', args: { label: plan.addLabel } }, async () => {
-    await expectOk(await rest(ctx, 'POST', `${base}/labels`, { labels: [plan.addLabel] }));
-    return undefined;
-  });
-  if (!labeled) return steps;
+  const addLabel = plan.addLabel;
+  if (addLabel) {
+    const labeled = await run({ code: 'step.add-label', args: { label: addLabel } }, async () => {
+      await expectOk(await rest(ctx, 'POST', `${base}/labels`, { labels: [addLabel] }));
+      return undefined;
+    });
+    if (!labeled) return steps;
+  }
   if (
     !(await run({ code: plan.state === 'closed' ? 'step.close-issue' : 'step.reopen-issue' }, async () => {
       const body = plan.state === 'closed' ? { state: 'closed', state_reason: 'completed' } : { state: 'open' };
@@ -154,7 +157,8 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan,
     return steps;
   }
 
-  await run({ code: 'step.set-board-status', args: { status: plan.projectStatus } }, () => setBoardStatus(token, issueUrl, plan.projectStatus, fetchFn));
+  const status = plan.projectStatus;
+  if (status) await run({ code: 'step.set-board-status', args: { status } }, () => setBoardStatus(token, issueUrl, status, fetchFn));
   return steps;
 }
 
