@@ -7,7 +7,7 @@ This page is the contract. Every JSON example below is checked by a test against
 ## Set up
 
 1. Sign in once with the GitHub CLI and let it use the Project: `gh auth login -s repo,project`. The tool takes the token from `gh auth token`. It never stores the token, and never writes it to a repository, a task file, or a log ([DEC-008](../decisions/DEC-008-agent-identity-and-write-confirmation.md)).
-2. Build it from a checkout: `npm ci && npm run build`. Run `node packages/cli/dist/bin.js <command>` (called `weaver` below).
+2. Get the tool. Either download `weaver.js` from the [latest GitHub Release](https://github.com/blcktgr73/Weaver/releases) and run `node weaver.js <command>` (it is one file and needs only Node 20 or later), or build it from a checkout: `npm ci && npm run build`, then `node packages/cli/dist/bin.js <command>`. `npm run package:cli` writes the same single file to `dist/weaver.js`. In this page the command is called `weaver`.
 3. Tell it which Project to read. It takes the configuration from a `fabric.yaml` in the folder it runs in (or `--root <folder>`) when there is one, and otherwise from your personal `~/.weaver/config.yaml` ([DEC-014](../decisions/DEC-014-user-configuration.md)); `WEAVER_HOME` moves that folder. The personal file needs only the Project (`project: {owner, number}`); without a repository list every repository on the Project is read. The files under the folder it runs in (except `node_modules`, `.git`, `dist`, `out`, and `examples`) are the repository files it reads.
 
 ## What every command prints

@@ -13,6 +13,7 @@
     "dev": "npm run build && node scripts/dev.js examples/sample-workspace",
     "dev:docs": "npm run build && node scripts/dev.js docs",
     "package": "npm run build && npm run package -w @palab/weaver-vscode-extension",
+    "package:cli": "npm run build && npm run bundle -w @palab/weaver-cli",
     "dev:overview": "npm run build && node scripts/dev.js examples/overview.code-workspace"
   }
 }

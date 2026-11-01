@@ -21,3 +21,9 @@ The tool can only be used from a checkout. Bundle it into one file and attach it
 - The release workflow builds a single `weaver.js` that runs with Node 20 or later and attaches it to the Release.
 - The agent contract and the getting-started guide say how to download and run it.
 - A test or a workflow step runs the bundled file (`--help`) before it is attached.
+
+## Progress
+
+- `npm run package:cli` bundles the tool with esbuild into `dist/weaver.js` (about 500 KB, Node 20 or later). The release workflow builds it, runs `node dist/weaver.js --help`, and attaches it next to the VSIX. The VSIX still holds only the extension.
+- The agent contract, the getting-started guide, and the distribution guide say how to download and run it. I ran the bundled file by hand from another folder: `--help` prints the usage and a command without a configuration answers with the usual JSON error.
+- The workflow itself runs only when a tag is pushed, so the attach step has not run yet.
