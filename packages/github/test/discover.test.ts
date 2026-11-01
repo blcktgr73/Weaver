@@ -56,6 +56,45 @@ describe('listProjects', () => {
   });
 });
 
+describe('listProjects with a sign-in that cannot see the organizations', () => {
+  const own = { data: { viewer: { login: 'me', projectsV2: { nodes: [node(1, 'Ops', 108)] } } } };
+  const scopeError = { errors: [{ type: 'INSUFFICIENT_SCOPES', message: "The 'organizations' field requires one of the following scopes: ['read:org']" }] };
+
+  /** Answers the full query with a scope error, and the own-Projects query with `own`. */
+  const withoutOrgScope = (calls: string[] = []): Fetch => async (_url, init) => {
+    const query = JSON.parse(init.body).query as string;
+    calls.push(query.includes('organizations') ? 'full' : 'own');
+    const body = query.includes('organizations') ? scopeError : own;
+    return { ok: true, status: 200, json: async () => body };
+  };
+
+  it('lists the own Projects and says the organizations were skipped, instead of failing', async () => {
+    const calls: string[] = [];
+    expect(await listProjects('t', withoutOrgScope(calls))).toEqual({
+      ok: true,
+      organizationsSkipped: true,
+      projects: [{ owner: 'me', number: 1, title: 'Ops', items: 108, closed: false }],
+    });
+    expect(calls).toEqual(['full', 'own']);
+  });
+
+  it('still reports the missing "project" scope when even the own Projects cannot be read', async () => {
+    const result = await listProjects('t', answer(200, scopeError));
+    expect(result).toEqual({ ok: false, error: { code: 'project.missing-scope' } });
+  });
+
+  it('asks once when the sign-in can see everything', async () => {
+    const calls: string[] = [];
+    const fetchImpl: Fetch = async (_url, init) => {
+      calls.push(init.body);
+      return { ok: true, status: 200, json: async () => ({ data: { viewer: { login: 'me', projectsV2: { nodes: [] }, organizations: { nodes: [] } } } }) };
+    };
+    const result = await listProjects('t', fetchImpl);
+    expect(calls).toHaveLength(1);
+    expect(result).toEqual({ ok: true, projects: [] });
+  });
+});
+
 describe('summarizeProject', () => {
   const card = (repository: string, assignees: string[] = []) => ({ repository, assignees });
 

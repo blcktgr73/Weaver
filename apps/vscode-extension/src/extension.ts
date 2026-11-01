@@ -89,7 +89,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // The steps of `weaver init` in the editor (DEC-014). Afterwards the Overview shows the new setup.
   const setUpCommand = vscode.commands.registerCommand('weaver.setUp', async () => {
-    if (await setUp()) await overview.show(await refresh());
+    try {
+      if (await setUp()) await overview.show(await refresh());
+    } catch (error) {
+      void vscode.window.showErrorMessage(message('ui.setup.failed', { detail: error instanceof Error ? error.message : String(error) }));
+    }
   });
 
   // A way into the Overview that does not depend on the workspace: it no longer opens in every window.
