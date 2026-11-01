@@ -3,6 +3,7 @@ import { Artifact, Locale, RequirementArtifact } from '@palab/weaver-markdown';
 import { addIssueToProject, createIssue, NoticeError, type Fetch } from '@palab/weaver-github';
 import { attribution, PlannedAction } from './actions';
 import type { System } from './contract';
+import { openFilesPullRequest } from './filesPullRequest';
 
 export const taskIdOf = (number: number): string => `TASK-${String(number).padStart(3, '0')}`;
 
@@ -149,44 +150,41 @@ export function planTaskCreate(input: TaskCreateInput): PlannedAction[] {
     run: async () => {
       if (!created.url || created.number === undefined) throw new NoticeError({ code: 'cli.err.issue-not-created' });
       const { system } = input;
-      const top = (await system.run('git', ['rev-parse', '--show-toplevel'], { cwd: input.root })).trim();
-      const base = (await system.run('gh', ['repo', 'view', input.repository, '--json', 'defaultBranchRef', '--jq', '.defaultBranchRef.name'])).trim();
-      await system.run('git', ['fetch', 'origin', base], { cwd: top });
-      const work = await system.tempDir();
-      try {
-        await system.run('git', ['worktree', 'add', '-b', branch, work, `origin/${base}`], { cwd: top });
-        const relative = path.relative(top, path.resolve(input.root, input.requirement.path)).split(path.sep).join('/');
-        const requirementText = await system.readText(path.join(work, relative));
-        const updated = requirementText === undefined ? undefined : addTaskToRequirement(requirementText, taskListLine(id, input.title, created.number as number, created.url as string));
-        if (updated === undefined) throw new NoticeError({ code: 'cli.err.no-tasks-section', args: { path: relative, base } });
-        await system.writeFile(path.join(work, relative), updated);
-        const taskRelative = path.relative(top, path.resolve(input.root, taskPath)).split(path.sep).join('/');
-        await system.writeFile(
-          path.join(work, taskRelative),
-          renderTaskFile({
-            id,
-            title: input.title,
-            requirement: input.requirement.id,
-            issueUrl: created.url as string,
-            issueNumber: created.number as number,
-            repository: input.repository,
-            criteria: input.criteria,
-            assigneeType: input.assigneeType,
-            assignee: input.assignee,
-          }),
-        );
-        const message = `docs: add ${id} ${input.title}\n\n${attribution(input.locale, input.login)}`;
-        await system.run('git', ['add', '-A'], { cwd: work });
-        await system.run('git', ['commit', '-m', message], { cwd: work });
-        await system.run('git', ['push', '-u', 'origin', branch], { cwd: work });
-        await system.run('gh', [
-          'pr', 'create', '--repo', input.repository, '--head', branch, '--base', base,
-          '--title', `docs: add ${id} ${input.title}`,
-          '--body', `${attribution(input.locale, input.login)}\n\nAdds ${taskPath} and lists ${id} under ${input.requirement.id}. Issue: ${created.url}`,
-        ]);
-      } finally {
-        await system.run('git', ['worktree', 'remove', '--force', work], { cwd: top }).catch(() => undefined);
-      }
+      await openFilesPullRequest({
+        system,
+        root: input.root,
+        repository: input.repository,
+        branch,
+        title: `docs: add ${id} ${input.title}`,
+        commitMessage: `docs: add ${id} ${input.title}
+
+${attribution(input.locale, input.login)}`,
+        body: `${attribution(input.locale, input.login)}
+
+Adds ${taskPath} and lists ${id} under ${input.requirement.id}. Issue: ${created.url}`,
+        edit: async ({ work, top, base }) => {
+          const relative = path.relative(top, path.resolve(input.root, input.requirement.path)).split(path.sep).join('/');
+          const requirementText = await system.readText(path.join(work, relative));
+          const updated = requirementText === undefined ? undefined : addTaskToRequirement(requirementText, taskListLine(id, input.title, created.number as number, created.url as string));
+          if (updated === undefined) throw new NoticeError({ code: 'cli.err.no-tasks-section', args: { path: relative, base } });
+          await system.writeFile(path.join(work, relative), updated);
+          const taskRelative = path.relative(top, path.resolve(input.root, taskPath)).split(path.sep).join('/');
+          await system.writeFile(
+            path.join(work, taskRelative),
+            renderTaskFile({
+              id,
+              title: input.title,
+              requirement: input.requirement.id,
+              issueUrl: created.url as string,
+              issueNumber: created.number as number,
+              repository: input.repository,
+              criteria: input.criteria,
+              assigneeType: input.assigneeType,
+              assignee: input.assignee,
+            }),
+          );
+        },
+      });
     },
   };
 

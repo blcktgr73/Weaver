@@ -342,3 +342,11 @@ export async function setIssueAssignees(token: string, repository: string, numbe
   const missing = assignees.find((login) => !now.has(login.toLowerCase()));
   if (missing) throw new NoticeError({ code: 'github.err.cannot-assign', args: { login: missing } });
 }
+
+/** The text of an Issue's body, or undefined when it cannot be read. */
+export async function fetchIssueBody(token: string, repository: string, number: number, fetchFn: FetchFn = fetch): Promise<string | undefined> {
+  const response = await rest({ token, fetchFn }, 'GET', `/repos/${repository}/issues/${number}`);
+  if (!response.ok) return undefined;
+  const data = (await response.json()) as { body?: string | null };
+  return data.body ?? '';
+}

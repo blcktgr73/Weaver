@@ -263,7 +263,9 @@ When the user describes work in a conversation and agrees that it should be trac
 
 ## Reconcile
 
-`weaver reconcile` reads what the Overview reports and sorts it into the steward's three tiers ([DEC-012](../decisions/DEC-012-steward-first-version.md)): automatic fixes (an Issue added to the Project), proposed fixes (a board Status behind its label, a note about a merged pull request that did not close its Issue, a closed task Issue set to `status:verified`), and items that are only reported (a board ahead of its label, stale cards, a broken Issue link, and the fixes that need a file change, which are not automated yet). It is a dry run unless `--apply` or `--approve` is given.
+`weaver reconcile` reads what the Overview reports and sorts it into the steward's three tiers ([DEC-012](../decisions/DEC-012-steward-first-version.md)): automatic fixes (an Issue added to the Project), proposed fixes (a board Status behind its label, a note about a merged pull request that did not close its Issue, a closed task Issue set to `status:verified`, and the two fixes that change repository files, each offered as a pull request), and items that are only reported (a board ahead of its label, stale cards, a broken Issue link, and the file fixes that cannot be offered safely).
+
+The two file fixes use the same separate worktree as `task create`, so your checkout and the default branch stay untouched. A **task file without an Issue** gets an Issue (created, and put on the Project) and a pull request that writes the link into the task file and the requirement's task line; if the Project already has a card titled with that task, that Issue is linked and none is made. A **card without a task file** gets a pull request that drafts the task file from the Issue and lists it under its requirement, but only when the Issue's title or body names a `REQ-###` that belongs to the same repository; otherwise it stays a report. The owner and criteria of a draft are guesses for the reviewer to check. A fix whose pull request is already open is not offered again. It is a dry run unless `--apply` or `--approve` is given.
 
 <!-- example: reconcile -->
 ```json

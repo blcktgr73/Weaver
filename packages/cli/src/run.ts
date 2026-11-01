@@ -204,6 +204,22 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       rulesFor,
       idleDaysFor,
       evidenceFor,
+      files: {
+        token,
+        login: await deps.login(),
+        locale,
+        project: setup.project,
+        system: deps.system,
+        root,
+        taskDirectory: (() => {
+          const first = artifacts.find((a) => a.kind === 'task');
+          return first ? path.posix.dirname(first.path) : 'docs/tasks';
+        })(),
+        fetch: deps.fetch,
+        fetchFn: deps.fetch as unknown as FetchFn | undefined,
+        usedTexts: (repository) => usedTaskTexts(artifacts, cards, repository, deps.system),
+        planned: [],
+      },
       artifacts,
       pulls: merged.flatMap((r) => (r.ok ? r.pulls : [])),
       now: deps.now(),
