@@ -23,6 +23,8 @@ export const ko: Record<MessageKey, Message> = {
   'validation.task-listed-twice': '이미 다른 요구사항에 등록된 작업입니다: {task} (등록 위치: {owner})',
 
   // 등록부(fabric.yaml)
+  'validation.config-invalid-yaml': '설정이 올바른 YAML이 아닙니다: {detail}',
+  'validation.config-not-a-mapping': '설정은 "project"가 있는 매핑이어야 합니다.',
   'validation.fabric-invalid-yaml': '등록부가 올바른 YAML이 아닙니다: {detail}',
   'validation.fabric-not-a-mapping': '등록부는 "project"와 "repositories"를 가진 항목 묶음이어야 합니다.',
   'validation.fabric-project-not-a-mapping': '"project"에는 "owner"와 "number"가 있어야 합니다.',
@@ -104,7 +106,6 @@ export const ko: Record<MessageKey, Message> = {
   'cli.usage': '사용법: weaver <명령> [옵션]\n\n명령:\n  list                 Project의 모든 카드를 나열합니다\n  show <카드>          카드 하나를 보여 줍니다: owner/name#번호, Issue 주소, 또는 TASK-###\n  project add <issue>...  Issue를 Project에 추가합니다(쓰기, --approve 참고)\n\n옵션:\n  --root <폴더>        fabric.yaml이 있는 폴더(기본값: 현재 폴더)\n  --repository <이름>  list: 이 저장소(owner/name)만\n  --column <이름>      list: 이 열만\n  --text               JSON 대신 읽기 쉬운 글로 출력합니다\n  --approve <id들>     쓰기 명령: 사용자가 승인한 작업만 실행합니다\n  card move <카드> --to <열>   쓰기: 카드를 옮깁니다(라벨, Issue 상태, 보드 Status)\n  reconcile [--apply]  Overview가 알려 주는 것의 수정 계획을 만듭니다(승인 없이는 아무것도 바꾸지 않습니다)\n  evidence attach <카드> --pull <번호 또는 주소>   쓰기: 병합된 풀 리퀘스트를 Issue에 연결합니다\n  task create          쓰기: --title <제목> --requirement <REQ-###> [--criteria AC-001,..] [--assignee <이름>]\n                       [--assignee-type human|agent] [--area <이름>] [--repository <owner/name>]\n  --lang <en|ko>       메시지 언어(기본값: WEAVER_LANG, 없으면 en)\n  --help               이 도움말을 보여 줍니다\n\n토큰은 gh 로그인에서 가져옵니다(gh auth login -s repo,project).',
   'cli.unknown-command': '"{command}"는 알 수 없는 명령입니다. weaver --help를 실행해 보세요.',
   'cli.missing-argument': '"{command}" 명령에는 {argument}가 필요합니다.',
-  'cli.no-registry': '{root}에서 올바른 fabric.yaml을 찾지 못했습니다.',
   'cli.no-token': 'GitHub 토큰이 없습니다. 다음을 실행하세요: gh auth login -s repo,project',
   'cli.confirm': '이 작업을 실행할까요? [y/N] ',
   'cli.action-line': '{kind} {target} (id {id})\n  변경: {summary}\n  이유: {reason}',
@@ -144,6 +145,8 @@ export const ko: Record<MessageKey, Message> = {
   'cli.reconcile.comment': '{ref}에 병합된 풀 리퀘스트 #{pull}이(가) {task}를 가리키지만 Issue를 닫지 않았다는 댓글을 답니다. Issue는 그대로 열어 둡니다.',
   'cli.reconcile.comment-reason': '병합된 풀 리퀘스트가 이 태스크를 가리키는데 Issue가 열려 있어서 그 연결을 Issue에 적습니다. 닫는 일은 사람이 합니다.',
   'cli.reconcile.relabel-reason': 'Issue가 닫혔고 닫힌 태스크 Issue는 Verified인데(DEC-003), 이전 상태 라벨이 남아 있습니다.',
+  'cli.no-setup': 'Weaver 설정을 찾지 못했습니다. "weaver init"을 실행하거나 {root}에 fabric.yaml을 두세요.',
+  'cli.config-invalid': '설정 {path}에 문제가 있습니다: {detail}',
   'cli.not-found': '"{ref}"에 맞는 카드가 없습니다.',
   'cli.ambiguous': '"{ref}"에 맞는 카드가 둘 이상입니다: {matches}.',
   'gap.offline-no-status': '상태를 알 수 없음: 태스크 파일에 상태가 없습니다(상태는 Issue에 있음)',

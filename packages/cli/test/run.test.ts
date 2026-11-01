@@ -80,7 +80,7 @@ describe('failures', () => {
   it('reports a missing registry, a missing token, and a bad command as JSON, or as text with --text', async () => {
     let s = setup({ registry: '' });
     expect(await run(['list'], s.deps)).toBe(EXIT.failed);
-    expect(JSON.parse(s.out.join('')).error.code).toBe('cli.no-registry');
+    expect(JSON.parse(s.out.join('')).error.code).toBe('cli.no-setup');
 
     s = setup({ token: undefined });
     expect(await run(['list'], s.deps)).toBe(EXIT.failed);
@@ -467,5 +467,61 @@ describe('weaver reconcile', () => {
     const { deps, out } = setup();
     expect(await run(['reconcile', '--text'], deps)).toBe(EXIT.ok);
     expect(out.join('')).toMatch(/^proposed\tcard-without-file\t#11\t/m);
+  });
+});
+
+describe('where the configuration comes from', () => {
+  const PERSONAL = 'project: {owner: me, number: 7}\n';
+  const WORKSPACE = 'project: {owner: me, number: 1}\nrepositories:\n  - me/Weaver\n';
+
+  /** Files by name, and the Project number each Project query asked for. */
+  function withFiles(files: { workspace?: string; personal?: string }) {
+    const s = setup();
+    const asked: number[] = [];
+    s.deps.readText = async (file) => (file.endsWith('fabric.yaml') ? files.workspace : file.endsWith('config.yaml') ? files.personal : undefined);
+    const original = s.deps.fetch as Fetch;
+    s.deps.fetch = async (url, init) => {
+      const body = init?.body ? JSON.parse(init.body) : undefined;
+      if (body?.variables?.n !== undefined && body.query.includes('projectV2')) asked.push(body.variables.n);
+      return original(url, init);
+    };
+    return { ...s, asked };
+  }
+
+  it('uses the personal configuration when the workspace has no fabric.yaml, with no repository list', async () => {
+    const { deps, out, asked } = withFiles({ personal: PERSONAL });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(asked).toEqual([7]);
+    expect(JSON.parse(out.join('')).cards).toHaveLength(2);
+  });
+
+  it('lets the workspace fabric.yaml decide the Project when both exist', async () => {
+    const { deps, asked } = withFiles({ workspace: WORKSPACE, personal: PERSONAL });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(asked).toEqual([1]);
+  });
+
+  it('does not let a broken personal file get in the way of a workspace fabric.yaml', async () => {
+    const { deps } = withFiles({ workspace: WORKSPACE, personal: 'project: [' });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+  });
+
+  it('says how to set up when there is no configuration at all', async () => {
+    const { deps, out } = withFiles({});
+    expect(await run(['list'], deps)).toBe(EXIT.failed);
+    const error = JSON.parse(out.join('')).error;
+    expect(error.code).toBe('cli.no-setup');
+    expect(error.message).toContain('weaver init');
+  });
+
+  it('reports a configuration that cannot be read instead of falling back', async () => {
+    const personal = withFiles({ personal: 'project: [' });
+    expect(await run(['list'], personal.deps)).toBe(EXIT.failed);
+    expect(JSON.parse(personal.out.join('')).error).toMatchObject({ code: 'cli.config-invalid' });
+    expect(JSON.parse(personal.out.join('')).error.message).toContain('config.yaml');
+
+    const workspace = withFiles({ workspace: 'repositories: [me/a]', personal: PERSONAL });
+    expect(await run(['list'], workspace.deps)).toBe(EXIT.failed);
+    expect(JSON.parse(workspace.out.join('')).error.message).toContain('fabric.yaml');
   });
 });

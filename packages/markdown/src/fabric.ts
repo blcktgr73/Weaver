@@ -67,8 +67,8 @@ export function parseFabric(path: string, text: string): FabricParseResult {
     if (!KNOWN_FIELDS.includes(field)) add('warning', 'unknown-field', { field });
   }
 
-  const project = readProject(data.project, add);
-  const repositories = readRepositories(data.repositories, add);
+  const project = readFabricProject(data.project, add);
+  const repositories = readFabricRepositories(data.repositories, add);
 
   if (issues.some((issue) => issue.severity === 'error') || !project) return { issues };
   return { registry: { project, repositories }, issues };
@@ -76,7 +76,8 @@ export function parseFabric(path: string, text: string): FabricParseResult {
 
 type Add = (severity: ValidationIssue['severity'], code: string, args?: MessageArgs) => void;
 
-function readProject(value: unknown, add: Add): FabricProject | undefined {
+/** Reads a `project` entry; shared with the personal configuration. */
+export function readFabricProject(value: unknown, add: Add): FabricProject | undefined {
   if (value === undefined || value === null) {
     add('error', 'missing-field', { field: 'project' });
     return undefined;
@@ -110,7 +111,8 @@ function readProject(value: unknown, add: Add): FabricProject | undefined {
   return ok ? { owner: owner as string, number: number as number } : undefined;
 }
 
-function readRepositories(value: unknown, add: Add): FabricRepository[] {
+/** Reads a `repositories` list; shared with the personal configuration. */
+export function readFabricRepositories(value: unknown, add: Add): FabricRepository[] {
   if (value === undefined || value === null) {
     add('error', 'missing-field', { field: 'repositories' });
     return [];

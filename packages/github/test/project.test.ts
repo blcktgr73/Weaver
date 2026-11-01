@@ -39,6 +39,13 @@ function fake(...replies: { status?: number; body: unknown }[]) {
 const project = { owner: 'me', number: 1 };
 
 describe('readProject', () => {
+  it('reads the Issues of every repository when no list is given', async () => {
+    const { fetchImpl } = fake({ body: page([issue('me/a', 1), issue('other/b', 2)], null) });
+    const result = await readProject('t', project, undefined, fetchImpl);
+    expect(result.ok && result.read.cards.map((c) => c.repository)).toEqual(['me/a', 'other/b']);
+    expect(result.ok && result.read.skipped).toBe(0);
+  });
+
   it('turns Issues of registered repositories into cards', async () => {
     const { fetchImpl } = fake({
       body: page(

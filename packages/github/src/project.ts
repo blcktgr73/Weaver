@@ -30,7 +30,7 @@ export interface ProjectCard {
 export interface ProjectRead {
   title: string;
   cards: ProjectCard[];
-  /** Items left out: pull requests, drafts, and Issues of repositories that are not registered. */
+  /** Items left out: pull requests, drafts, and Issues of repositories that were not asked for. */
   skipped: number;
 }
 
@@ -80,10 +80,11 @@ const TASK_TITLE = /^\[(TASK-\d{3,})\]/;
 export async function readProject(
   token: string,
   project: { owner: string; number: number },
-  repositories: readonly string[],
+  /** The repositories to read; left out, every repository that has Issues on the Project is read. */
+  repositories: readonly string[] | undefined,
   fetchImpl: Fetch = fetch as unknown as Fetch,
 ): Promise<ProjectResult> {
-  const registered = new Set(repositories.map((name) => name.toLowerCase()));
+  const registered = repositories ? new Set(repositories.map((name) => name.toLowerCase())) : undefined;
   const cards: ProjectCard[] = [];
   let skipped = 0;
   let title = '';
@@ -118,7 +119,7 @@ export async function readProject(
     for (const node of found.items.nodes) {
       const issue = node.content;
       const repository = issue?.repository?.nameWithOwner;
-      if (issue?.__typename !== 'Issue' || !repository || !registered.has(repository.toLowerCase())) {
+      if (issue?.__typename !== 'Issue' || !repository || (registered && !registered.has(repository.toLowerCase()))) {
         skipped += 1;
         continue;
       }
