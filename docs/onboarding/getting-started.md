@@ -115,6 +115,7 @@ The Overview shows the work of all registered repositories on one Kanban: the co
    ```
 
    To use your own personal or organization Project, follow [Register your own Project](register-your-project.md).
+   To change how a repository's columns and evidence rules work, follow [Configure how your repository tracks its work](configure-your-process.md).
 
 2. Open that folder in VS Code. The Overview opens by itself when the file exists, or run **Weaver: Open Overview**.
 3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
