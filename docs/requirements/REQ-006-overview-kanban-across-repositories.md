@@ -46,6 +46,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 - A requirement view does not carry a second Kanban board. It shows one line of stage counts for its tasks, and the Overview is the only board.
 - From a requirement view or a task file, an action shows its cards on the Overview: the project is turned on, its lane is unfolded, and the cards of that requirement or task are highlighted.
 - Each successful read of the Project is kept on the user's computer, never in the repository. When GitHub cannot be read, the Overview shows that board with its age, and falls back to the files only when no read of the same Project was kept.
+- The finished cards, those in the Verified column and those whose Issue is closed, are folded by default, and each lane shows only their count in the Verified column. A finished card that carries a gap, such as a closed Issue outside Verified, stays visible. One control on the Overview unfolds and folds them again, and the choice is kept on the user's computer only. Showing a requirement or a task on the Overview unfolds them when a highlighted card is among them. The folded cards still count in the lane totals and in the mismatch checks.
 
 ## Open decisions
 
@@ -106,6 +107,7 @@ The editor behaviors in the right column cannot be driven by the test suite; the
 - `TASK-059` Set up the configuration from the terminal with weaver init — [GitHub Issue #124](https://github.com/blcktgr73/Weaver/issues/124)
 - `TASK-060` Set up the configuration from the editor and show every repository of the Project — [GitHub Issue #125](https://github.com/blcktgr73/Weaver/issues/125)
 - `TASK-061` Move the committed registry and roster out of the repository and write the migration note — [GitHub Issue #126](https://github.com/blcktgr73/Weaver/issues/126)
+- `TASK-062` Fold the finished cards of the Overview by default — [GitHub Issue #149](https://github.com/blcktgr73/Weaver/issues/149)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 

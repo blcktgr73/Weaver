@@ -9,6 +9,8 @@ import {
   FocusTarget,
   focusCards,
   findMismatches,
+  foldFinished,
+  isFinished,
   makeSnapshot,
   MergedPull,
   moveLane,
@@ -43,6 +45,7 @@ const REGISTRY_FILE = 'fabric.yaml';
 const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
 const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 const ORDER_KEY = 'weaver.overview.laneOrder';
+const FINISHED_KEY = 'weaver.overview.showFinished';
 const SNAPSHOT_KEY = 'weaver.overview.lastRead';
 /** How many repositories are asked for their process at a time (DEC-015). */
 const PROCESS_BATCH = 4;
@@ -100,6 +103,8 @@ export class OverviewView {
   private collapsed: Set<string>;
   /** The lane order the user chose, on this computer only. Lanes not in it keep the registry order. */
   private order: string[];
+  /** Finished cards (Verified, or a closed Issue) are folded unless the user asked to see them. */
+  private showFinished: boolean;
 
   constructor(
     private readonly store: vscode.Memento,
@@ -108,6 +113,7 @@ export class OverviewView {
     this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
     this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
     this.order = store.get<string[]>(ORDER_KEY, []);
+    this.showFinished = store.get<boolean>(FINISHED_KEY, false);
   }
 
   /** The registered repositories in the order the user chose, then the registry order. */
@@ -170,6 +176,11 @@ export class OverviewView {
   private revealFocus(): void {
     if (this.registry.kind !== 'ok') return;
     for (const card of this.matching()) {
+      // A highlighted card that is folded away cannot be seen: unfold the finished cards.
+      if (isFinished({ placement: card.placement, state: card.state })) {
+        this.showFinished = true;
+        void this.store.update(FINISHED_KEY, true);
+      }
       const lane = this.registry.registry.repositories.find((r) => r.repository.toLowerCase() === card.repository.toLowerCase());
       if (!lane) continue;
       this.hidden.delete(lane.repository);
@@ -193,6 +204,11 @@ export class OverviewView {
     else if (message.type === 'toggleLane' && message.id) {
       this.flip(this.hidden, HIDDEN_KEY, message.id);
       void this.readPending(this.request);
+    }
+    else if (message.type === 'toggleFinished') {
+      this.showFinished = !this.showFinished;
+      void this.store.update(FINISHED_KEY, this.showFinished);
+      this.render();
     }
     else if (message.type === 'foldLane' && message.id) this.flip(this.collapsed, COLLAPSED_KEY, message.id);
     else if (message.type === 'showAll') {
@@ -528,10 +544,14 @@ export class OverviewView {
         ),
       };
     });
+    const ordered = applyLaneOrder(buildLanes(this.registry.registry, cards), this.order);
+    const folds = ordered.map((lane) => ({ repository: lane.repository, ...foldFinished(lane) }));
     return {
       kind: 'ready',
       projectTitle: this.read.title,
-      lanes: applyLaneOrder(buildLanes(this.registry.registry, cards), this.order),
+      lanes: this.showFinished ? ordered : folds.map((fold) => fold.lane),
+      showFinished: this.showFinished,
+      finished: Object.fromEntries(folds.map((fold) => [fold.repository, fold.folded])),
       skipped: this.read.skipped,
       hidden: [...this.hidden],
       collapsed: [...this.collapsed],

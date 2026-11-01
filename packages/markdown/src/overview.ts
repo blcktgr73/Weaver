@@ -92,6 +92,27 @@ export function buildLanes<T extends { repository: string; number: number; place
   });
 }
 
+/** True for a card that is finished work: in the Verified column, or with a closed Issue. A card with a gap is never counted as finished, so it stays in view. */
+export function isFinished(card: { placement: KanbanPlacement; state?: 'open' | 'closed' }): boolean {
+  return (card.placement.column === 'Verified' || card.state === 'closed') && card.placement.gaps.length === 0;
+}
+
+/**
+ * The lane without its finished cards, and how many were taken out. The totals of the lane
+ * stay as they were: a folded card is still counted, only not drawn.
+ */
+export function foldFinished<T extends { placement: KanbanPlacement; state?: 'open' | 'closed' }>(lane: Lane<T>): { lane: Lane<T>; folded: number } {
+  let folded = 0;
+  const columns = Object.fromEntries(
+    KANBAN_COLUMNS.map((column) => {
+      const kept = lane.columns[column].filter((card) => !isFinished(card));
+      folded += lane.columns[column].length - kept.length;
+      return [column, kept];
+    }),
+  ) as Record<KanbanColumn, T[]>;
+  return { lane: { ...lane, columns }, folded };
+}
+
 /** What to show on the Overview: every card of a requirement, or the one card of a task. */
 export interface FocusTarget {
   requirementId: string;
