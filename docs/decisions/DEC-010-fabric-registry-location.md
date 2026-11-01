@@ -1,6 +1,6 @@
 # DEC-010: The fabric registry is `fabric.yaml` at the root of the Weaver repository
 
-- Status: accepted
+- Status: superseded by [DEC-014](./DEC-014-user-configuration.md) for where a person's configuration lives. The `fabric.yaml` format remains as the optional shared file.
 - Date: 2026-10-31
 - Related: `REQ-006`, [DEC-007](./DEC-007-central-project-is-configuration.md), `TASK-029`, `TASK-030`
 

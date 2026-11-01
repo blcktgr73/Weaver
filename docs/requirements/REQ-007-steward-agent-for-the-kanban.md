@@ -79,6 +79,10 @@ Also not covered by tests: the `[y/N]` question at a terminal (`readline` in `bi
 - `TASK-047` Move a card and attach evidence from the command line — [GitHub Issue #98](https://github.com/blcktgr73/Weaver/issues/98)
 - `TASK-048` Reconcile mismatches according to the steward tiers — [GitHub Issue #99](https://github.com/blcktgr73/Weaver/issues/99)
 - `TASK-049` Write the agent contract for the weaver tool — [GitHub Issue #100](https://github.com/blcktgr73/Weaver/issues/100)
+- `TASK-051` Keep a requirement tidy when task create adds the first task — [GitHub Issue #113](https://github.com/blcktgr73/Weaver/issues/113)
+- `TASK-052` Show the errors of the weaver tool in the chosen language — [GitHub Issue #114](https://github.com/blcktgr73/Weaver/issues/114)
+- `TASK-053` Reconcile the two mismatches that need a file change as pull requests — [GitHub Issue #115](https://github.com/blcktgr73/Weaver/issues/115)
+- `TASK-054` Attach the weaver tool to the release — [GitHub Issue #116](https://github.com/blcktgr73/Weaver/issues/116)
 
 The approach for the first version is [DEC-012](../decisions/DEC-012-steward-first-version.md). `TASK-043` and `TASK-044` come first; the write tasks follow `TASK-044`; `TASK-048` needs `TASK-045` to `TASK-047`. Scheduled runs and batch approval have no task until they are decided.
 
