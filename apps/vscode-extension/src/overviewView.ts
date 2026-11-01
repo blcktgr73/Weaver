@@ -24,11 +24,12 @@ import {
   staleNotices,
   ValidationIssue,
 } from '@palab/weaver-markdown';
-import { placeWithRules, ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
+import { mapLimit, placeWithRules, ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { fabricRoot } from './fabricRoot';
 import { fetchEvidence, getGitHubToken } from './github';
+import { log } from './log';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { processStore } from './processStore';
@@ -45,6 +46,8 @@ const ORDER_KEY = 'weaver.overview.laneOrder';
 const SNAPSHOT_KEY = 'weaver.overview.lastRead';
 /** How many repositories are asked for their process at a time (DEC-015). */
 const PROCESS_BATCH = 4;
+/** How many repositories are asked for their merged pull requests at a time. */
+const PULL_LIMIT = 4;
 
 export type Registry =
   | { kind: 'none' }
@@ -136,7 +139,10 @@ export class OverviewView {
         enableScripts: true,
         retainContextWhenHidden: true,
       });
-      this.panel.onDidDispose(() => (this.panel = undefined));
+      this.panel.onDidDispose(() => {
+        this.panel = undefined;
+        this.lastHtml = undefined;
+      });
       this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string; delta?: number }) => {
         // An action that fails must say so: a rejected promise inside a message handler would be silent.
         this.onMessage(message).catch((error: unknown) => void vscode.window.showErrorMessage(text('ui.overview.action-failed', { detail: error instanceof Error ? error.message : String(error) })));
@@ -180,6 +186,7 @@ export class OverviewView {
   }
 
   private async onMessage(message: { type: string; url?: string; id?: string; path?: string; delta?: number }): Promise<void> {
+    log(`message ${message.type}${message.id ? ` ${message.id}` : ''}`);
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
     else if (message.type === 'setUp') await vscode.commands.executeCommand('weaver.setUp');
@@ -341,7 +348,10 @@ export class OverviewView {
 
   private async load(interactive: boolean): Promise<void> {
     const request = ++this.request;
+    const started = Date.now();
+    log(`load #${request} start (interactive=${interactive})`);
     this.registry = await readRegistry();
+    log(`load #${request} registry ${this.registry.kind}${this.registry.kind === 'ok' ? `, ${this.registry.registry.repositories.length} repositories, source ${this.registry.source}` : ''}`);
     if (this.registry.kind !== 'ok') {
       this.read = undefined;
       return this.render();
@@ -361,6 +371,7 @@ export class OverviewView {
     let repositories = registry.repositories.map((r) => r.repository);
     // Without a list in the configuration, the repositories are known only after the Project is read.
     const result = await readProject(token, registry.project, derived ? undefined : repositories);
+    log(`load #${request} project read ${result.ok ? `ok, ${result.read.cards.length} cards` : 'failed'} after ${Date.now() - started} ms${request !== this.request ? ' (newer request, dropped)' : ''}`);
     if (request !== this.request) return;
     if (result.ok && derived) {
       registry = { ...registry, repositories: effectiveRepositories({}, result.read.cards.map((card) => card.repository)) };
@@ -368,7 +379,9 @@ export class OverviewView {
       repositories = registry.repositories.map((r) => r.repository);
     }
     if (result.ok) {
-      const pulls = await Promise.all(registry.repositories.map((r) => readMergedPulls(token, r.repository)));
+      // A few at a time: with many repositories, all at once is slow and meets GitHub's rate limits.
+      const pulls = await mapLimit(registry.repositories, PULL_LIMIT, (r) => readMergedPulls(token, r.repository));
+      log(`load #${request} pull requests read after ${Date.now() - started} ms${request !== this.request ? ' (newer request, dropped)' : ''}`);
       if (request !== this.request) return;
       this.pulls = pulls.flatMap((r) => (r.ok ? r.pulls : []));
       this.skippedChecks = pulls.flatMap((r) => (r.ok ? [] : [r.error]));
@@ -417,17 +430,21 @@ export class OverviewView {
     await this.readPending(request);
   }
 
-  private async readPending(request: number): Promise<void> {
-    const token = this.token;
-    if (!token || this.readingBusy) return;
+  private async readPending(_request: number): Promise<void> {
+    if (!this.token || this.readingBusy) return;
     this.readingBusy = true;
     try {
       for (;;) {
+        // The loop outlives a refresh: it takes the newest token and list each round, so a refresh
+        // while it runs is picked up here instead of being dropped by the `readingBusy` check above.
+        const token = this.token;
+        if (!token) return;
         const shown = this.repositories().filter((name) => this.reading.has(name) && !this.hidden.has(name));
         const batch = [...shown.filter((name) => !this.collapsed.has(name)), ...shown.filter((name) => this.collapsed.has(name))].slice(0, PROCESS_BATCH);
-        if (batch.length === 0 || request !== this.request) return;
+        if (batch.length === 0) return;
+        const began = Date.now();
         await processStore.refresh(token, batch);
-        if (request !== this.request) return;
+        log(`process files of ${batch.length} repositories read in ${Date.now() - began} ms, ${this.reading.size - batch.length} left`);
         // A lane whose file could not be read keeps today's defaults rather than waiting for ever.
         for (const name of batch) this.reading.delete(name);
         this.render();
@@ -537,6 +554,16 @@ export class OverviewView {
     if (!this.panel) return;
     const nonce = randomBytes(16).toString('hex');
     this.panel.title = 'Weaver';
-    this.panel.webview.html = renderOverviewHtml(this.state(), nonce, this.panel.webview.cspSource, currentLocale());
+    const state = this.state();
+    const html = renderOverviewHtml(state, nonce, this.panel.webview.cspSource, currentLocale());
+    // Setting the page reloads it, which drops the scroll position and a click in progress; the
+    // nonce differs every time, so compare without it. Many repositories render many times.
+    const same = this.lastHtml !== undefined && html.split(nonce).join('') === this.lastHtml;
+    log(`render ${state.kind}${same ? ' (unchanged, skipped)' : ` (${html.length} bytes)`}`);
+    if (same) return;
+    this.lastHtml = html.split(nonce).join('');
+    this.panel.webview.html = html;
   }
+
+  private lastHtml: string | undefined;
 }

@@ -2,8 +2,8 @@ import { execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { cloneUrl, DirectoryKind, effectiveRepositories, planClones } from '@palab/weaver-markdown';
-import { readProject } from '@palab/weaver-github';
+import { cloneUrl, DirectoryKind, effectiveRepositories, formatKilobytes, planClones } from '@palab/weaver-markdown';
+import { readProject, readRepositorySizes } from '@palab/weaver-github';
 import { getGitHubToken } from './github';
 import { message } from './locale';
 import { readRegistry } from './overviewView';
@@ -23,13 +23,19 @@ export async function setFabricRoot(): Promise<string | undefined> {
     canSelectMany: false,
     openLabel: message('ui.fabric.root-button'),
     title: message('ui.fabric.root-prompt'),
-    defaultUri: fabricRoot() ? vscode.Uri.file(fabricRoot() as string) : undefined,
+    // Without a choice yet, start from the folder above the open one: the base folder of your projects.
+    defaultUri: fabricRoot() ? vscode.Uri.file(fabricRoot() as string) : parentOfWorkspace(),
   });
   const folder = picked?.[0]?.fsPath;
   if (!folder) return undefined;
   await vscode.workspace.getConfiguration('weaver').update(SETTING, folder, vscode.ConfigurationTarget.Global);
   void vscode.window.showInformationMessage(message('ui.fabric.root-set', { root: folder }));
   return folder;
+}
+
+function parentOfWorkspace(): vscode.Uri | undefined {
+  const folder = vscode.workspace.workspaceFolders?.[0]?.uri;
+  return folder?.scheme === 'file' ? vscode.Uri.file(path.dirname(folder.fsPath)) : undefined;
 }
 
 async function kindOf(directory: string): Promise<DirectoryKind | undefined> {
@@ -101,18 +107,46 @@ export async function cloneRegistered(): Promise<void> {
     return;
   }
 
+  // The size only helps to choose; without a sign-in or an answer, the list has none.
+  const sizeToken = await getGitHubToken(false, ['repo', 'project']);
+  const sizes = sizeToken ? await readRepositorySizes(sizeToken, missing.map((item) => item.repository)) : new Map<string, number>();
   const picked = await vscode.window.showQuickPick(
-    items.map((item) => ({
-      label: item.repository,
-      description: item.state === 'not-a-repository' ? message('ui.fabric.pick-item-exists') : item.directory,
-      picked: item.state === 'missing',
-      item,
-    })).filter((row) => row.item.state !== 'present'),
+    items.map((item) => {
+      const size = sizes.get(item.repository);
+      const where = path.join(root as string, item.directory);
+      return {
+        label: item.repository,
+        description:
+          item.state === 'not-a-repository'
+            ? `${where}, ${message('ui.fabric.pick-item-exists')}`
+            : message('ui.fabric.pick-item-size', { path: where, size: size === undefined ? message('ui.fabric.confirm-size-unknown') : formatKilobytes(size) }),
+        picked: item.state === 'missing',
+        item,
+      };
+    }).filter((row) => row.item.state !== 'present'),
     { canPickMany: true, placeHolder: message('ui.fabric.pick', { root }) },
   );
   if (!picked) return;
   const chosen = picked.map((row) => row.item).filter((item) => item.state === 'missing');
   const skipped = missing.length - chosen.length;
+  if (chosen.length === 0) return;
+
+  // The last look before anything is written: how many, where, and how large.
+  const known = chosen.map((item) => sizes.get(item.repository)).filter((size): size is number => size !== undefined);
+  const total = known.length === 0 ? message('ui.fabric.confirm-size-unknown') : `${known.length < chosen.length ? '≥ ' : ''}${formatKilobytes(known.reduce((a, b) => a + b, 0))}`;
+  const go = message('ui.fabric.confirm-button');
+  const change = message('ui.fabric.confirm-change');
+  const answer = await vscode.window.showInformationMessage(
+    message('ui.fabric.confirm', { count: chosen.length, root, size: total }),
+    { modal: true, detail: message('ui.fabric.confirm-detail', { root }) },
+    go,
+    change,
+  );
+  if (answer === change) {
+    if (await setFabricRoot()) await cloneRegistered();
+    return;
+  }
+  if (answer !== go) return;
 
   let cloned = 0;
   const failures: string[] = [];
