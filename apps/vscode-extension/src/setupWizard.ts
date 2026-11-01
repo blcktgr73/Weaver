@@ -31,7 +31,7 @@ export async function setUp(): Promise<boolean> {
   const current: UserConfig | undefined = existing.kind === 'ok' ? existing.config : undefined;
 
   // 1. The Project.
-  const listed = await listProjects(token);
+  const listed = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: message('ui.setup.listing') }, () => listProjects(token));
   if (!listed.ok) return fail(formatNotice(listed.error, locale));
   if (listed.organizationsSkipped) void vscode.window.showInformationMessage(message('ui.setup.organizations-skipped'));
   type ProjectItem = vscode.QuickPickItem & { project?: Project };
