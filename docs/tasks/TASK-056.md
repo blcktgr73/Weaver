@@ -20,3 +20,4 @@ Weaver is developed with its own workflow (AGENTS.md). Prepare the first round o
 - An Issue form lets a participant report friction with what they were doing, what they expected, and what happened.
 - The guide says how a report becomes a story in the user story map and, when it needs work, a task.
 - A checklist for the first round covers install, opening the Overview, and the first requirement view.
+- It is written for colleagues who did not build Weaver and who work in a shared project: a colleague installs a Release, runs the setup, and sees the Overview of that project without a configuration beyond the setup.

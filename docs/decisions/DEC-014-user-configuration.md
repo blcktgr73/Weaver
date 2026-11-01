@@ -35,5 +35,5 @@
 
 ## Not decided yet
 
-- A roster per repository, for a person who works with different teams.
+- A roster per repository, for a person who works with different teams. The people of a project that has outside colleagues need not be written by hand: the collaborators of the repository on GitHub are already its record of who works on it, so the humans of a roster could be taken from there, and only agents (which have no GitHub account) kept in the personal file. Not built; setup (`TASK-059`, `TASK-060`) offers the assignees of the cards as candidates for now.
 - Reading the personal configuration from a remote place (for a new machine).
