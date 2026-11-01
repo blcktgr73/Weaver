@@ -19,5 +19,6 @@ Define where the roster lives and its shape (kind, tool or model, how reached), 
 ## Progress
 
 - The roster is the `roster` of the personal configuration (DEC-014), read when the Requirement view loads. An owner, reviewer, or approver who is not in it is shown as a gap on the task, and an approver who is an agent as well. With no roster there are no gaps.
-- Not done: the same gaps are not yet in the Problems panel of the workspace scan.
+- The workspace scan reads the roster too: an owner, reviewer, or approver of a task file who is not in it, and an approver who is an agent, are warnings in the Problems panel on that task file. With no roster none is raised. "Agent work Verified without a human approval" needs the card's column, so it is shown in the Requirement view only.
+- The Problems panel was not looked at by hand; the code has no automated tests.
 
