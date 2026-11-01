@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
+  effectiveRepositories,
   applyLaneOrder,
   buildLanes,
   cloneDirectories,
@@ -31,6 +32,7 @@ import { fetchEvidence, getGitHubToken } from './github';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { processStore } from './processStore';
+import { readUserConfig } from './userConfig';
 import { isOpenableUrl } from './requirementHtml';
 import { REQUIREMENT_EDITOR } from './requirementEditor';
 import type { RequirementView } from './requirementView';
@@ -42,18 +44,33 @@ const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 const ORDER_KEY = 'weaver.overview.laneOrder';
 const SNAPSHOT_KEY = 'weaver.overview.lastRead';
 
-type Registry =
+export type Registry =
   | { kind: 'none' }
   | { kind: 'invalid'; issues: ValidationIssue[] }
-  | { kind: 'ok'; registry: FabricRegistry };
+  /** `derived`: the personal configuration gives no repository list, so the repositories are the ones the Project has cards of. */
+  | { kind: 'ok'; registry: FabricRegistry; source: 'workspace' | 'user'; derived: boolean };
 
-/** Reads `fabric.yaml` at the root of the workspace (DEC-010). */
+/** True when the workspace has a shared `fabric.yaml` (DEC-010); only then does the Overview open by itself. */
+export async function hasWorkspaceRegistry(): Promise<boolean> {
+  const [uri] = await vscode.workspace.findFiles(REGISTRY_FILE, '**/{node_modules,.git}/**', 1);
+  return Boolean(uri);
+}
+
+/**
+ * The Project and repositories to show (DEC-014): the workspace `fabric.yaml` when there is one,
+ * else the personal configuration. A file that exists but is wrong is reported, not skipped.
+ */
 export async function readRegistry(): Promise<Registry> {
   const [uri] = await vscode.workspace.findFiles(REGISTRY_FILE, '**/{node_modules,.git}/**', 1);
-  if (!uri) return { kind: 'none' };
-  const text = new TextDecoder('utf-8').decode(await vscode.workspace.fs.readFile(uri));
-  const result = parseFabric(vscode.workspace.asRelativePath(uri, false), text);
-  return result.registry ? { kind: 'ok', registry: result.registry } : { kind: 'invalid', issues: result.issues };
+  if (uri) {
+    const text = new TextDecoder('utf-8').decode(await vscode.workspace.fs.readFile(uri));
+    const result = parseFabric(vscode.workspace.asRelativePath(uri, false), text);
+    return result.registry ? { kind: 'ok', registry: result.registry, source: 'workspace', derived: false } : { kind: 'invalid', issues: result.issues };
+  }
+  const user = await readUserConfig();
+  if (user.kind !== 'ok') return user.kind === 'none' ? { kind: 'none' } : { kind: 'invalid', issues: user.issues };
+  const { project, repositories } = user.config;
+  return { kind: 'ok', registry: { project, repositories: repositories ?? [] }, source: 'user', derived: repositories === undefined };
 }
 
 /** The Overview Kanban: one lane per registered repository, columns by stage, cards linked to requirements (REQ-006). */
@@ -160,6 +177,7 @@ export class OverviewView {
   private async onMessage(message: { type: string; url?: string; id?: string; path?: string; delta?: number }): Promise<void> {
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
+    else if (message.type === 'setUp') await vscode.commands.executeCommand('weaver.setUp');
     else if (message.type === 'toggleLane' && message.id) this.flip(this.hidden, HIDDEN_KEY, message.id);
     else if (message.type === 'foldLane' && message.id) this.flip(this.collapsed, COLLAPSED_KEY, message.id);
     else if (message.type === 'showAll') {
@@ -329,13 +347,25 @@ export class OverviewView {
       return this.render();
     }
 
-    const { registry } = this.registry;
-    const repositories = registry.repositories.map((r) => r.repository);
+    const { derived } = this.registry;
+    let registry = this.registry.registry;
+    let repositories = registry.repositories.map((r) => r.repository);
     // A repository never asked has no process to draw from, so the first picture waits for it (DEC-015);
     // otherwise the last answer is used now and checked for a change once the board is shown.
-    const known = repositories.every((name) => processStore.has(name));
-    const [result] = await Promise.all([readProject(token, registry.project, repositories), known ? undefined : processStore.refresh(token, repositories)]);
+    // Without a list in the configuration, the repositories are known only after the Project is read.
+    let known = !derived && repositories.every((name) => processStore.has(name));
+    const [result] = await Promise.all([readProject(token, registry.project, derived ? undefined : repositories), known || derived ? undefined : processStore.refresh(token, repositories)]);
     if (request !== this.request) return;
+    if (result.ok && derived) {
+      registry = { ...registry, repositories: effectiveRepositories({}, result.read.cards.map((card) => card.repository)) };
+      this.registry = { ...this.registry, registry };
+      repositories = registry.repositories.map((r) => r.repository);
+      known = repositories.every((name) => processStore.has(name));
+      if (!known) {
+        await processStore.refresh(token, repositories);
+        if (request !== this.request) return;
+      }
+    }
     if (result.ok) {
       const pulls = await Promise.all(registry.repositories.map((r) => readMergedPulls(token, r.repository)));
       if (request !== this.request) return;
@@ -354,6 +384,7 @@ export class OverviewView {
         if (kept) {
           this.read = { title: kept.title, cards: kept.cards, skipped: 0 };
           this.readAt = kept.readAt;
+          if (derived) this.registry = { ...this.registry, registry: { ...registry, repositories: effectiveRepositories({}, kept.cards.map((card) => card.repository)) } };
         }
       }
     }

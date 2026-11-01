@@ -98,7 +98,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
   let filter = '';
   switch (state.kind) {
     case 'no-registry':
-      body = `<p class="muted">${e(tt('ui.overview.no-registry'))}</p>`;
+      body = `<p class="muted">${e(tt('ui.overview.no-registry'))}</p><div class="actions">${button('setUp', 'ui.overview.set-up')}</div>`;
       break;
     case 'registry-invalid':
       body = `<p>${e(tt('ui.overview.registry-problems'))}</p><ul class="plain">${state.issues

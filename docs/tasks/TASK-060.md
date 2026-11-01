@@ -23,3 +23,9 @@ Add the editor command "Weaver: Set Up" with the same steps as `weaver init`, re
 - The Overview opens on start only in a workspace that has a `fabric.yaml`.
 - A message tells a new user to run the setup when there is no configuration.
 - The editor behavior is checked by hand in the development host.
+
+## Progress
+
+- Built: the command "Weaver: Set Up" (sign-in through VS Code, Project pick or address, repositories to leave out, roster people and agents, a preview, and the file written only after a yes, with the old file kept as `config.yaml.bak`); the Overview reads the workspace `fabric.yaml`, else the personal file, and with no repository list shows a lane for each repository the Project has cards of; the Overview opens by itself only in a workspace that has a `fabric.yaml`; a status bar entry "Weaver" opens it; a new user is told once how to start, and the empty Overview has a "Set up" button; the clone command works with the derived list. `parseProjectRef` moved to the shared package so the editor and the tool read an address the same way.
+- Not yet done: the last "Done when" item. None of this was driven by hand in the development host; the editor code has no automated tests, only `npm run check`. This task stays open until it is.
+

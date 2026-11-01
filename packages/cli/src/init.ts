@@ -6,6 +6,7 @@ import {
   MessageArgs,
   MessageKey,
   parseConfig,
+  parseProjectRef,
   serializeConfig,
   t,
   type UserConfig,
@@ -34,14 +35,7 @@ export function parseSelection(text: string, max: number): number[] | undefined 
   return [...picked].sort((a, b) => a - b);
 }
 
-/** A Project named by its address (`.../users/you/projects/3`, `.../orgs/team/projects/7`) or as `owner/3`. */
-export function parseProjectRef(text: string): { owner: string; number: number } | undefined {
-  const wanted = text.trim().replace(/\/+$/, '');
-  const address = /^https:\/\/github\.com\/(?:users|orgs)\/([^/\s]+)\/projects\/(\d+)(?:\/.*)?$/i.exec(wanted);
-  if (address) return { owner: address[1], number: Number(address[2]) };
-  const short = /^([A-Za-z0-9][A-Za-z0-9-]*)\/(\d+)$/.exec(wanted);
-  return short ? { owner: short[1], number: Number(short[2]) } : undefined;
-}
+export { parseProjectRef };
 
 const same = (a: { owner: string; number: number }, b: { owner: string; number: number }): boolean => a.owner.toLowerCase() === b.owner.toLowerCase() && a.number === b.number;
 

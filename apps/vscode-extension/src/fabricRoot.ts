@@ -2,7 +2,9 @@ import { execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { cloneUrl, DirectoryKind, planClones } from '@palab/weaver-markdown';
+import { cloneUrl, DirectoryKind, effectiveRepositories, planClones } from '@palab/weaver-markdown';
+import { readProject } from '@palab/weaver-github';
+import { getGitHubToken } from './github';
 import { message } from './locale';
 import { readRegistry } from './overviewView';
 
@@ -74,7 +76,17 @@ export async function cloneRegistered(): Promise<void> {
     if (!root) return;
   }
 
-  const repositories = registry.registry.repositories.map((r) => r.repository);
+  let repositories = registry.registry.repositories.map((r) => r.repository);
+  if (registry.derived) {
+    // The configuration gives no list, so the repositories are the ones the Project has cards of.
+    const token = await getGitHubToken(true, ['repo', 'project']);
+    const read = token ? await readProject(token, registry.registry.project, undefined) : undefined;
+    if (!read?.ok) {
+      void vscode.window.showWarningMessage(message('ui.fabric.no-registry'));
+      return;
+    }
+    repositories = effectiveRepositories({}, read.read.cards.map((card) => card.repository)).map((r) => r.repository);
+  }
   const present = new Map<string, DirectoryKind>();
   for (const item of planClones(repositories, new Map())) {
     const kind = await kindOf(path.join(root, item.directory));
