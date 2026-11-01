@@ -23,10 +23,10 @@ Start with the VSIX file while the user base is small. Publish to a registry onl
 2. Install it. The path is relative to the folder the command runs in, so run it from the repository root and include `dist/`:
 
    ```bash
-   code --install-extension dist/weaver-0.0.1.vsix
+   code --install-extension dist/weaver-0.1.0.vsix
    ```
 
-   A path such as `weaver-0.0.1.vsix` without `dist/` fails with `ENOENT`. In the VS Code UI, use Extensions view → `…` → `Install from VSIX…` instead.
+   A path such as `weaver-0.1.0.vsix` without `dist/` fails with `ENOENT`. In the VS Code UI, use Extensions view → `…` → `Install from VSIX…` instead.
 
 3. Check that the extension ID `palab.weaver` is listed, then run `Weaver: Open Requirement View` from the command palette.
 
