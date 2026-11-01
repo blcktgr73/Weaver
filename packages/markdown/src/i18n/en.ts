@@ -67,6 +67,8 @@ export const en = {
   'ui.overview.sign-in': 'Sign in to GitHub',
   'ui.overview.sign-in-note': 'The board is read from the GitHub Project with your VS Code sign-in. It needs the "repo" and "project" scopes.',
   'ui.overview.refresh': 'Refresh',
+  'ui.overview.reading-process': 'Reading how this repository tracks its work…',
+  'ui.overview.reading-note': '{count} lanes are still being read, so their cards are not shown yet and the checks below leave them out.',
   'ui.overview.loading': 'Loading the Project…',
   'ui.overview.no-registry': 'Weaver is not set up on this computer yet. Choose the GitHub Project to show, and Weaver keeps it in your own configuration.',
   'ui.overview.set-up': 'Set up',

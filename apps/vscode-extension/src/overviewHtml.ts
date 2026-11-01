@@ -52,6 +52,8 @@ export type OverviewState =
       mismatches: Mismatch[];
       /** Checks that could not run, such as unreadable pull requests. */
       skippedChecks: Notice[];
+      /** Repositories whose process file is being read: their lanes wait, and the checks leave them out. */
+      reading: string[];
       /** True while some cards are highlighted, so the header can offer to clear them. */
       focusActive: boolean;
     };
@@ -83,16 +85,16 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       </div>`;
   };
 
-  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean, index: number, count: number): string => `<section class="lane">
+  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean, index: number, count: number, reading = false): string => `<section class="lane">
       <h2><button class="fold" data-fold="${e(lane.repository)}" aria-expanded="${!folded}" title="${e(tt(folded ? 'ui.overview.unfold' : 'ui.overview.fold', { title: lane.title }))}">${folded ? '\u25b8' : '\u25be'}</button>${e(lane.title)} <span class="muted small">${e(lane.repository)}</span>
         <span class="lane-move">${index > 0 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="-1" title="${e(tt('ui.overview.move-up', { title: lane.title }))}">\u25b2</button>` : ''}${index < count - 1 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="1" title="${e(tt('ui.overview.move-down', { title: lane.title }))}">\u25bc</button>` : ''}</span>
         <span class="badge">${e(tt('ui.overview.cards', { count: lane.total }))}</span>${lane.blocked ? `<span class="badge blocked">${e(tt('ui.overview.blocked', { count: lane.blocked }))}</span>` : ''}</h2>
-      ${folded ? '' : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
+      ${folded ? '' : reading ? `<p class="muted small">${e(tt('ui.overview.reading-process'))}</p>` : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
     </section>`;
 
-  const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>): string =>
+  const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>, reading: Set<string> = new Set()): string =>
     `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
-      ${lanes.map((lane, index) => laneHtml(lane, collapsed.has(lane.repository), index, lanes.length)).join('')}`;
+      ${lanes.map((lane, index) => laneHtml(lane, collapsed.has(lane.repository), index, lanes.length, reading.has(lane.repository))).join('')}`;
 
   let body: string;
   let filter = '';
@@ -139,8 +141,9 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       const skippedChecks = state.skippedChecks.length
         ? `<p class="muted small">${e(tt('ui.overview.mismatches-skipped', { reasons: state.skippedChecks.map((n) => formatNotice(n, locale)).join(' ') }))}</p>`
         : '';
-      body = mismatchHtml + skippedChecks + (shown.length
-        ? `${boardOf(shown, collapsed)}
+      const readingNote = state.reading.length ? `<p class="muted small">${e(tt('ui.overview.reading-note', { count: state.reading.length }))}</p>` : '';
+      body = readingNote + mismatchHtml + skippedChecks + (shown.length
+        ? `${boardOf(shown, collapsed, new Set(state.reading))}
       ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`
         : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`);
       break;
