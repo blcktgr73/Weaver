@@ -9,3 +9,4 @@ export * from './cardActions';
 export * from './reconcile';
 export * from './setup';
 export * from './init';
+export * from './processCommand';

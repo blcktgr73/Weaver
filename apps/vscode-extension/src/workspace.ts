@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import {
   Artifact,
   loadWorkspace,
+  parseProcess,
   Locale,
   t,
   ValidationIssue,
@@ -11,6 +12,9 @@ import {
 
 const EXCLUDE = '**/{node_modules,.git,dist,out}/**';
 const MAX_FILES = 2000;
+/** A repository's process file (DEC-015). A workspace may hold the folders of a few repositories. */
+const PROCESS_FILE_GLOB = '**/.weaver/process.yaml';
+const MAX_PROCESS_FILES = 20;
 
 export interface Loaded extends WorkspaceResult {
   uris: Map<string, vscode.Uri>;
@@ -30,7 +34,17 @@ export async function loadWorkspaceArtifacts(): Promise<Loaded> {
       return { path, text: decoder.decode(bytes) };
     }),
   );
-  return { ...loadWorkspace(files), uris, markdownFileCount: files.length };
+  const loaded = loadWorkspace(files);
+
+  // The process files of the repositories in the workspace are checked too, so that a mistake
+  // shows in the Problems panel. A wrong section keeps its defaults; nothing else changes here.
+  const processFiles = await vscode.workspace.findFiles(PROCESS_FILE_GLOB, EXCLUDE, MAX_PROCESS_FILES);
+  for (const uri of processFiles) {
+    const path = vscode.workspace.asRelativePath(uri, false);
+    uris.set(path, uri);
+    loaded.issues.push(...parseProcess(path, decoder.decode(await vscode.workspace.fs.readFile(uri))).issues);
+  }
+  return { ...loaded, uris, markdownFileCount: files.length };
 }
 
 export function publishDiagnostics(
