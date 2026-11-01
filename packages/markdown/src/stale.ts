@@ -19,6 +19,8 @@ export interface StaleInput {
   needsDecision?: boolean;
   /** The task has a human-approved evidence exception (DEC-006). */
   evidenceException?: boolean;
+  /** A repository whose process does not expect pull requests has no "no evidence" mark for the lack of one. */
+  pullRequest?: 'required' | 'optional';
 }
 
 /**
@@ -37,7 +39,7 @@ export function staleNotices(input: StaleInput, now: Date, idleDays: number = DE
     }
   }
 
-  if (EVIDENCE_COLUMNS.includes(input.column) && input.pullCount === 0 && !input.evidenceException) {
+  if (EVIDENCE_COLUMNS.includes(input.column) && input.pullCount === 0 && !input.evidenceException && input.pullRequest !== 'optional') {
     notices.push({ code: 'stale.no-evidence' });
   }
 

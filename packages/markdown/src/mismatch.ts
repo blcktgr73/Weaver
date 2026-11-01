@@ -83,6 +83,10 @@ export interface MismatchInput {
   pulls?: readonly MergedPull[];
   /** Repositories whose process takes the column from the board Status (DEC-015); the board cannot differ from itself. */
   boardSourced?: readonly string[];
+  /** Repositories whose process does not honor an `evidence_exception` (DEC-015). */
+  exceptionsIgnored?: readonly string[];
+  /** Repositories whose process does not need a pull request that closes the Issue (DEC-015). */
+  closingNotRequired?: readonly string[];
 }
 
 /**
@@ -94,6 +98,8 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
   const { artifacts, cards, repositories } = input;
   const registered = new Set(repositories.map((name) => name.toLowerCase()));
   const boardSourced = new Set((input.boardSourced ?? []).map((name) => name.toLowerCase()));
+  const exceptionsIgnored = new Set((input.exceptionsIgnored ?? []).map((name) => name.toLowerCase()));
+  const closingNotRequired = new Set((input.closingNotRequired ?? []).map((name) => name.toLowerCase()));
   const found: Mismatch[] = [];
   const cardByUrl = new Map(cards.map((card) => [normalizeIssueUrl(card.url), card]));
   const links = requirementsByIssue(artifacts);
@@ -137,14 +143,16 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
   }
 
   const exceptions = new Set<string>();
-  for (const artifact of artifacts) if (artifact.kind === 'task' && artifact.evidenceException) exceptions.add(artifact.id);
+  for (const artifact of artifacts) {
+    if (artifact.kind === 'task' && artifact.evidenceException && !exceptionsIgnored.has((artifact.repository ?? '').toLowerCase())) exceptions.add(artifact.id);
+  }
   for (const pull of input.pulls ?? []) {
     // A `docs:` pull request usually writes or splits a task; it is not what implements it.
     if (/^docs(\([^)]*\))?!?:/i.test(pull.title.trim())) continue;
     for (const taskId of taskIdsOfPull(pull)) {
       if (exceptions.has(taskId)) continue;
       const card = cards.find((c) => c.taskId === taskId && c.repository.toLowerCase() === pull.repository.toLowerCase());
-      if (card && card.state !== 'closed' && !pull.closes.includes(card.number)) {
+      if (card && card.state !== 'closed' && !pull.closes.includes(card.number) && !closingNotRequired.has(pull.repository.toLowerCase())) {
         found.push({
           kind: 'merged-pr-not-linked',
           subject: taskId,

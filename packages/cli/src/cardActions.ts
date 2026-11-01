@@ -1,6 +1,7 @@
 import {
   ColumnRules,
   describeMove,
+  EvidenceRules,
   evidenceGaps,
   formatNotice,
   KANBAN_COLUMNS,
@@ -30,6 +31,8 @@ export interface MoveInput {
   locale: Locale;
   /** The column rules of the card's repository (DEC-015); the defaults when left out. */
   rules?: ColumnRules;
+  /** The evidence rules of the card's repository (DEC-015); the defaults when left out. */
+  evidence?: EvidenceRules;
   fetchFn?: FetchFn;
 }
 
@@ -49,7 +52,7 @@ export async function planCardMove(input: MoveInput): Promise<Planned> {
   let warnings: string[] = [];
   if (column === 'Verified' && !input.evidenceException) {
     const read = await fetchEvidence(input.token, card.url, input.fetchFn);
-    const gaps = evidenceGaps('Verified', read.ok ? read.evidence : undefined);
+    const gaps = evidenceGaps('Verified', read.ok ? read.evidence : undefined, input.evidence);
     const blocking = gaps.filter((gap) => gap.code === 'gap.no-linked-pr' || gap.code === 'gap.evidence-not-loaded');
     if (blocking.length) {
       return { ok: false, refusal: { code: 'cli.move-refused', args: { ref: `${card.repository}#${card.number}`, gaps: blocking.map((gap) => formatNotice(gap, locale)) } } };

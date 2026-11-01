@@ -2,6 +2,7 @@ import * as path from 'path';
 import {
   Artifact,
   DEFAULT_STALE_DAYS,
+  honoredException,
   RequirementArtifact,
   formatNotice,
   Locale,
@@ -184,8 +185,12 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     const found = processes.get(repository.toLowerCase());
     return found?.file === 'read' ? found.process.stale.idleDays : DEFAULT_STALE_DAYS;
   };
+  const evidenceFor = (repository: string) => {
+    const found = processes.get(repository.toLowerCase());
+    return found?.file === 'read' ? found.process.evidence : undefined;
+  };
   const cards = placeWithRules(read.read.cards, rulesFor);
-  const all = toCliCards(cards, artifacts, deps.now(), idleDaysFor);
+  const all = toCliCards(cards, artifacts, deps.now(), idleDaysFor, evidenceFor);
 
   if (args.command === 'reconcile') {
     const merged = await Promise.all(repositories.map((repository) => readMergedPulls(token, repository, 50, deps.fetch)));
@@ -198,6 +203,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       cards,
       rulesFor,
       idleDaysFor,
+      evidenceFor,
       artifacts,
       pulls: merged.flatMap((r) => (r.ok ? r.pulls : [])),
       now: deps.now(),
@@ -221,7 +227,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       const column = parseColumn(args.options.to);
       if (!column) return fail(EXIT.usage, 'cli.bad-column', { column: args.options.to });
       const task = card.task?.path ? artifacts.find((a) => a.kind === 'task' && a.path === card.task?.path) : undefined;
-      planned = await planCardMove({ token, card, column, evidenceException: task?.kind === 'task' && Boolean(task.evidenceException), locale, rules: rulesFor(card.repository), fetchFn });
+      planned = await planCardMove({ token, card, column, evidenceException: task?.kind === 'task' && Boolean(honoredException(task.evidenceException, evidenceFor(card.repository))), locale, rules: rulesFor(card.repository), evidence: evidenceFor(card.repository), fetchFn });
     } else {
       planned = await planEvidenceAttach({ token, login: await deps.login(), card, pull: args.options.pull, locale, fetchFn });
     }

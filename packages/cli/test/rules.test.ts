@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Fetch } from '@palab/weaver-github';
 import { EXIT, run } from '../src';
-import { setup, withGitHub } from './helpers';
+import { FILES, setup, withGitHub } from './helpers';
 
 /** The process file of `me/Weaver`; every other file lookup keeps the helper's answer (none). */
 function withProcessFile(deps: ReturnType<typeof setup>['deps'], answer: { status: number; text?: string }) {
@@ -72,5 +72,39 @@ describe('the columns of a repository come from its process', () => {
     expect(err.join('')).toContain('Done');
     expect(err.join('')).not.toContain('status:verified');
     expect(gh.calls.some((c) => c.startsWith('PATCH') || c.includes('/labels'))).toBe(false);
+  });
+});
+
+describe('the evidence rules of a repository come from its process', () => {
+  const VERIFY = ['card', 'move', 'TASK-010', '--to', 'Verified'];
+
+  it('refuses Verified without a linked pull request by default, and plans it when pull requests are optional', async () => {
+    const refused = setup();
+    withGitHub(refused.deps, { linkedPull: false });
+    expect(await run(VERIFY, refused.deps)).toBe(EXIT.usage);
+    expect(JSON.parse(refused.out.join('')).error.code).toBe('cli.move-refused');
+
+    const allowed = setup();
+    withGitHub(allowed.deps, { linkedPull: false });
+    withProcessFile(allowed.deps, { status: 200, text: 'evidence:\n  pull-request: optional\n' });
+    expect(await run(VERIFY, allowed.deps)).toBe(EXIT.unconfirmed);
+    expect(JSON.parse(allowed.out.join('')).actions[0].kind).toBe('card.move');
+  });
+
+  it('honors a task\'s evidence exception by default, and not when the process says exceptions do not count', async () => {
+    const withException = (s: ReturnType<typeof setup>) => {
+      s.deps.files = async () => [FILES[0], { path: FILES[1].path, text: FILES[1].text.replace('assignee: claude-code\n', 'assignee: claude-code\nevidence_exception: before the rule\n') }];
+    };
+    const honored = setup();
+    withException(honored);
+    withGitHub(honored.deps, { linkedPull: false });
+    expect(await run(VERIFY, honored.deps)).toBe(EXIT.unconfirmed);
+
+    const ignored = setup();
+    withException(ignored);
+    withGitHub(ignored.deps, { linkedPull: false });
+    withProcessFile(ignored.deps, { status: 200, text: 'evidence:\n  exceptions: false\n' });
+    expect(await run(VERIFY, ignored.deps)).toBe(EXIT.usage);
+    expect(JSON.parse(ignored.out.join('')).error.code).toBe('cli.move-refused');
   });
 });

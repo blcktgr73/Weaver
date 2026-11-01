@@ -1,6 +1,7 @@
 import {
   Artifact,
   ColumnRules,
+  EvidenceRules,
   findMismatches,
   formatNotice,
   Locale,
@@ -31,6 +32,7 @@ export interface ReconcileInput {
   /** The column rules of a repository's process (DEC-015); the defaults when it has none. */
   rulesFor?: (repository: string) => ColumnRules | undefined;
   idleDaysFor?: (repository: string) => number;
+  evidenceFor?: (repository: string) => EvidenceRules | undefined;
   now: Date;
   fetch?: Fetch;
   fetchFn?: FetchFn;
@@ -64,6 +66,8 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
     repositories: input.repositories,
     pulls: input.pulls,
     boardSourced: input.repositories.filter((name) => input.rulesFor?.(name)?.source === 'board-status'),
+    exceptionsIgnored: input.repositories.filter((name) => input.evidenceFor?.(name)?.exceptions === false),
+    closingNotRequired: input.repositories.filter((name) => input.evidenceFor?.(name)?.closingPullRequest === false),
   })) {
     const item = (tier: ReportItem['tier'], automated: boolean): ReportItem => ({
       tier,
@@ -157,7 +161,7 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
   }
 
   // Stale cards need a person's judgment.
-  const notices = cardNotices(input.cards, input.artifacts, input.now, input.idleDaysFor);
+  const notices = cardNotices(input.cards, input.artifacts, input.now, input.idleDaysFor, input.evidenceFor);
   for (const card of input.cards) {
     for (const notice of notices.get(normalizeIssueUrl(card.url)) ?? []) {
       reports.push({

@@ -1,6 +1,8 @@
 import {
   Artifact,
   DEFAULT_STALE_DAYS,
+  EvidenceRules,
+  honoredException,
   Notice,
   normalizeIssueUrl,
   RequirementLink,
@@ -34,13 +36,20 @@ export interface CliCard {
 /** Days of no change before a card is idle: one number for all, or one per repository (DEC-015). */
 export type IdleDays = number | ((repository: string) => number);
 
-export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays: IdleDays = DEFAULT_STALE_DAYS): Map<string, Notice[]> {
+export function cardNotices(
+  cards: readonly ProjectCard[],
+  artifacts: readonly Artifact[],
+  now: Date,
+  idleDays: IdleDays = DEFAULT_STALE_DAYS,
+  evidenceFor?: (repository: string) => EvidenceRules | undefined,
+): Map<string, Notice[]> {
   const links = requirementsByIssue(artifacts);
   const tasks = new Map(artifacts.flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])));
   return new Map(
     cards.map((card) => {
       const link = links.get(normalizeIssueUrl(card.url));
       const task = link?.taskPath ? tasks.get(link.taskPath) : undefined;
+      const evidence = evidenceFor?.(card.repository);
       const notices = staleNotices(
         {
           column: card.placement.column,
@@ -48,7 +57,8 @@ export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly A
           updatedAt: card.updatedAt,
           pullCount: card.pullCount,
           needsDecision: task?.status === 'needs-human-decision',
-          evidenceException: Boolean(task?.evidenceException),
+          evidenceException: Boolean(honoredException(task?.evidenceException, evidence)),
+          pullRequest: evidence?.pullRequest,
         },
         now,
         typeof idleDays === 'function' ? idleDays(card.repository) : idleDays,
@@ -58,9 +68,15 @@ export function cardNotices(cards: readonly ProjectCard[], artifacts: readonly A
   );
 }
 
-export function toCliCards(cards: readonly ProjectCard[], artifacts: readonly Artifact[], now: Date, idleDays: IdleDays = DEFAULT_STALE_DAYS): CliCard[] {
+export function toCliCards(
+  cards: readonly ProjectCard[],
+  artifacts: readonly Artifact[],
+  now: Date,
+  idleDays: IdleDays = DEFAULT_STALE_DAYS,
+  evidenceFor?: (repository: string) => EvidenceRules | undefined,
+): CliCard[] {
   const links = requirementsByIssue(artifacts);
-  const notices = cardNotices(cards, artifacts, now, idleDays);
+  const notices = cardNotices(cards, artifacts, now, idleDays, evidenceFor);
   return cards.map((card) => {
     const link: RequirementLink | undefined = links.get(normalizeIssueUrl(card.url));
     const taskId = link?.taskId ?? card.taskId;

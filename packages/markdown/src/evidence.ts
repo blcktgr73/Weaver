@@ -1,5 +1,16 @@
 import { Locale, Notice, t } from './i18n';
 import { KanbanColumn } from './kanban';
+import type { ProcessConfig } from './process';
+
+/** What a repository expects as evidence (DEC-015). Without a process file these are today's rules (DEC-006). */
+export type EvidenceRules = ProcessConfig['evidence'];
+
+const DEFAULT_EVIDENCE: EvidenceRules = { pullRequest: 'required', closingPullRequest: true, exceptions: true };
+
+/** The `evidence_exception` reason of a task, when the repository honors exceptions; otherwise none. */
+export function honoredException(reason: string | undefined, rules: EvidenceRules = DEFAULT_EVIDENCE): string | undefined {
+  return rules.exceptions ? reason : undefined;
+}
 
 export type ChecksState = 'passing' | 'failing' | 'pending' | 'none';
 
@@ -38,16 +49,18 @@ export function summarizeChecks(runs: CheckRunLike[]): ChecksState {
  * Evidence is only demanded once a task claims to be in review or verified;
  * it reports gaps and never decides acceptance.
  */
-export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | undefined): Notice[] {
+export function evidenceGaps(column: KanbanColumn, evidence: TaskEvidence | undefined, rules: EvidenceRules = DEFAULT_EVIDENCE): Notice[] {
   if (column !== 'Review' && column !== 'Verified') return [];
   if (!evidence) return [{ code: 'gap.evidence-not-loaded' }];
-  if (evidence.pulls.length === 0) return [{ code: 'gap.no-linked-pr' }];
+  // A repository that does not expect pull requests has no gap for the lack of one.
+  if (evidence.pulls.length === 0) return rules.pullRequest === 'optional' ? [] : [{ code: 'gap.no-linked-pr' }];
 
   const gaps: Notice[] = [];
   if (column === 'Verified' && !evidence.pulls.some((pull) => pull.state === 'merged')) {
     gaps.push({ code: 'gap.no-merged-pr' });
   } else if (
     column === 'Verified' &&
+    rules.closingPullRequest &&
     !evidence.pulls.some((pull) => pull.state === 'merged' && pull.link === 'closes')
   ) {
     gaps.push({ code: 'gap.no-closing-pr' });
