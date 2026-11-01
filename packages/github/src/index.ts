@@ -7,3 +7,4 @@ export * from './errors';
 export * from './discover';
 export * from './processFile';
 export * from './processes';
+export * from './size';

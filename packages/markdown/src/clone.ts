@@ -52,3 +52,11 @@ export function planClones(
 export function cloneUrl(repository: string): string {
   return `https://github.com/${repository}.git`;
 }
+
+/** A repository size given in kilobytes, as a person reads it: `800 KB`, `12.5 MB`, `1.3 GB`. */
+export function formatKilobytes(kilobytes: number): string {
+  if (kilobytes < 1024) return `${Math.max(0, Math.round(kilobytes))} KB`;
+  const megabytes = kilobytes / 1024;
+  if (megabytes < 1024) return `${megabytes < 10 ? megabytes.toFixed(1) : Math.round(megabytes)} MB`;
+  return `${(megabytes / 1024).toFixed(1)} GB`;
+}

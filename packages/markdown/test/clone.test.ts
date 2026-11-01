@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cloneDirectories, cloneUrl, planClones } from '../src';
+import { cloneDirectories, cloneUrl, formatKilobytes, planClones } from '../src';
 
 describe('cloneDirectories', () => {
   it('uses the repository name', () => {
@@ -48,5 +48,14 @@ describe('planClones', () => {
 describe('cloneUrl', () => {
   it('points at GitHub over HTTPS', () => {
     expect(cloneUrl('o/Weaver')).toBe('https://github.com/o/Weaver.git');
+  });
+});
+
+describe('formatKilobytes', () => {
+  it('reads as KB, MB, or GB', () => {
+    expect(formatKilobytes(800)).toBe('800 KB');
+    expect(formatKilobytes(5 * 1024)).toBe('5.0 MB');
+    expect(formatKilobytes(250 * 1024)).toBe('250 MB');
+    expect(formatKilobytes(1.5 * 1024 * 1024)).toBe('1.5 GB');
   });
 });
