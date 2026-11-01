@@ -52,6 +52,15 @@ export function parseConfig(path: string, text: string): ConfigParseResult {
   return { config: { project, ...(repositories ? { repositories } : {}), ...(roster ? { roster } : {}) }, issues };
 }
 
+/** A Project named by its address (`.../users/you/projects/3`, `.../orgs/team/projects/7`) or as `owner/3`. */
+export function parseProjectRef(text: string): { owner: string; number: number } | undefined {
+  const wanted = text.trim().replace(/\/+$/, '');
+  const address = /^https:\/\/github\.com\/(?:users|orgs)\/([^/\s]+)\/projects\/(\d+)(?:\/.*)?$/i.exec(wanted);
+  if (address) return { owner: address[1], number: Number(address[2]) };
+  const short = /^([A-Za-z0-9][A-Za-z0-9-]*)\/(\d+)$/.exec(wanted);
+  return short ? { owner: short[1], number: Number(short[2]) } : undefined;
+}
+
 /** Where the Project and the repositories came from. */
 export type SetupSource = 'workspace' | 'user';
 

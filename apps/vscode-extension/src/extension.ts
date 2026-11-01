@@ -3,10 +3,13 @@ import { documentKindOf, viewTargetOf } from '@palab/weaver-markdown';
 import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
 import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
-import { OverviewView, readRegistry } from './overviewView';
+import { hasWorkspaceRegistry, OverviewView, readRegistry } from './overviewView';
+import { setUp } from './setupWizard';
 import { processStore } from './processStore';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
+
+const SETUP_PROMPTED_KEY = 'weaver.setup.prompted';
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
@@ -84,6 +87,18 @@ export function activate(context: vscode.ExtensionContext): void {
     await overview.show(await refresh());
   });
 
+  // The steps of `weaver init` in the editor (DEC-014). Afterwards the Overview shows the new setup.
+  const setUpCommand = vscode.commands.registerCommand('weaver.setUp', async () => {
+    if (await setUp()) await overview.show(await refresh());
+  });
+
+  // A way into the Overview that does not depend on the workspace: it no longer opens in every window.
+  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+  statusBar.text = '$(project) Weaver';
+  statusBar.tooltip = message('ui.status-bar.tooltip');
+  statusBar.command = 'weaver.openOverview';
+  statusBar.show();
+
   // From a requirement view, a requirement file, or a task file: show its cards on the Overview (TASK-041).
   const showOnOverview = vscode.commands.registerCommand(
     'weaver.showOnOverview',
@@ -149,10 +164,21 @@ export function activate(context: vscode.ExtensionContext): void {
     if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) void refresh();
   });
 
-  context.subscriptions.push(diagnostics, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, statusBar, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
-    // With a registry at the workspace root, the Overview is where exploration starts (REQ-006).
-    if ((await readRegistry()).kind !== 'none') await overview.show(loaded);
+    // Only a workspace with its own `fabric.yaml` opens the Overview by itself (REQ-006, DEC-014).
+    if (await hasWorkspaceRegistry()) {
+      await overview.show(loaded);
+      return;
+    }
+    // A new user is told once how to start; the status bar and the command stay for later.
+    if ((await readRegistry()).kind === 'none' && !context.globalState.get<boolean>(SETUP_PROMPTED_KEY)) {
+      await context.globalState.update(SETUP_PROMPTED_KEY, true);
+      const setUpLabel = message('ui.setup.set-up-button');
+      if ((await vscode.window.showInformationMessage(message('ui.setup.none'), setUpLabel)) === setUpLabel) {
+        await vscode.commands.executeCommand('weaver.setUp');
+      }
+    }
   });
 }
 

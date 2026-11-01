@@ -31,6 +31,10 @@
         "title": "%weaver.command.openOverview.title%"
       },
       {
+        "command": "weaver.setUp",
+        "title": "%weaver.command.setUp.title%"
+      },
+      {
         "command": "weaver.scanWorkspace",
         "title": "%weaver.command.scanWorkspace.title%"
       },
