@@ -4,7 +4,7 @@ type: requirement
 title: Teams describe their own development process and adopt it step by step
 status: draft
 owner: PALab
-story_ids: [US-022]
+story_ids: [US-022, US-037]
 repository: blcktgr73/Weaver
 github_project: PALab Ops Kanban
 ---
@@ -26,6 +26,7 @@ A repository describes its process in a file kept in Git. Weaver follows it, beh
 - A team can adopt one part of the configuration at a time, for example columns first and evidence rules later, and each step is visible in the view.
 - The view shows which parts of the process come from the configuration and which are defaults.
 - A migration guide takes a team from its existing process to a configuration, with this repository as the worked example.
+- A repository that does not use status labels can say where its columns come from (for example the Project board Status), and its cards are placed by that rule instead of showing as Review with a gap.
 
 ## Tasks
 
