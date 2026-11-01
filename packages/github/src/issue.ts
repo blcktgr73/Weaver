@@ -1,3 +1,4 @@
+import { NoticeError, errorNotice } from './errors';
 import {
   BoardItem,
   CheckRunLike,
@@ -75,17 +76,6 @@ export interface MoveStep {
 
 const API = 'https://api.github.com';
 
-/** An error whose message can be shown in any language. */
-class WeaverError extends Error {
-  constructor(readonly notice: Notice) {
-    super(notice.code);
-  }
-}
-
-function errorNotice(error: unknown): Notice {
-  return error instanceof WeaverError ? error.notice : raw((error as Error).message);
-}
-
 async function rest({ token, fetchFn }: Ctx, method: string, path: string, body?: unknown): Promise<Response> {
   return fetchFn(`${API}${path}`, {
     method,
@@ -107,7 +97,7 @@ async function graphql<T>({ token, fetchFn }: Ctx, query: string, variables: Rec
   });
   const json = (await response.json()) as { data?: T; errors?: { message: string }[] };
   if (!response.ok || json.errors?.length) {
-    throw new Error(json.errors?.map((e) => e.message).join('; ') ?? `GitHub returned ${response.status}`);
+    throw new NoticeError(json.errors?.length ? { code: 'github.err.raw', args: { detail: json.errors.map((e) => e.message).join('; ') } } : { code: 'github.err.http', args: { status: response.status } });
   }
   return json.data as T;
 }
@@ -138,7 +128,7 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan,
     }
   };
   const expectOk = async (response: Response): Promise<void> => {
-    if (!response.ok) throw new WeaverError({ code: 'github.err.http', args: { status: response.status } });
+    if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
   };
 
   for (const label of plan.removeLabels) {
@@ -175,7 +165,7 @@ export async function applyMove(token: string, issueUrl: string, plan: MovePlan,
  */
 export async function setBoardStatus(token: string, issueUrl: string, status: string, fetchFn: FetchFn = fetch): Promise<Notice | undefined> {
   const ref = parseIssueUrl(issueUrl);
-  if (!ref) throw new WeaverError({ code: 'github.err.not-issue-url' });
+  if (!ref) throw new NoticeError({ code: 'github.err.not-issue-url' });
   const ctx: Ctx = { token, fetchFn };
   type Items = {
     repository: {
@@ -193,7 +183,7 @@ export async function setBoardStatus(token: string, issueUrl: string, status: st
   for (const item of items) {
     const field = item.project.field;
     const option = field?.options.find((o) => o.name === status);
-    if (!field || !option) throw new WeaverError({ code: 'step.no-status-option', args: { board: item.project.title, status } });
+    if (!field || !option) throw new NoticeError({ code: 'step.no-status-option', args: { board: item.project.title, status } });
     await graphql(ctx, SET_STATUS, { p: item.project.id, i: item.id, f: field.id, o: option.id });
     updated.push(item.project.title);
   }
@@ -203,7 +193,7 @@ export async function setBoardStatus(token: string, issueUrl: string, status: st
 /** True when an Issue already has a comment that contains `marker`, so a note is not written twice. */
 export async function hasIssueComment(token: string, repository: string, number: number, marker: string, fetchFn: FetchFn = fetch): Promise<boolean> {
   const response = await rest({ token, fetchFn }, 'GET', `/repos/${repository}/issues/${number}/comments?per_page=100`);
-  if (!response.ok) throw new Error(`GitHub answered ${response.status}.`);
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
   const comments = (await response.json()) as { body?: string }[];
   return comments.some((comment) => (comment.body ?? '').includes(marker));
 }
@@ -241,7 +231,7 @@ async function getJson<T>({ token, fetchFn }: Ctx, url: string): Promise<T> {
       'X-GitHub-Api-Version': '2022-11-28',
     },
   });
-  if (!response.ok) throw new WeaverError({ code: 'github.err.http', args: { status: response.status } });
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
   return (await response.json()) as T;
 }
 
@@ -324,8 +314,8 @@ export async function fetchPull(token: string, repository: string, number: numbe
   const response = await fetchFn(`${API}/repos/${repository}/pulls/${number}`, {
     headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' },
   });
-  if (response.status === 404) throw new Error(`Pull request #${number} of ${repository} was not found.`);
-  if (!response.ok) throw new Error(`GitHub answered ${response.status}.`);
+  if (response.status === 404) throw new NoticeError({ code: 'github.err.pull-not-found', args: { number, repository } });
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
   const data = (await response.json()) as { number: number; title: string; html_url: string; merged_at: string | null };
   return { number: data.number, title: data.title, url: data.html_url, merged: Boolean(data.merged_at) };
 }
@@ -333,5 +323,5 @@ export async function fetchPull(token: string, repository: string, number: numbe
 /** Adds a comment to an Issue. A failure throws an Error that says what GitHub answered. */
 export async function addIssueComment(token: string, repository: string, number: number, body: string, fetchFn: FetchFn = fetch): Promise<void> {
   const response = await rest({ token, fetchFn }, 'POST', `/repos/${repository}/issues/${number}/comments`, { body });
-  if (!response.ok) throw new Error(`GitHub answered ${response.status}.`);
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
 }

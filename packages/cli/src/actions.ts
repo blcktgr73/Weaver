@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { formatNotice, Locale, MessageKey, Notice, t } from '@palab/weaver-markdown';
+import { errorNotice, NoticeError } from '@palab/weaver-github';
 import { Deps, EXIT, SCHEMA } from './contract';
 
 /**
@@ -99,7 +100,9 @@ export interface ExecuteContext {
   note(text: string): void;
 }
 
-const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+/** The error in the chosen language when it carries a notice, otherwise its text as it is (for example what `git` printed). */
+const errorText = (error: unknown, locale: Locale): string =>
+  error instanceof NoticeError ? formatNotice(errorNotice(error), locale) : error instanceof Error ? error.message : String(error);
 
 /**
  * Runs the plan one action at a time. An action runs only when its id was approved up front or the
@@ -156,9 +159,10 @@ export async function executeActions(actions: readonly PlannedAction[], ctx: Exe
       await ctx.log.append({ ...entry, outcome: 'done' });
     } catch (error) {
       result.outcome = 'failed';
-      result.message = errorText(error);
+      result.message = errorText(error, ctx.locale);
       stopped = true;
-      await ctx.log.append({ ...entry, outcome: 'failed', message: result.message }).catch(() => undefined);
+      // The log reads the same for everyone, so it keeps English.
+      await ctx.log.append({ ...entry, outcome: 'failed', message: errorText(error, 'en') }).catch(() => undefined);
     }
   }
   return [...results.values()];

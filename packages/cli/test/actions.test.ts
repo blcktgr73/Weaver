@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
+import { NoticeError } from '@palab/weaver-github';
 import {
   actionId,
   attribution,
@@ -136,6 +137,41 @@ describe('executeActions', () => {
     expect(results.map((r) => r.outcome)).toEqual(['unconfirmed', 'unconfirmed']);
     expect(second.ran).toEqual([]);
     expect(notes.join('')).toContain(`id ${actionId(second.planned)}`);
+  });
+
+  it('shows the error of a failed action in the chosen language and keeps English in the log', async () => {
+    const failing: PlannedAction = {
+      kind: 'test.write',
+      target: 'me/Weaver#1',
+      summary: { code: 'cli.not-found', args: { ref: 'x' } },
+      reason: { code: 'cli.no-token' },
+      run: async () => {
+        throw new NoticeError({ code: 'github.err.http-detail', args: { status: 403, detail: 'Resource not accessible' } });
+      },
+    };
+    const ko = context({ approved: [actionId(failing)] });
+    ko.ctx.locale = 'ko';
+    const korean = await executeActions([failing], ko.ctx);
+    expect(korean[0].message).toBe('GitHub 응답 코드 403: Resource not accessible.');
+    expect(ko.entries[0].message).toBe('GitHub answered 403: Resource not accessible.');
+
+    const en = context({ approved: [actionId(failing)] });
+    expect((await executeActions([failing], en.ctx))[0].message).toBe('GitHub answered 403: Resource not accessible.');
+  });
+
+  it('passes on the text of an error that has no notice, such as what git printed', async () => {
+    const failing: PlannedAction = {
+      kind: 'test.write',
+      target: 't',
+      summary: { code: 'cli.not-found', args: { ref: 'x' } },
+      reason: { code: 'cli.no-token' },
+      run: async () => {
+        throw new Error('git push failed: rejected');
+      },
+    };
+    const { ctx } = context({ approved: [actionId(failing)] });
+    ctx.locale = 'ko';
+    expect((await executeActions([failing], ctx))[0].message).toBe('git push failed: rejected');
   });
 
   it('skips an action whose prerequisite was refused or failed', async () => {

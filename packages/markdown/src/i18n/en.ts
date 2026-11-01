@@ -322,6 +322,16 @@ export const en = {
   'github.err.not-found': 'not found or no access',
   'github.err.http': 'GitHub returned {status}',
   'github.err.network': 'network error: {detail}',
+  'github.err.unauthorized': 'GitHub rejected the sign-in (401).',
+  'github.err.no-data': 'GitHub sent no data.',
+  'github.err.no-issue': 'GitHub sent no Issue.',
+  'github.err.http-detail': 'GitHub answered {status}: {detail}.',
+  'github.err.project-not-found': 'Project {number} of {owner} was not found, or this sign-in cannot see it.',
+  'github.err.not-an-issue': '{url} is not an Issue that this sign-in can see.',
+  'github.err.pull-not-found': 'Pull request #{number} of {repository} was not found.',
+  'cli.err.issue-not-created': 'The Issue was not created.',
+  'cli.err.no-tasks-section': '{path} has no "## Tasks" section on {base}.',
+  'cli.err.move-step-failed': '{step} failed: {detail}. Steps done before it: {done}.',
   'github.err.raw': '{detail}',
 } satisfies Record<string, Message>;
 

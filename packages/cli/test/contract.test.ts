@@ -17,6 +17,8 @@ function shapeOf(value: unknown): unknown {
 /** The examples of the page: the JSON block after each `<!-- example: name -->`. */
 function examples(text: string): Map<string, unknown> {
   const found = new Map<string, unknown>();
+  // A checkout on Windows may turn line breaks into CRLF.
+  text = text.replace(/\r\n/g, '\n');
   for (const match of text.matchAll(/<!-- example: ([\w-]+) -->\s*```json\n([\s\S]*?)\n```/g)) found.set(match[1], JSON.parse(match[2]));
   return found;
 }
