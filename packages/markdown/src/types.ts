@@ -69,6 +69,11 @@ export interface TaskArtifact {
   status?: LifecycleStatus;
   assigneeType?: AssigneeType;
   assignee?: string;
+  /** Who reviews the work, apart from who does it (REQ-002). */
+  reviewer?: string;
+  /** Who approved the work and when. A human approval of agent work is recorded here. */
+  approvedBy?: string;
+  approvedOn?: string;
   repository?: string;
   branch?: string;
   pullRequest?: string | null;

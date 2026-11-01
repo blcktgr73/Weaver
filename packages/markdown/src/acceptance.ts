@@ -1,3 +1,4 @@
+import { yamlValue } from './frontmatter';
 import { Locale, t } from './i18n';
 import { CriterionCoverage, MergedTask } from './tasks';
 
@@ -23,10 +24,6 @@ export function acceptanceGaps(coverage: CriterionCoverage[], tasks: MergedTask[
     if (task.file?.status === 'needs-human-decision') lines.push(t('acceptance.decision', locale, { task: task.id }));
   }
   return lines;
-}
-
-function yamlValue(value: string): string {
-  return /^[\w][\w .@-]*$/.test(value) && !/\s$/.test(value) ? value : JSON.stringify(value);
 }
 
 /**

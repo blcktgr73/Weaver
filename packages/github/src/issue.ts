@@ -325,3 +325,16 @@ export async function addIssueComment(token: string, repository: string, number:
   const response = await rest({ token, fetchFn }, 'POST', `/repos/${repository}/issues/${number}/comments`, { body });
   if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
 }
+
+/**
+ * Sets the assignees of an Issue to exactly `assignees`. GitHub quietly drops a login that cannot be
+ * assigned (not a collaborator, for one), so the answer is checked and a missing login is an error.
+ */
+export async function setIssueAssignees(token: string, repository: string, number: number, assignees: readonly string[], fetchFn: FetchFn = fetch): Promise<void> {
+  const response = await rest({ token, fetchFn }, 'PATCH', `/repos/${repository}/issues/${number}`, { assignees });
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
+  const data = (await response.json()) as { assignees?: { login: string }[] };
+  const now = new Set((data.assignees ?? []).map((a) => a.login.toLowerCase()));
+  const missing = assignees.find((login) => !now.has(login.toLowerCase()));
+  if (missing) throw new NoticeError({ code: 'github.err.cannot-assign', args: { login: missing } });
+}

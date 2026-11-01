@@ -127,3 +127,29 @@ The order of `repositories` is the default lane order. Rules:
 - Errors: the file is not valid YAML or not a mapping; `project`, `project.owner`, `project.number`, or `repositories` is missing or has the wrong type; the owner is not a valid login; the number is not a whole number of 1 or more; `repositories` is empty; an entry is not `owner/name` or lacks `repository`; a repository is listed twice (names are compared without case).
 - Warnings: an unknown field is kept but not interpreted.
 - The registry is returned only when there are no errors.
+
+## Contributor roster
+
+`roster.yaml` lists the people and agents that tasks can be given to ([DEC-013](../decisions/DEC-013-contributor-roster.md)). It is plain YAML, read from the root of the folder that holds `fabric.yaml`.
+
+```yaml
+contributors:
+  - id: maria            # the name task files use
+    kind: human          # human | agent
+    github: maria-dev    # optional; becomes the Issue assignee for a human
+  - id: claude-code
+    kind: agent
+    tool: Claude Code    # for an agent: the tool or product
+    model: opus          # optional
+    reach: runs in the maintainer's session
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `id` | yes | The name used in task files. Letters, digits, spaces, and `. _ @ -`. Unique without regard to case. |
+| `kind` | yes | `human` or `agent`. |
+| `name` | no | A display name. |
+| `github` | no | The GitHub login. |
+| `tool`, `model`, `reach` | agents | Which tool or model it is, and how it is reached. A missing `tool` or `reach` is a warning. |
+
+A task file may also name `reviewer`, `approved_by`, and `approved_on`. With a roster, an owner, reviewer, or approver that is not in it, an approver that is an agent, and Verified agent work without a human approval are shown as gaps.

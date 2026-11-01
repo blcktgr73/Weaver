@@ -17,3 +17,6 @@ export * from './clone';
 export * from './stale';
 export * from './offline';
 export * from './snapshot';
+export * from './roster';
+export { setFrontmatterFields, yamlValue } from './frontmatter';
+export * from './assign';

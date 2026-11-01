@@ -30,8 +30,14 @@ const KNOWN_REQUIREMENT_FIELDS = [
 const KNOWN_TASK_FIELDS = [
   'id', 'type', 'title', 'requirement', 'status', 'assignee_type', 'assignee', 'repository',
   'branch', 'pull_request', 'issue', 'tests', 'blockers', 'criteria',
-  'evidence_exception',
+  'evidence_exception', 'reviewer', 'approved_by', 'approved_on',
 ];
+
+/** A date as written in YAML: a quoted string, or an unquoted date that the parser turned into a Date. */
+function dateStr(value: unknown): string | undefined {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+}
 
 function str(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
@@ -163,6 +169,9 @@ export function parseArtifact(path: string, text: string): ParseResult {
     ...(status ? { status } : {}),
     ...(assigneeType ? { assigneeType: assigneeType as AssigneeType } : {}),
     ...(str(fm.assignee) ? { assignee: str(fm.assignee) } : {}),
+    ...(str(fm.reviewer) ? { reviewer: str(fm.reviewer) } : {}),
+    ...(str(fm.approved_by) ? { approvedBy: str(fm.approved_by) } : {}),
+    ...(dateStr(fm.approved_on) ? { approvedOn: dateStr(fm.approved_on) } : {}),
     ...(repository ? { repository } : {}),
     ...(str(fm.branch) ? { branch: str(fm.branch) } : {}),
     ...(pullRequest !== undefined ? { pullRequest } : {}),
