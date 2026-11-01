@@ -86,7 +86,12 @@ The first dogfooding round gave a concrete case. ClawHub, BookPlay-Pro, Dialogue
 2. Version 1 keeps the six columns and configures only where they come from and the evidence rules.
 3. The repository is the single source of truth; there is no personal override.
 
-## Not decided yet
+## Known limits
 
-- Further rules a repository needs. They are added when a repository asks for one. The first round only showed the column source and the pull-request expectation.
-- Whether a roster that belongs to a project (for example the colleagues of a shared project) should also live in the repository. The roster stays personal for now ([DEC-014](./DEC-014-user-configuration.md)).
+- **A GitHub Project board with three Status values (Todo, In Progress, Done) cannot tell Ready, Blocked, and Review from their neighbors.** A repository that uses `board-status` on such a board shows those three columns empty. This is a limit of the board, not of Weaver. A repository that needs the finer columns can use the `status:*` labels, or give its board a richer Status field.
+
+## Deferred
+
+- **A personal overlay of a repository's process.** The repository stays the single source of truth. For a repository one does not own, a person may later want to keep their own *differences* from its process outside the repository (in the personal configuration), and to see in the view where their reading differs from the repository's. The name is "overlay": it is laid over the repository's file without changing it, and it is shown, not hidden. It is not needed yet, so it is not built and not specified. It is taken up when a real case appears.
+- **Further rules.** They are added when a repository asks for one. The first round only showed the column source and the pull-request expectation. The decision is to settle on this, watch what happens in the dogfooding, and add what is missing.
+- **The roster of a project.** See [DEC-014](./DEC-014-user-configuration.md): the humans of a repository can be taken from its GitHub collaborators, which are already the repository's own record of who works on it.

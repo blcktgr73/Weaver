@@ -165,3 +165,4 @@ The `weaver` command-line tool gives an agent, or you in a terminal, the Kanban 
 - A requirement view reads one repository at a time. The Overview shows the registered repositories together, read-only.
 - Board Status is compared with the label only when the GitHub token has the `project` scope.
 - Owners and criteria are edited in Markdown; the view does not write them.
+- A GitHub Project board with only three Status values (Todo, In Progress, Done) cannot tell Ready, Blocked, and Review apart. A repository that reads its columns from such a board shows those three columns empty; use the `status:*` labels if you need them ([DEC-015](../decisions/DEC-015-process-configuration.md)).
