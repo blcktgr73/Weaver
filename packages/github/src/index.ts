@@ -4,3 +4,4 @@ export * from './pulls';
 export * from './write';
 export * from './issue';
 export * from './errors';
+export * from './discover';
