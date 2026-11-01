@@ -33,6 +33,7 @@ export async function setUp(): Promise<boolean> {
   // 1. The Project.
   const listed = await listProjects(token);
   if (!listed.ok) return fail(formatNotice(listed.error, locale));
+  if (listed.organizationsSkipped) void vscode.window.showInformationMessage(message('ui.setup.organizations-skipped'));
   type ProjectItem = vscode.QuickPickItem & { project?: Project };
   const items: ProjectItem[] = listed.projects.map((p) => ({
     label: `${p.owner} #${p.number}  ${p.title}`,

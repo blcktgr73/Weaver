@@ -66,6 +66,7 @@ export async function runInit(deps: Deps, locale: Locale, wantsText: boolean): P
   const listed = await listProjects(token, deps.fetch);
   if (!listed.ok) return fail(EXIT.failed, 'init.failed', { detail: formatNotice(listed.error, locale) });
   const projects: ProjectSummary[] = listed.projects;
+  if (listed.organizationsSkipped) note(say('init.organizations-skipped'));
   if (projects.length) {
     note(say('init.projects-title'));
     projects.forEach((p, i) => note(say('init.project-line', { index: i + 1, owner: p.owner, number: p.number, title: p.title, items: p.items, current: existing && same(existing.project, p) ? say('init.current') : '' })));
