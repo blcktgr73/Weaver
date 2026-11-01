@@ -6,3 +6,4 @@ export * from './issue';
 export * from './errors';
 export * from './discover';
 export * from './processFile';
+export * from './processes';

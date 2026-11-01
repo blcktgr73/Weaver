@@ -22,13 +22,14 @@ import {
   staleNotices,
   ValidationIssue,
 } from '@palab/weaver-markdown';
-import { ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
+import { placeWithRules, ProjectCard, ProjectRead, readMergedPulls, readProject } from '@palab/weaver-github';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { fabricRoot } from './fabricRoot';
 import { fetchEvidence, getGitHubToken } from './github';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
+import { processStore } from './processStore';
 import { isOpenableUrl } from './requirementHtml';
 import { REQUIREMENT_EDITOR } from './requirementEditor';
 import type { RequirementView } from './requirementView';
@@ -328,7 +329,11 @@ export class OverviewView {
     }
 
     const { registry } = this.registry;
-    const result = await readProject(token, registry.project, registry.repositories.map((r) => r.repository));
+    const repositories = registry.repositories.map((r) => r.repository);
+    // A repository never asked has no process to draw from, so the first picture waits for it (DEC-015);
+    // otherwise the last answer is used now and checked for a change once the board is shown.
+    const known = repositories.every((name) => processStore.has(name));
+    const [result] = await Promise.all([readProject(token, registry.project, repositories), known ? undefined : processStore.refresh(token, repositories)]);
     if (request !== this.request) return;
     if (result.ok) {
       const pulls = await Promise.all(registry.repositories.map((r) => readMergedPulls(token, r.repository)));
@@ -352,6 +357,17 @@ export class OverviewView {
       }
     }
     this.render();
+
+    if (known && result.ok) {
+      void processStore.refresh(token, repositories).then((changed) => {
+        if (changed && request === this.request) this.render();
+      });
+    }
+  }
+
+  /** The cards placed with the rules of each repository's process, which may have changed since they were read. */
+  private placed(cards: readonly ProjectCard[]): ProjectCard[] {
+    return placeWithRules(cards, processStore.rulesFor);
   }
 
   private state(): OverviewState {
@@ -363,7 +379,7 @@ export class OverviewView {
       // GitHub could not be read: show the last board read (DEC-011), or else the board the files give.
       if (this.read && this.readAt) {
         const links = requirementsByIssue(this.loaded?.artifacts ?? []);
-        const cards: OverviewCard[] = this.read.cards.map((card) => ({ ...card, requirement: links.get(normalizeIssueUrl(card.url)), stale: [] }));
+        const cards: OverviewCard[] = this.placed(this.read.cards).map((card) => ({ ...card, requirement: links.get(normalizeIssueUrl(card.url)), stale: [] }));
         const lanes = applyLaneOrder(buildLanes(this.registry.registry, cards), this.order);
         return { kind: 'error', error: this.error, offline: { lanes, collapsed: [...this.collapsed], snapshotAge: snapshotAge(this.readAt, new Date()) } };
       }
@@ -391,11 +407,13 @@ export class OverviewView {
     const links = requirementsByIssue(this.loaded?.artifacts ?? []);
     const now = new Date();
     const focused = new Set(this.matching().map((card) => normalizeIssueUrl(card.url)));
-    const idleDays = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
+    // A repository's process sets its own idle days; the user's setting is for the rest.
+    const idleSetting = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
+    const placedCards = this.placed(this.read.cards);
     const tasks = new Map(
       (this.loaded?.artifacts ?? []).flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])),
     );
-    const cards: OverviewCard[] = this.read.cards.map((card) => {
+    const cards: OverviewCard[] = placedCards.map((card) => {
       const requirement = links.get(normalizeIssueUrl(card.url));
       const task = requirement?.taskPath ? tasks.get(requirement.taskPath) : undefined;
       return {
@@ -412,7 +430,7 @@ export class OverviewView {
             evidenceException: Boolean(task?.evidenceException),
           },
           now,
-          idleDays,
+          processStore.staleDaysFor(card.repository) ?? idleSetting,
         ),
       };
     });
@@ -425,9 +443,10 @@ export class OverviewView {
       collapsed: [...this.collapsed],
       mismatches: findMismatches({
         artifacts: this.loaded?.artifacts ?? [],
-        cards: this.read.cards,
+        cards: placedCards,
         repositories: this.registry.registry.repositories.map((r) => r.repository),
         pulls: this.pulls,
+        boardSourced: this.registry.registry.repositories.map((r) => r.repository).filter((name) => processStore.rulesFor(name)?.source === 'board-status'),
       }),
       skippedChecks: this.skippedChecks,
       focusActive: focused.size > 0,

@@ -4,11 +4,13 @@ import { currentLocale, message } from './locale';
 import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEditor';
 import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
 import { OverviewView, readRegistry } from './overviewView';
+import { processStore } from './processStore';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
+  processStore.init(context.globalState);
   const view = new RequirementView();
   const overview = new OverviewView(context.globalState, view);
 

@@ -1,6 +1,7 @@
 import {
   BoardItem,
   boardGaps,
+  ColumnRules,
   describePull,
   evidenceGaps,
   formatNotice,
@@ -27,7 +28,7 @@ import {
 import { coverageOf } from './coverage';
 
 export type TaskStatus =
-  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[] }
+  | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[]; rules?: ColumnRules; boardStatus?: string }
   | { ok: false; error: Notice };
 
 export interface StatusState {
@@ -86,7 +87,7 @@ export function renderRequirementHtml(
   const placed = new Map<string, { issue: IssueSnapshot; placement: KanbanPlacement }>();
   for (const task of tasks) {
     const result = status?.byTask[task.id];
-    if (result?.ok) placed.set(task.id, { issue: result.issue, placement: placeIssue(result.issue) });
+    if (result?.ok) placed.set(task.id, { issue: result.issue, placement: placeIssue({ ...result.issue, boardStatus: result.boardStatus }, result.rules) });
   }
 
   /** Placement gaps plus evidence gaps for a task whose Issue was read. */
@@ -100,7 +101,7 @@ export function renderRequirementHtml(
       : result.evidenceError
         ? [tt('ui.evidence.error-prefix', { detail: formatNotice(result.evidenceError, locale) })]
         : evidenceGaps(entry.placement.column, result.evidence).map((gap) => formatNotice(gap, locale));
-    const board = boardGaps(entry.placement.column, result.board, requirement.githubProject).map((gap) => formatNotice(gap, locale));
+    const board = boardGaps(entry.placement.column, result.board, requirement.githubProject, result.rules).map((gap) => formatNotice(gap, locale));
     const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
     const blockers = (task?.file?.blockers ?? []).map((text) => tt('gap.blocker', { text }));
     const decision = task?.file?.status === 'needs-human-decision' ? [tt('gap.needs-decision')] : [];

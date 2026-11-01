@@ -1,19 +1,7 @@
 import { formatNotice, Locale, parseProcess, ProcessConfig, ProcessSection, SectionSource, t, defaultProcess, validationKey } from '@palab/weaver-markdown';
-import { fetchProcessFile, type FetchFn } from '@palab/weaver-github';
+import { fetchProcessFile, mapLimit, PROCESS_READ_LIMIT, type FetchFn } from '@palab/weaver-github';
 
-/** Runs `work` on every item, at most `limit` at a time, and returns the results in the order of the items. */
-export async function mapLimit<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  const worker = async (): Promise<void> => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await work(items[index]);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
-  return results;
-}
+export { mapLimit } from '@palab/weaver-github';
 
 /** How one repository tracks its work, as the tool prints it. Part of the JSON contract. */
 export interface ProcessReport {
@@ -29,8 +17,7 @@ export interface ProcessReport {
   error?: { code: string; message: string };
 }
 
-/** At most this many repositories are asked at a time (DEC-015). */
-export const PROCESS_READ_LIMIT = 4;
+export { PROCESS_READ_LIMIT };
 
 /**
  * Reads the process of every repository, a few at a time. A repository that has no file or cannot
