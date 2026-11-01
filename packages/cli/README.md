@@ -17,6 +17,7 @@ It reads the Project to work on from a `fabric.yaml` in the folder it runs in (o
 
 | Command | Prints |
 | --- | --- |
+| `weaver init` | Sets up `~/.weaver/config.yaml` in a terminal: the Project, the repositories to leave out, the roster. Shows the file and writes it only after a yes; keeps `config.yaml.bak` when it replaces one. Exits with 6 without a terminal |
 | `weaver list [--repository o/n] [--column name]` | Every card of the Project, with its task, requirement, stale marks, and gaps |
 | `weaver show <card>` | One card with its task file, requirement, and the merged pull requests that close it or name its task. `<card>` is `owner/name#number`, an Issue address, or `TASK-###` |
 | `weaver project add <issue>...` | A write ([confirmation](#how-every-write-is-confirmed)). Adds Issues of registered repositories that are not on the Project yet. Skips, with the reason, an Issue that is already there, of an unregistered repository, or not an Issue address. `<issue>` is `owner/name#number` or an Issue address |

@@ -30,11 +30,12 @@ This page is the contract. Every JSON example below is checked by a test against
 | Exit code | Meaning |
 | --- | --- |
 | 0 | Done, or nothing to do |
-| 1 | Failed: no `fabric.yaml`, no token, GitHub unreachable, or a write failed |
+| 1 | Failed: no configuration, no token, GitHub unreachable, or a write failed |
 | 2 | The command was wrong or refused (unknown command, missing argument, a move to Verified without evidence, a pull request that is not merged) |
 | 3 | The card was not found |
 | 4 | A write was **not confirmed**: nothing was changed (see below) |
 | 5 | A write was **declined** by the person at the terminal: nothing was changed |
+| 6 | A command that asks questions (`weaver init`) was run without a terminal |
 
 ## Read
 
@@ -196,6 +197,10 @@ After the user approved that action, the same command with `--approve 0b184aa2fc
 ```
 
 `skipped` lists what a command left out and why (for example an Issue that is already on the Project). `report` is used by `reconcile`.
+
+## Set up
+
+`weaver init` sets up your personal configuration `~/.weaver/config.yaml` in a terminal: it lists the Projects you can read, takes the repositories found on the one you choose (you leave out the ones you do not want), offers the people assigned to its cards for your roster, lets you add agents, shows the file, and writes it only after you say yes. Running it again starts from the file that is there and keeps a copy of the old one as `config.yaml.bak`. It asks questions, so an agent cannot run it: without a terminal it exits with code 6. Ask the user to run it, or write the file by hand ([the format](../product/artifact-schema-v0.1.md#user-configuration)).
 
 ## Commands that write
 
