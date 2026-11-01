@@ -7,3 +7,4 @@ export * from './projectAdd';
 export * from './taskCreate';
 export * from './cardActions';
 export * from './reconcile';
+export * from './setup';

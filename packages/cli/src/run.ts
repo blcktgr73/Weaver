@@ -8,7 +8,7 @@ import {
   loadWorkspace,
   MessageArgs,
   MessageKey,
-  parseFabric,
+  effectiveRepositories,
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
@@ -19,6 +19,7 @@ import { parseColumn, planCardMove, planEvidenceAttach } from './cardActions';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
+import { loadSetup } from './setup';
 import { planReconcile } from './reconcile';
 import { nextTaskNumber, planTaskCreate, usedTaskTexts } from './taskCreate';
 
@@ -68,17 +69,24 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   }
 
   const root = path.resolve(deps.cwd, args.options.root ?? '.');
-  const registry = parseFabric('fabric.yaml', (await deps.readText(path.join(root, 'fabric.yaml'))) ?? '').registry;
-  if (!registry) return fail(EXIT.failed, 'cli.no-registry', { root });
+  const loaded = await loadSetup(root, deps, locale);
+  if (!loaded.ok) {
+    return loaded.reason === 'none'
+      ? fail(EXIT.failed, 'cli.no-setup', { root })
+      : fail(EXIT.failed, 'cli.config-invalid', { path: loaded.path, detail: loaded.detail });
+  }
+  const { setup } = loaded;
   const token = await deps.token();
   if (!token) return fail(EXIT.failed, 'cli.no-token');
 
-  const repositories = registry.repositories.map((r) => r.repository);
-  const read = await readProject(token, registry.project, repositories, deps.fetch);
+  const read = await readProject(token, setup.project, setup.repositories?.map((r) => r.repository), deps.fetch);
   if (!read.ok) {
     report(read.error.code, formatNotice(read.error, locale));
     return EXIT.failed;
   }
+
+  // Without a list, the repositories are the ones that have cards on the Project.
+  const repositories = effectiveRepositories(setup, read.read.cards.map((card) => card.repository)).map((r) => r.repository);
 
   /** Shows the plan, takes the confirmations, runs what was approved, and prints the result. */
   const confirmAndRun = async (actions: PlannedAction[], skipped: Skipped[] = [], options: { report?: ReportItem[]; dryRun?: boolean } = {}): Promise<number> => {
@@ -99,7 +107,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
   if (args.command === 'project') {
     const plan = planProjectAdd(args.positional.slice(1), {
       token,
-      project: registry.project,
+      project: setup.project,
       repositories,
       onProject: read.read.cards.map((card) => card.url),
       fetch: deps.fetch,
@@ -126,7 +134,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       token,
       login: await deps.login(),
       locale,
-      project: registry.project,
+      project: setup.project,
       requirement,
       repository,
       title,
@@ -151,7 +159,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       token,
       login: await deps.login(),
       locale,
-      project: registry.project,
+      project: setup.project,
       repositories,
       cards: read.read.cards,
       artifacts,
@@ -192,7 +200,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     if (wantsText) {
       deps.out(cards.map(textLine).join('\n') + (cards.length ? '\n' : ''));
     } else {
-      const project = { owner: registry.project.owner, number: registry.project.number, title: read.read.title };
+      const project = { owner: setup.project.owner, number: setup.project.number, title: read.read.title };
       deps.out(`${JSON.stringify({ schema: SCHEMA, project, cards, skipped: read.read.skipped })}\n`);
     }
     return EXIT.ok;

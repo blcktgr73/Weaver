@@ -24,6 +24,8 @@ export const en = {
   'validation.task-listed-twice': '{task} is already listed under {owner}.',
 
   // Fabric registry (fabric.yaml, see docs/product/artifact-schema-v0.1.md)
+  'validation.config-invalid-yaml': 'The configuration is not valid YAML: {detail}',
+  'validation.config-not-a-mapping': 'The configuration must be a mapping with a "project".',
   'validation.fabric-invalid-yaml': 'The registry is not valid YAML: {detail}',
   'validation.fabric-not-a-mapping': 'The registry must be a mapping with "project" and "repositories".',
   'validation.fabric-project-not-a-mapping': '"project" must have "owner" and "number".',
@@ -105,7 +107,6 @@ export const en = {
   'cli.usage': 'Usage: weaver <command> [options]\n\nCommands:\n  list                 List every card of the Project\n  show <card>          Show one card: owner/name#number, an Issue address, or TASK-###\n  project add <issue>...  Add Issues to the Project (a write; see --approve)\n\nOptions:\n  --root <folder>      The folder that holds fabric.yaml (default: the current folder)\n  --repository <name>  list: only this repository (owner/name)\n  --column <name>      list: only this column\n  --text               Print readable text instead of JSON\n  --approve <ids>      Write commands: run only the listed actions, which the user approved\n  card move <card> --to <column>   Write: move a card (labels, Issue state, board Status)\n  reconcile [--apply]  Plan the fixes for what the Overview reports (nothing is changed without approval)\n  evidence attach <card> --pull <number or address>   Write: link a merged pull request on the Issue\n  task create          Write: --title <t> --requirement <REQ-###> [--criteria AC-001,..] [--assignee <name>]\n                       [--assignee-type human|agent] [--area <name>] [--repository <owner/name>]\n  --lang <en|ko>       Language of messages (default: WEAVER_LANG, then en)\n  --help               Show this help\n\nThe token comes from the gh login (gh auth login -s repo,project).',
   'cli.unknown-command': 'Unknown command "{command}". Run weaver --help.',
   'cli.missing-argument': 'The command "{command}" needs {argument}.',
-  'cli.no-registry': 'No valid fabric.yaml was found in {root}.',
   'cli.no-token': 'No GitHub token. Run: gh auth login -s repo,project',
   'cli.confirm': 'Run this action? [y/N] ',
   'cli.action-line': '{kind} {target} (id {id})\n  Change: {summary}\n  Why: {reason}',
@@ -145,6 +146,8 @@ export const en = {
   'cli.reconcile.comment': 'Comment on {ref} that merged pull request #{pull} names {task} but does not close the Issue. The Issue stays open.',
   'cli.reconcile.comment-reason': 'A merged pull request names this task and the Issue is still open, so the link is written on the Issue. Closing it stays with a person.',
   'cli.reconcile.relabel-reason': 'The Issue is closed, and a closed task Issue is Verified (DEC-003), but it kept an older status label.',
+  'cli.no-setup': 'No Weaver configuration was found. Run "weaver init", or put a fabric.yaml in {root}.',
+  'cli.config-invalid': 'The configuration {path} has a problem: {detail}',
   'cli.not-found': 'No card matches "{ref}".',
   'cli.ambiguous': '"{ref}" matches more than one card: {matches}.',
   'gap.offline-no-status': 'state unknown: the task file gives no status (the Issue has it)',
