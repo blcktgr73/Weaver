@@ -66,6 +66,8 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.sign-in': 'GitHub에 로그인',
   'ui.overview.sign-in-note': '보드는 VS Code의 GitHub 로그인으로 GitHub Project에서 읽어 옵니다. "repo"와 "project" 권한이 필요합니다.',
   'ui.overview.refresh': '새로 고침',
+  'ui.overview.reading-process': '이 저장소가 일을 어떻게 추적하는지 읽는 중…',
+  'ui.overview.reading-note': '{count}개 레인을 아직 읽는 중이라 카드를 보여 주지 않고, 아래 점검에서도 뺍니다.',
   'ui.overview.loading': 'Project를 불러오는 중…',
   'ui.overview.no-registry': '이 컴퓨터에는 아직 Weaver 설정이 없습니다. 보여 줄 GitHub Project를 고르면 내 설정 파일에 저장합니다.',
   'ui.overview.set-up': '설정하기',

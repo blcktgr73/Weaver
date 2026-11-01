@@ -43,6 +43,8 @@ const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
 const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 const ORDER_KEY = 'weaver.overview.laneOrder';
 const SNAPSHOT_KEY = 'weaver.overview.lastRead';
+/** How many repositories are asked for their process at a time (DEC-015). */
+const PROCESS_BATCH = 4;
 
 export type Registry =
   | { kind: 'none' }
@@ -178,12 +180,16 @@ export class OverviewView {
     if (message.type === 'signIn') await this.load(true);
     else if (message.type === 'refresh') await this.load(false);
     else if (message.type === 'setUp') await vscode.commands.executeCommand('weaver.setUp');
-    else if (message.type === 'toggleLane' && message.id) this.flip(this.hidden, HIDDEN_KEY, message.id);
+    else if (message.type === 'toggleLane' && message.id) {
+      this.flip(this.hidden, HIDDEN_KEY, message.id);
+      void this.readPending(this.request);
+    }
     else if (message.type === 'foldLane' && message.id) this.flip(this.collapsed, COLLAPSED_KEY, message.id);
     else if (message.type === 'showAll') {
       this.hidden.clear();
       void this.store.update(HIDDEN_KEY, []);
       this.render();
+      void this.readPending(this.request);
     }
     else if (message.type === 'clearFocus') {
       this.focus = undefined;
@@ -350,21 +356,13 @@ export class OverviewView {
     const { derived } = this.registry;
     let registry = this.registry.registry;
     let repositories = registry.repositories.map((r) => r.repository);
-    // A repository never asked has no process to draw from, so the first picture waits for it (DEC-015);
-    // otherwise the last answer is used now and checked for a change once the board is shown.
     // Without a list in the configuration, the repositories are known only after the Project is read.
-    let known = !derived && repositories.every((name) => processStore.has(name));
-    const [result] = await Promise.all([readProject(token, registry.project, derived ? undefined : repositories), known || derived ? undefined : processStore.refresh(token, repositories)]);
+    const result = await readProject(token, registry.project, derived ? undefined : repositories);
     if (request !== this.request) return;
     if (result.ok && derived) {
       registry = { ...registry, repositories: effectiveRepositories({}, result.read.cards.map((card) => card.repository)) };
       this.registry = { ...this.registry, registry };
       repositories = registry.repositories.map((r) => r.repository);
-      known = repositories.every((name) => processStore.has(name));
-      if (!known) {
-        await processStore.refresh(token, repositories);
-        if (request !== this.request) return;
-      }
     }
     if (result.ok) {
       const pulls = await Promise.all(registry.repositories.map((r) => readMergedPulls(token, r.repository)));
@@ -388,12 +386,51 @@ export class OverviewView {
         }
       }
     }
+    // A repository whose process was never read is not drawn with guessed rules: its lane says it is being
+    // read, and the checks that need its rules leave it out until it is (DEC-015).
+    this.reading = new Set(result.ok ? repositories.filter((name) => !processStore.has(name)) : []);
+    this.token = token;
     this.render();
+    if (result.ok) void this.readProcesses(token, request, repositories);
+  }
 
-    if (known && result.ok) {
-      void processStore.refresh(token, repositories).then((changed) => {
+  private token: string | undefined;
+  /** Repositories whose process file has not been read yet. */
+  private reading = new Set<string>();
+  private readingBusy = false;
+
+  /**
+   * The last answer of each repository is checked for a change in the background; the repositories
+   * never read are read by priority: the lanes that are shown first (unfolded before folded), four
+   * at a time. A lane that is hidden is read only when it is shown (DEC-015).
+   */
+  private async readProcesses(token: string, request: number, repositories: readonly string[]): Promise<void> {
+    const kept = repositories.filter((name) => processStore.has(name));
+    if (kept.length) {
+      void processStore.refresh(token, kept).then((changed) => {
         if (changed && request === this.request) this.render();
       });
+    }
+    await this.readPending(request);
+  }
+
+  private async readPending(request: number): Promise<void> {
+    const token = this.token;
+    if (!token || this.readingBusy) return;
+    this.readingBusy = true;
+    try {
+      for (;;) {
+        const shown = this.repositories().filter((name) => this.reading.has(name) && !this.hidden.has(name));
+        const batch = [...shown.filter((name) => !this.collapsed.has(name)), ...shown.filter((name) => this.collapsed.has(name))].slice(0, PROCESS_BATCH);
+        if (batch.length === 0 || request !== this.request) return;
+        await processStore.refresh(token, batch);
+        if (request !== this.request) return;
+        // A lane whose file could not be read keeps today's defaults rather than waiting for ever.
+        for (const name of batch) this.reading.delete(name);
+        this.render();
+      }
+    } finally {
+      this.readingBusy = false;
     }
   }
 
@@ -442,10 +479,14 @@ export class OverviewView {
     // A repository's process sets its own idle days; the user's setting is for the rest.
     const idleSetting = vscode.workspace.getConfiguration('weaver').get<number>('staleDays', 14);
     const placedCards = this.placed(this.read.cards);
+    // Cards of a lane whose process is not read yet are not judged: they would be judged by guessed rules.
+    const checkedCards = placedCards.filter((card) => !this.reading.has(card.repository));
+    const checkedRepositories = this.registry.registry.repositories.map((r) => r.repository).filter((name) => !this.reading.has(name));
     const tasks = new Map(
       (this.loaded?.artifacts ?? []).flatMap((a) => (a.kind === 'task' ? [[a.path, a] as const] : [])),
     );
     const cards: OverviewCard[] = placedCards.map((card) => {
+      if (this.reading.has(card.repository)) return { ...card, requirement: links.get(normalizeIssueUrl(card.url)), stale: [] };
       const requirement = links.get(normalizeIssueUrl(card.url));
       const task = requirement?.taskPath ? tasks.get(requirement.taskPath) : undefined;
       return {
@@ -476,14 +517,15 @@ export class OverviewView {
       collapsed: [...this.collapsed],
       mismatches: findMismatches({
         artifacts: this.loaded?.artifacts ?? [],
-        cards: placedCards,
-        repositories: this.registry.registry.repositories.map((r) => r.repository),
+        cards: checkedCards,
+        repositories: checkedRepositories,
         pulls: this.pulls,
-        exceptionsIgnored: this.registry.registry.repositories.map((r) => r.repository).filter((name) => processStore.evidenceFor(name)?.exceptions === false),
-        closingNotRequired: this.registry.registry.repositories.map((r) => r.repository).filter((name) => processStore.evidenceFor(name)?.closingPullRequest === false),
-        boardSourced: this.registry.registry.repositories.map((r) => r.repository).filter((name) => processStore.rulesFor(name)?.source === 'board-status'),
+        exceptionsIgnored: checkedRepositories.filter((name) => processStore.evidenceFor(name)?.exceptions === false),
+        closingNotRequired: checkedRepositories.filter((name) => processStore.evidenceFor(name)?.closingPullRequest === false),
+        boardSourced: checkedRepositories.filter((name) => processStore.rulesFor(name)?.source === 'board-status'),
       }),
       skippedChecks: this.skippedChecks,
+      reading: [...this.reading],
       focusActive: focused.size > 0,
     };
   }
