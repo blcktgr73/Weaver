@@ -10,6 +10,7 @@ import {
   mergeTasks,
   MessageKey,
   Notice,
+  parseIssueUrl,
   planMove,
   recordAcceptance,
   RequirementArtifact,
@@ -17,6 +18,7 @@ import {
 import { applyMove, fetchBoardItems, fetchEvidence, fetchIssue, getGitHubToken } from './github';
 import { coverageOf } from './coverage';
 import { currentLocale, message } from './locale';
+import { processStore } from './processStore';
 import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
 
@@ -125,6 +127,9 @@ export class RequirementView {
         entry.status = { byTask: entry.status.byTask, loading: false };
         return;
       }
+      // Only the repositories of this requirement's tasks are asked for their process (DEC-015).
+      const repositories = [...new Set(this.tasksOf(entry).flatMap((task) => { const ref = task.issueUrl ? parseIssueUrl(task.issueUrl) : undefined; return ref ? [`${ref.owner}/${ref.repo}`] : []; }))];
+      await processStore.refresh(token, repositories);
       const results = await Promise.all(
         this.tasksOf(entry).map(async (task) => {
           if (!task.issueUrl) return undefined;
@@ -133,10 +138,15 @@ export class RequirementView {
             fetchEvidence(token, task.issueUrl),
             fetchBoardItems(token, task.issueUrl),
           ]);
+          const ref = parseIssueUrl(task.issueUrl);
+          const rules = ref ? processStore.rulesFor(`${ref.owner}/${ref.repo}`) : undefined;
+          const boardStatus = (board?.find((item) => item.project === entry.requirement.githubProject) ?? board?.[0])?.status;
           const status: TaskStatus = issue.ok
             ? {
                 ok: true,
                 issue: issue.issue,
+                ...(rules ? { rules } : {}),
+                ...(boardStatus ? { boardStatus } : {}),
                 ...(evidence.ok ? { evidence: evidence.evidence } : { evidenceError: evidence.error }),
                 ...(board ? { board } : {}),
               }
@@ -162,7 +172,12 @@ export class RequirementView {
     const current = entry.status.byTask[taskId];
     if (!column || !task?.issueUrl || !current?.ok) return;
 
-    const plan = planMove(current.issue, column);
+    const plan = planMove({ ...current.issue, boardStatus: current.boardStatus }, column, current.rules);
+    if (plan.unavailable) {
+      void vscode.window.showWarningMessage(message('ui.msg.move-unavailable', { task: taskId, column: message(`column.${column}` as MessageKey) }));
+      this.render(entry);
+      return;
+    }
     if (plan.noop) {
       this.render(entry);
       return;

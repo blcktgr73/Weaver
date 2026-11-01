@@ -358,6 +358,7 @@ export const ko: Record<MessageKey, Message> = {
   'ui.msg.status-read-failed': 'Weaver: Issue 상태를 읽지 못했습니다 ({detail}).',
   'ui.msg.move-stopped': 'Weaver: "{step}" 단계에서 멈췄습니다 ({detail}). 여기까지 완료: {done}.',
   'ui.msg.move-nothing': '없음',
+  'ui.msg.move-unavailable': '옮기지 않았습니다: {task}의 보드에는 "{column}"을 뜻하는 Status가 없습니다.',
   'ui.msg.move-done': 'Weaver: 이동 완료 — {task} → {column}',
   'ui.msg.no-requirements': 'Weaver: 유효한 요구사항 문서가 없습니다. 문제(Problems) 패널을 확인하세요.',
   'ui.msg.pick-requirement': 'Weaver 요구사항을 고르세요',

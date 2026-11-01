@@ -365,6 +365,7 @@ export const en = {
   'ui.msg.status-read-failed': 'Weaver: could not read Issue status ({detail}).',
   'ui.msg.move-stopped': 'Weaver: stopped at "{step}" ({detail}). Done so far: {done}.',
   'ui.msg.move-nothing': 'nothing',
+  'ui.msg.move-unavailable': 'Not moved: the board of {task} has no Status that means "{column}".',
   'ui.msg.move-done': 'Weaver: moved {task} to {column}.',
   'ui.msg.no-requirements': 'Weaver: no valid requirement artifacts found. Check the Problems panel.',
   'ui.msg.pick-requirement': 'Select a Weaver requirement',

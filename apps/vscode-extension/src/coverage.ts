@@ -17,7 +17,7 @@ export function coverageOf(
   return criteriaCoverage(requirement.criteria, tasks, (taskId) => {
     const result = status?.byTask[taskId];
     if (!result?.ok) return undefined;
-    const column = placeIssue(result.issue).column;
+    const column = placeIssue({ ...result.issue, boardStatus: result.boardStatus }, result.rules).column;
     const excepted = tasks.find((task) => task.id === taskId)?.file?.evidenceException;
     const gaps = excepted ? 0 : result.evidenceError ? 1 : evidenceGaps(column, result.evidence).length;
     return { column, evidenceGapCount: gaps };
