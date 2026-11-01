@@ -1,0 +1,48 @@
+name: Weaver feedback (first round of use)
+description: Tell us where Weaver got in your way, or what you wished it did, while you used it for real.
+title: "[Feedback] "
+labels: ["dogfooding"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for trying Weaver. A report here is read as a small requirement: what you were doing, what you expected, and what happened. The maintainer turns it into a story in the [user story map](https://github.com/blcktgr73/Weaver/blob/main/docs/product/user-story-map.md) and, when it needs work, into a task. Nothing needs to be polished.
+  - type: textarea
+    id: doing
+    attributes:
+      label: What were you trying to do?
+      description: The goal, in your own words. For example "see the cards of our shared Project" or "give a task to a colleague".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened instead?
+      description: What you saw, and any message Weaver showed. A screenshot helps; paste it here.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: How much did it get in the way?
+      options:
+        - I could not go on
+        - I got there, but it took a workaround
+        - It was only confusing or annoying
+        - Not a problem, just an idea
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where were you using Weaver?
+      description: "The extension version (Extensions view, Weaver), whether it was the editor or the `weaver` command line, and the Project or repository if it matters."
+      placeholder: "0.1.0, editor, the shared Project of our team"
+    validations:
+      required: false
