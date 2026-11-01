@@ -230,10 +230,25 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 <body>
   <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + finishedButton(state) + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>
   ${filter}
-  <div class="scroll">${body}</div>
+  <div class="scroll"${state.kind === 'ready' ? ' data-keep-scroll' : ''}>${body}</div>
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
   document.querySelector('.card.focus')?.scrollIntoView({ block: 'center', inline: 'center' });
+  // Setting the page again starts it at the top left. The board remembers where it was scrolled, and
+  // goes back there; a highlighted card wins, and the loading page leaves the saved place alone.
+  const board = document.querySelector('[data-keep-scroll]');
+  if (board) {
+    const place = vscode.getState();
+    if (place && !document.querySelector('.card.focus')) {
+      board.scrollTop = place.top;
+      board.scrollLeft = place.left;
+    }
+    let saving;
+    board.addEventListener('scroll', () => {
+      clearTimeout(saving);
+      saving = setTimeout(() => vscode.setState({ top: board.scrollTop, left: board.scrollLeft }), 100);
+    });
+  }
   document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-cmd],[data-url],[data-open],[data-req],[data-toggle],[data-fold],[data-file],[data-move-lane]');
     if (!target) return;
