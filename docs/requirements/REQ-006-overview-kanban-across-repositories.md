@@ -33,7 +33,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 
 ## Acceptance criteria
 
-- A registry file in Git lists the registered repositories and the central Project they report to. Adding a repository to the registry is a normal reviewed change.
+- A person's configuration, kept outside any repository (`~/.weaver/config.yaml`), names the central Project and, optionally, the repositories to show; without a list, every repository that has cards on the Project is shown. A workspace may share a `fabric.yaml` with the same fields. A setup procedure in the editor and in the terminal writes the file.
 - Each user can set a local fabric root folder, which is not shared. A command clones every registered repository that is missing under that folder and skips the ones already there. Opening the fabric root in VS Code shows all of them in one workspace.
 - Weaver opens on the Overview Kanban when a fabric is configured. The columns are the Kanban stages and the lanes are the registered repositories, in the order of the registry, so a card shows which project it belongs to.
 - A user can reorder, collapse, hide, and filter lanes. These choices are stored on that user's computer and never in the repository. A collapsed lane still shows its card count and its blocked-card count.
@@ -54,7 +54,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 ## Decisions taken
 
 - The central Project is configuration. PALab keeps PALab Ops Kanban, and other teams register their own: [DEC-007](../decisions/DEC-007-central-project-is-configuration.md).
-- The registry is `fabric.yaml` at the root of the Weaver repository: [DEC-010](../decisions/DEC-010-fabric-registry-location.md).
+- The registry format is `fabric.yaml` ([DEC-010](../decisions/DEC-010-fabric-registry-location.md)), but a person's own configuration lives in `~/.weaver/config.yaml` and the repository list can be derived from the Project: [DEC-014](../decisions/DEC-014-user-configuration.md).
 - The six columns stay derived from Issue labels, and no custom Project field is required: [DEC-009](../decisions/DEC-009-keep-labels-for-columns.md).
 - The offline board is the last board read from GitHub, kept on the user's computer: [DEC-011](../decisions/DEC-011-offline-board-from-last-read.md).
 
@@ -100,7 +100,12 @@ The editor behaviors in the right column cannot be driven by the test suite; the
 
 - `TASK-042` Show the last read board when GitHub is unreachable — [GitHub Issue #92](https://github.com/blcktgr73/Weaver/issues/92)
 - `TASK-050` Open the views a card leads to as new tabs instead of a split — [GitHub Issue #102](https://github.com/blcktgr73/Weaver/issues/102)
-- `TASK-055` Register the maintainer's other projects in the fabric — [GitHub Issue #117](https://github.com/blcktgr73/Weaver/issues/117)
+- `TASK-055` Show the maintainer's other projects on the Overview — [GitHub Issue #117](https://github.com/blcktgr73/Weaver/issues/117)
+- `TASK-057` Read the user configuration and keep the workspace file as an optional shared one — [GitHub Issue #122](https://github.com/blcktgr73/Weaver/issues/122)
+- `TASK-058` Discover the Projects of a user and the repositories on a Project — [GitHub Issue #123](https://github.com/blcktgr73/Weaver/issues/123)
+- `TASK-059` Set up the configuration from the terminal with weaver init — [GitHub Issue #124](https://github.com/blcktgr73/Weaver/issues/124)
+- `TASK-060` Set up the configuration from the editor and show every repository of the Project — [GitHub Issue #125](https://github.com/blcktgr73/Weaver/issues/125)
+- `TASK-061` Move the committed registry and roster out of the repository and write the migration note — [GitHub Issue #126](https://github.com/blcktgr73/Weaver/issues/126)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 

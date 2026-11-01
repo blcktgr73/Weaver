@@ -1,7 +1,7 @@
 ---
 id: TASK-055
 type: task
-title: Register the maintainer's other projects in the fabric
+title: Show the maintainer's other projects on the Overview
 requirement: REQ-006
 issue: https://github.com/blcktgr73/Weaver/issues/117
 repository: blcktgr73/Weaver
@@ -10,14 +10,13 @@ criteria: [AC-001]
 assignee: claude-code
 ---
 
-# TASK-055 Register the maintainer's other projects in the fabric
+# TASK-055 Show the maintainer's other projects on the Overview
 
 Tracked in [Issue #117](https://github.com/blcktgr73/Weaver/issues/117). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
-Add the maintainer's other repositories to `fabric.yaml`, and put their Issues on the central Project, so that the Overview shows them as lanes. Which repositories to add is the maintainer's decision; the agent lists the candidates and checks that each one can be read.
+Use the setup of [DEC-014](../decisions/DEC-014-user-configuration.md) to put the maintainer's other projects on their own Overview. Nothing about which repositories one person looks at is committed to a repository. The first try, a committed `fabric.yaml` with ClawHub, BookPlay-Pro, and DialogueLab, was dropped for that reason. It depends on `TASK-057` to `TASK-060`.
 
 ## Done when
 
-- The maintainer names the repositories to register.
-- Each registered repository has a lane on the Overview, and its Issues are on the Project, or the lane says it has none.
-- The change to `fabric.yaml` goes through a pull request.
+- The maintainer's own configuration shows ClawHub, BookPlay-Pro, and DialogueLab as lanes next to Weaver and HowMuchToday.
+- No repository file was changed to do it.
