@@ -2,6 +2,11 @@ import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
   acceptanceGaps,
+  AssignRole,
+  Contributor,
+  parseIssueUrl as parseIssue,
+  planAssignment,
+  setFrontmatterFields,
   describeMove,
   evidenceGaps,
   formatNotice,
@@ -19,6 +24,8 @@ import { applyMove, fetchBoardItems, fetchEvidence, fetchIssue, getGitHubToken }
 import { coverageOf } from './coverage';
 import { currentLocale, message } from './locale';
 import { processStore } from './processStore';
+import { readUserConfig } from './userConfig';
+import { errorNotice, setIssueAssignees } from '@palab/weaver-github';
 import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
 import { Loaded } from './workspace';
 
@@ -66,7 +73,7 @@ export class RequirementView {
     this.panels.add(entry);
 
     panel.onDidDispose(() => this.panels.delete(entry));
-    panel.webview.onDidReceiveMessage(async (message: { type: string; url?: string; taskId?: string; column?: string }) => {
+    panel.webview.onDidReceiveMessage(async (message: { type: string; url?: string; taskId?: string; column?: string; role?: string }) => {
       if (message.type === 'openSource' && entry.uri) {
         // `default` is the text editor even when Weaver is the default editor for the file.
         await vscode.commands.executeCommand('vscode.openWith', entry.uri, 'default', {
@@ -82,6 +89,8 @@ export class RequirementView {
         await this.loadStatus(entry, true);
       } else if (message.type === 'moveTask' && message.taskId && message.column) {
         await this.moveTask(entry, message.taskId, message.column);
+      } else if (message.type === 'assign' && message.taskId && (message.role === 'assignee' || message.role === 'reviewer' || message.role === 'approval')) {
+        await this.assign(entry, message.taskId, message.role);
       } else if (message.type === 'acceptRequirement') {
         await this.acceptRequirement(entry);
       }
@@ -164,7 +173,8 @@ export class RequirementView {
         const summary = processStore.summary(name);
         return summary.sources.stale === 'default' ? { ...summary, process: { ...summary.process, stale: { idleDays: staleSetting } } } : summary;
       });
-      entry.status = { byTask, loading: false, processes };
+      const user = await readUserConfig();
+      entry.status = { byTask, loading: false, processes, ...(user.kind === 'ok' && user.config.roster ? { roster: user.config.roster } : {}) };
     } catch (error) {
       entry.status = { byTask: entry.status.byTask, loading: false };
       void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
@@ -236,6 +246,86 @@ export class RequirementView {
         `${message('ui.msg.move-done', { task: taskId, column: columnLabel })}${note ? ' ' + note : ''}`,
       );
     }
+    await this.loadStatus(entry, false);
+  }
+
+  /**
+   * Names the owner or the reviewer of a task, or records who approved it (REQ-002, DEC-013). The
+   * person picks from the roster of the personal configuration, sees every change, and confirms
+   * before anything is written: the task file first, then the Issue assignee for a human owner.
+   */
+  private async assign(entry: Panel, taskId: string, role: AssignRole): Promise<void> {
+    const task = this.tasksOf(entry).find((candidate) => candidate.id === taskId);
+    const file = task?.file;
+    const uri = file && entry.loaded.uris.get(file.path);
+    if (!task || !file || !uri) return;
+    const locale = currentLocale();
+
+    // Who: the roster, or somebody typed by hand. An approval of agent work has to come from a person.
+    const user = await readUserConfig();
+    const roster = user.kind === 'ok' ? user.config.roster : undefined;
+    type Item = vscode.QuickPickItem & { contributor?: Contributor };
+    const items: Item[] = (roster?.contributors ?? [])
+      .filter((c) => role !== 'approval' || c.kind === 'human')
+      .map((c) => ({ label: c.name ?? c.id, description: [message(`ui.owner.${c.kind}` as MessageKey), c.github ? `@${c.github}` : '', c.tool ?? ''].filter(Boolean).join(' · '), contributor: c }));
+    items.push({ label: message('ui.assign.someone-else'), alwaysShow: true });
+    const picked = await vscode.window.showQuickPick(items, { placeHolder: message(`ui.assign.pick-${role}` as MessageKey, { task: taskId }), ignoreFocusOut: true });
+    if (!picked) return;
+    let who: Contributor | undefined = picked.contributor;
+    if (!who) {
+      const name = (await vscode.window.showInputBox({ prompt: message('ui.assign.type-name', { task: taskId }), ignoreFocusOut: true }))?.trim();
+      if (!name) return;
+      let kind: 'human' | 'agent' = 'human';
+      if (role !== 'approval') {
+        const kinds: (vscode.QuickPickItem & { ownerKind: 'human' | 'agent' })[] = [
+          { label: message('ui.owner.human'), ownerKind: 'human' },
+          { label: message('ui.owner.agent'), ownerKind: 'agent' },
+        ];
+        const chosen = await vscode.window.showQuickPick(kinds, { placeHolder: message('ui.assign.pick-kind', { name }), ignoreFocusOut: true });
+        if (!chosen) return;
+        kind = chosen.ownerKind;
+      }
+      who = { id: name, kind };
+    }
+
+    const current = entry.status.byTask[taskId];
+    const date = new Date().toISOString().slice(0, 10);
+    const plan = planAssignment({ role, task: file, who, ...(current?.ok ? { issueAssignees: current.issue.assignees } : {}), date });
+    if (plan.changes.length === 0) {
+      void vscode.window.showInformationMessage(message('ui.assign.nothing'));
+      return;
+    }
+    const detail = [message('ui.assign.detail-file', { path: file.path }), ...plan.changes.map((change) => `- ${formatNotice(change, locale)}`)].join('\n');
+    const writeLabel = message('ui.assign.confirm');
+    const choice = await vscode.window.showWarningMessage(message('ui.assign.title', { task: taskId }), { modal: true, detail }, writeLabel);
+    if (choice !== writeLabel) return;
+
+    const document = await vscode.workspace.openTextDocument(uri);
+    const updated = setFrontmatterFields(document.getText(), plan.fields);
+    if (updated === undefined) {
+      void vscode.window.showErrorMessage(message('ui.assign.file-failed', { path: file.path }));
+      return;
+    }
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(uri, new vscode.Range(0, 0, document.lineCount, 0), updated);
+    await vscode.workspace.applyEdit(edit);
+    await document.save();
+
+    // The Issue assignee follows a human owner, so the file and the Issue stay in step.
+    const ref = task.issueUrl ? parseIssueUrl(task.issueUrl) : undefined;
+    if (plan.issueAssignees && ref) {
+      try {
+        const token = await getGitHubToken(true, ['repo']);
+        if (!token) throw new Error(message('ui.setup.sign-in-failed'));
+        await setIssueAssignees(token, `${ref.owner}/${ref.repo}`, ref.number, plan.issueAssignees);
+      } catch (error) {
+        const detail = formatNotice(errorNotice(error), locale);
+        void vscode.window.showWarningMessage(message('ui.assign.issue-failed', { task: taskId, detail }));
+        await this.loadStatus(entry, false);
+        return;
+      }
+    }
+    void vscode.window.showInformationMessage(message('ui.assign.done', { task: taskId }));
     await this.loadStatus(entry, false);
   }
 

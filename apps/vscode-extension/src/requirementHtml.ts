@@ -18,6 +18,8 @@ import {
   Notice,
   ownerGaps,
   ownerOf,
+  Roster,
+  rosterGaps,
   placeIssue,
   RequirementArtifact,
   t,
@@ -40,6 +42,8 @@ export interface StatusState {
   loading: boolean;
   /** The process of each repository the tasks live in (DEC-015), for the section that shows where each setting comes from. */
   processes?: ProcessSummary[];
+  /** The roster of the personal configuration (DEC-013), when there is one: owners are judged against it. */
+  roster?: Roster;
 }
 
 export function escapeHtml(value: string): string {
@@ -108,19 +112,29 @@ export function renderRequirementHtml(
         : evidenceGaps(entry.placement.column, result.evidence, result.evidenceRules).map((gap) => formatNotice(gap, locale));
     const board = boardGaps(entry.placement.column, result.board, requirement.githubProject, result.rules).map((gap) => formatNotice(gap, locale));
     const owner = task ? ownerGaps(entry.placement.column, ownerOf(task, entry.issue.assignees)).map((gap) => formatNotice(gap, locale)) : [];
+    const roster = task?.file ? rosterGaps(task.file, entry.placement.column, status?.roster).map((gap) => formatNotice(gap, locale)) : [];
     const blockers = (task?.file?.blockers ?? []).map((text) => tt('gap.blocker', { text }));
     const decision = task?.file?.status === 'needs-human-decision' ? [tt('gap.needs-decision')] : [];
-    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...board, ...blockers, ...decision, ...evidence];
+    return [...entry.placement.gaps.map((gap) => formatNotice(gap, locale)), ...owner, ...roster, ...board, ...blockers, ...decision, ...evidence];
   };
 
   /** The recorded owner (task file), or the Issue assignee as a hint. */
   const ownerHtml = (task: MergedTask): string => {
     const owner = ownerOf(task, placed.get(task.id)?.issue.assignees);
+    let who: string;
     if (!owner) {
-      return status?.byTask[task.id] ? `<span class="muted">${e(tt('ui.owner.unassigned'))}</span>` : '<span class="muted">—</span>';
+      who = status?.byTask[task.id] ? `<span class="muted">${e(tt('ui.owner.unassigned'))}</span>` : '<span class="muted">—</span>';
+    } else {
+      const note = owner.type ? tt(`ui.owner.${owner.type}`) : owner.source === 'issue' ? tt('ui.owner.from-issue') : '';
+      who = `${e(owner.name)}${note ? ` <span class="muted small">· ${e(note)}</span>` : ''}`;
     }
-    const note = owner.type ? tt(`ui.owner.${owner.type}`) : owner.source === 'issue' ? tt('ui.owner.from-issue') : '';
-    return `${e(owner.name)}${note ? ` <span class="muted small">· ${e(note)}</span>` : ''}`;
+    const file = task.file;
+    if (!file) return who;
+    // The reviewer and the approval are recorded in the task file; each link changes one of them (REQ-002).
+    const reviewer = file.reviewer ? `<div class="muted small">${e(tt('ui.assign.reviewer-line', { name: file.reviewer }))}</div>` : '';
+    const approval = file.approvedBy ? `<div class="muted small">${e(tt('ui.assign.approval-line', { name: file.approvedBy, date: file.approvedOn ?? '—' }))}</div>` : '';
+    const link = (role: string, key: MessageKey): string => `<a href="#" data-assign="${e(task.id)}" data-role="${role}">${e(tt(key))}</a>`;
+    return `${who}${reviewer}${approval}<div class="small">${link('assignee', 'ui.assign.assign')} · ${link('reviewer', 'ui.assign.reviewer')} · ${link('approval', 'ui.assign.approval')}</div>`;
   };
 
   const evidenceCell = (taskId: string): string => {
@@ -327,6 +341,12 @@ export function renderRequirementHtml(
     if (select) vscode.postMessage({ type: 'moveTask', taskId: select.dataset.move, column: select.value });
   });
   document.addEventListener('click', (event) => {
+    const assign = event.target.closest('[data-assign]');
+    if (assign) {
+      event.preventDefault();
+      vscode.postMessage({ type: 'assign', taskId: assign.dataset.assign, role: assign.dataset.role });
+      return;
+    }
     const target = event.target.closest('[data-cmd],[data-url]');
     if (!target) return;
     event.preventDefault();
