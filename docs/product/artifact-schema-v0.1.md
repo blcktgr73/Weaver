@@ -102,9 +102,9 @@ Warnings (shown, but not invalid):
 14. A task file is not listed under its requirement's `## Tasks`.
 15. A task file's `criteria` names a criterion the requirement does not have.
 
-## Fabric registry
+## Fabric registry (the optional shared file)
 
-`fabric.yaml` lists the repositories that appear on the Overview Kanban and the central GitHub Project they report to ([DEC-007](../decisions/DEC-007-central-project-is-configuration.md), [DEC-010](../decisions/DEC-010-fabric-registry-location.md)). It is a plain YAML file, not Markdown with frontmatter. It sits at the root of the repository that owns the fabric, and the parser takes its path without assuming where it is.
+A workspace may keep a `fabric.yaml` for a team that wants everyone to see the same Project and repositories; a person's own configuration is [`~/.weaver/config.yaml`](#user-configuration) ([DEC-014](../decisions/DEC-014-user-configuration.md)). `fabric.yaml` lists the repositories that appear on the Overview Kanban and the central GitHub Project they report to ([DEC-007](../decisions/DEC-007-central-project-is-configuration.md), [DEC-010](../decisions/DEC-010-fabric-registry-location.md)). It is a plain YAML file, not Markdown with frontmatter. It sits at the root of the repository that owns the fabric, and the parser takes its path without assuming where it is.
 
 ```yaml
 project:
@@ -127,3 +127,23 @@ The order of `repositories` is the default lane order. Rules:
 - Errors: the file is not valid YAML or not a mapping; `project`, `project.owner`, `project.number`, or `repositories` is missing or has the wrong type; the owner is not a valid login; the number is not a whole number of 1 or more; `repositories` is empty; an entry is not `owner/name` or lacks `repository`; a repository is listed twice (names are compared without case).
 - Warnings: an unknown field is kept but not interpreted.
 - The registry is returned only when there are no errors.
+
+## User configuration
+
+`~/.weaver/config.yaml` is a person's own configuration, read by the editor and the `weaver` tool ([DEC-014](../decisions/DEC-014-user-configuration.md)). `WEAVER_HOME` moves the folder. It is never committed.
+
+```yaml
+project:
+  owner: blcktgr73
+  number: 1
+repositories:            # optional; without it, every repository with cards on the Project is shown
+  - blcktgr73/Weaver
+  - repository: blcktgr73/HowMuchToday
+    title: How much today
+roster:                  # optional; see "Contributor roster" for the entries
+  contributors:
+    - id: blcktgr73
+      kind: human
+```
+
+`project` and `repositories` follow the rules of the fabric registry; a workspace `fabric.yaml` overrides them for that workspace. `roster` always comes from this file.

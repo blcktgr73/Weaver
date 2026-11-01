@@ -42,6 +42,7 @@ PALab contributors can move from a Weaver requirement to an assigned task, imple
 - `TASK-010` Show label, board Status, and closing-PR mismatches as gaps — [GitHub Issue #25](https://github.com/blcktgr73/Weaver/issues/25)
 - `TASK-011` Record blockers, human decisions, and acceptance — [GitHub Issue #26](https://github.com/blcktgr73/Weaver/issues/26)
 - `TASK-012` Package the extension and write a getting-started guide — [GitHub Issue #27](https://github.com/blcktgr73/Weaver/issues/27)
+- `TASK-056` Prepare the first dogfooding round with a feedback intake and a checklist — [GitHub Issue #118](https://github.com/blcktgr73/Weaver/issues/118)
 
 `TASK-005` was split from `TASK-002`; see [DEC-002](../decisions/DEC-002-split-task-002.md).
 
