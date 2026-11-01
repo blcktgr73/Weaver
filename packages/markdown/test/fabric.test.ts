@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { formatNotice, parseFabric, validationKey } from '../src';
@@ -114,10 +114,8 @@ describe('this repository', () => {
     expect(parseFabric('fabric.yaml', text).issues).toEqual([]);
   });
 
-  it('has a valid fabric.yaml at its root', () => {
-    const text = readFileSync(resolve(__dirname, '../../../fabric.yaml'), 'utf8');
-    const { registry, issues } = parseFabric('fabric.yaml', text);
-    expect(issues).toEqual([]);
-    expect(registry?.repositories.map((r) => r.repository)).toContain('blcktgr73/Weaver');
+  it('keeps no personal registry at its root: a registry belongs to the person who uses it (DEC-014)', () => {
+    expect(existsSync(resolve(__dirname, '../../../fabric.yaml'))).toBe(false);
+    expect(existsSync(resolve(__dirname, '../../../roster.yaml'))).toBe(false);
   });
 });

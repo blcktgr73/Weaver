@@ -104,24 +104,14 @@ Set `weaver.language` to `auto`, `en`, or `ko`. `auto` follows the VS Code displ
 
 The Overview shows the work of all registered repositories on one Kanban: the columns are the stages, and each registered repository is a lane. A card shows its Issue, its task, and the requirement it belongs to when the files in your workspace say so. Pressing the requirement tag opens that requirement.
 
-1. Put a `fabric.yaml` at the root of the folder you open ([schema](../product/artifact-schema-v0.1.md#fabric-registry)):
-
-   ```yaml
-   project:
-     owner: your-login-or-organization
-     number: 1
-   repositories:
-     - your-org/your-repo
-   ```
-
-   To use your own personal or organization Project, follow [Register your own Project](register-your-project.md).
+1. Run **Weaver: Set Up** (or `weaver init` in a terminal). It asks which GitHub Project to show and which of its repositories to leave out, shows the file, and writes it to `~/.weaver/config.yaml` after you say yes. The file is yours and is never committed. To use a Project of your own or of an organization, and for the details of each step, follow [Register your own Project](register-your-project.md).
    To change how a repository's columns and evidence rules work, follow [Configure how your repository tracks its work](configure-your-process.md).
 
-2. Open that folder in VS Code. The Overview opens by itself when the file exists, or run **Weaver: Open Overview**.
+2. Run **Weaver: Open Overview**, or press **Weaver** in the status bar. The Overview opens by itself only in a workspace that holds a shared `fabric.yaml` ([schema](../product/artifact-schema-v0.1.md#fabric-registry)), which a team can use so that everyone opens the same Project.
 3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
-4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (the example registry plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
+4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (an example shared `fabric.yaml` plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
 
-Adjusting the lanes: the **Projects** chips above the board turn a project on or off (**Show all** brings them back), the ▾ beside a lane title folds it to its title (its card and blocked-card counts stay visible), and the ▲ ▼ beside it move it up or down among the lanes that are shown. These choices stay on your computer, survive a restart, and are never written to the repository. A repository you have not placed keeps the order of `fabric.yaml`.
+Adjusting the lanes: the **Projects** chips above the board turn a project on or off (**Show all** brings them back), the ▾ beside a lane title folds it to its title (its card and blocked-card counts stay visible), and the ▲ ▼ beside it move it up or down among the lanes that are shown. These choices stay on your computer, survive a restart, and are never written to the repository. A repository you have not placed keeps the order of your configuration, or alphabetical order when it gives no repository list.
 
 What a card opens (each opens as a new tab in the same editor group, so the screen is not split; close a tab or use the tab list to go back):
 
@@ -130,7 +120,7 @@ What a card opens (each opens as a new tab in the same editor group, so the scre
 - **`#62`** opens the Issue on GitHub.
 - **Right-click a card** to choose among the task file, the requirement source, the Issue, a pull request that refers to the Issue (needs the GitHub sign-in), and the repository folder. A place that cannot open is listed with the reason.
 
-**When GitHub cannot be read** (no network, a rejected sign-in, a missing scope), the Overview says why and shows a read-only board under the message. Every successful read of the Project is kept on your computer (never in the repository), and that last board is shown with how long ago it was read, for example *3 hours ago*. Requirement tags still come from the files in your workspace, but stale marks and mismatches are not shown, because they would judge old data against today. A kept read of a different Project than `fabric.yaml` names now is ignored.
+**When GitHub cannot be read** (no network, a rejected sign-in, a missing scope), the Overview says why and shows a read-only board under the message. Every successful read of the Project is kept on your computer (never in the repository), and that last board is shown with how long ago it was read, for example *3 hours ago*. Requirement tags still come from the files in your workspace, but stale marks and mismatches are not shown, because they would judge old data against today. A kept read of a different Project than your configuration names now is ignored.
 
 When nothing has been kept yet (the first run without a connection), the board is built from the files in your workspace instead, with a note that its state may be out of date. A task's column comes from the `status` in its task file. A task whose file gives no status (the Issue has it, [DEC-005](../decisions/DEC-005-task-files.md)) is shown in Backlog marked *state unknown*, and a cancelled task is left out. Cards from files have no right-click menu, but their titles still open the requirement.
 
@@ -144,7 +134,7 @@ A card can carry up to three **stale marks**, each shown on its own:
 
 The **Mismatches** list above the board shows where the files, the Issues, and the Project disagree: a task file with no Issue, a task whose Issue is not on the Project, a card that no task file or requirement lists, a merged pull request that names a task but does not close its Issue (an Issue that is already closed is left out), and a board Status that its label does not give. Weaver only reports these; it changes nothing. A card is judged against files only for repositories whose files are in your workspace.
 
-Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order in `fabric.yaml`. The Overview is read-only; to move a card, use a requirement view.
+Cards of a repository that is not cloned in your workspace still appear, but they have no requirement tag because Weaver has only the files it can see. The lane order is the order of the repositories in your configuration, or alphabetical when it gives no list. The Overview is read-only; to move a card, use a requirement view.
 
 ### Clone the registered repositories
 

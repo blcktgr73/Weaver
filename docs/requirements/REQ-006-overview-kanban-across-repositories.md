@@ -66,7 +66,7 @@ Each criterion was checked against the code and its tests. The rows say where th
 
 | Criterion | Proof | Not yet proven |
 | --- | --- | --- |
-| AC-001 registry | `fabric.yaml`, `parseFabric` tests, DEC-010 | Registry in a hub repository (the parser does not assume a location) |
+| AC-001 registry | `parseConfig` and `parseFabric` tests, `config.example.yaml`, `examples/overview/fabric.yaml`, DEC-010, DEC-014 | Registry in a hub repository (the parser does not assume a location) |
 | AC-002 fabric root and clone | `clone.ts` tests, the commands in the extension | Clone run against a real remote from the editor |
 | AC-003 opens on the Overview, lanes in registry order | `overviewHtml` render checks, seen in the editor | none |
 | AC-004 reorder, collapse, hide, filter lanes | `applyLaneOrder`, `moveLane` tests, seen in the editor (chips, fold, scroll) | The up and down buttons |
