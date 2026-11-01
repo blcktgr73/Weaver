@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { effectiveRepositories, parseConfig, parseFabric, resolveSetup, serializeConfig, type UserConfig } from '../src';
 
@@ -111,5 +113,22 @@ describe('serializeConfig', () => {
   it('keeps a value that needs quoting', () => {
     const text = serializeConfig({ project: { owner: 'me', number: 3 }, roster: { contributors: [{ id: 'a', kind: 'agent', tool: 't', reach: 'the "main" session: yes' }] } });
     expect(parseConfig('c', text).config?.roster?.contributors[0].reach).toBe('the "main" session: yes');
+  });
+});
+
+describe('config.example.yaml', () => {
+  const text = readFileSync(resolve(__dirname, '../../../config.example.yaml'), 'utf8');
+
+  it('is a valid personal configuration that shows every field', () => {
+    const result = parse(text);
+    expect(result.issues).toEqual([]);
+    expect(result.config?.project).toEqual({ owner: 'your-login-or-org', number: 3 });
+    expect(result.config?.repositories?.map((r) => r.repository)).toEqual(['your-org/your-repo', 'your-org/another-repo']);
+    expect(result.config?.roster?.contributors.map((c) => c.kind)).toEqual(['human', 'agent']);
+  });
+
+  it('is what the setup would write for the same choices, apart from the comments', () => {
+    const config = parse(text).config as UserConfig;
+    expect(parse(serializeConfig(config)).config).toEqual(config);
   });
 });

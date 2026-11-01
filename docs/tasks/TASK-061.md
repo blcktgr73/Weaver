@@ -22,3 +22,9 @@ This repository still holds a `fabric.yaml`. Remove it, keep `examples/overview/
 - The guide for registering a Project is rewritten around the setup procedure.
 - A note says how to move from a `fabric.yaml` to the personal file.
 - The development scripts (`npm run dev:overview`) still work through the example workspace.
+
+## Progress
+
+- Removed the committed `fabric.yaml`; a test now checks that no `fabric.yaml` or `roster.yaml` is kept at the repository root. `examples/overview/fabric.yaml` stays as the example of the shared format (and is what `npm run dev:overview` opens); its comment says so.
+- Added [`config.example.yaml`](../../config.example.yaml), checked by a test (valid, every field, and what the setup would write for the same choices).
+- Rewrote [Register your own Project](../onboarding/register-your-project.md) around the setup, with a section on a team's shared `fabric.yaml` and one on moving from a `fabric.yaml` you already have. Updated the Overview section of [Getting started](../onboarding/getting-started.md).

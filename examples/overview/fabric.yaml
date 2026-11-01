@@ -1,6 +1,8 @@
-# Example registry for trying the Overview (npm run dev:overview).
-# It mirrors the fabric.yaml at the repository root; the development host cannot open the
-# repository root while it is already open in another VS Code window, so this folder holds the registry.
+# Example of a shared registry (a workspace `fabric.yaml`, DEC-010) and the one `npm run dev:overview` opens.
+# A person's own Project and repositories belong in ~/.weaver/config.yaml instead (DEC-014, see config.example.yaml);
+# a `fabric.yaml` in a workspace is for a team that wants everyone to open the same ones.
+# The development host cannot open the repository root while it is already open in another VS Code window,
+# so this folder holds the registry the development workspace uses.
 project:
   owner: blcktgr73
   number: 1

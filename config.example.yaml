@@ -1,0 +1,30 @@
+# Example of a Weaver personal configuration (DEC-014).
+#
+# The real file is ~/.weaver/config.yaml (or under WEAVER_HOME). It belongs to you and is never committed.
+# Run "Weaver: Set Up" in VS Code, or `weaver init` in a terminal, to write it with questions instead of by hand.
+# docs/onboarding/register-your-project.md explains each step.
+
+# The GitHub Project to show on the Overview. Required.
+# The owner is a user or an organization login; the number is the one in the Project's address
+# (https://github.com/users/you/projects/3 or https://github.com/orgs/your-org/projects/3).
+project:
+  owner: your-login-or-org
+  number: 3
+
+# The repositories to show. Optional. Left out, every repository that has cards on the Project is shown,
+# in alphabetical order. When given, the list is also the order of the lanes.
+repositories:
+  - your-org/your-repo
+  - repository: your-org/another-repo
+    title: Another repo
+
+# The people and agents you work with. Optional. Task owners and reviewers are picked from here.
+roster:
+  contributors:
+    - id: your-login
+      kind: human
+      github: your-login
+    - id: claude-code
+      kind: agent
+      tool: Claude Code
+      reach: assigned as the Issue assignee
