@@ -27,4 +27,5 @@ Finished work only grows, and on a Project with many repositories it hides the w
 ## Progress
 
 - Built: `isFinished` and `foldFinished` in the shared package (a card is finished when it is in Verified or its Issue is closed, and it has no gap); the Overview folds finished cards by default, shows "N finished, folded" in the Verified column of each lane, and has one header button, "Show finished (N)" / "Hide finished"; the choice is kept on this computer; a highlighted finished card unfolds them. Lane totals and the mismatch checks still count every card.
+- Seen in the development host: the fold and the button work. Unfolding sent the board back to its top left, because the page is set again on every change; the board now keeps its scroll place across those renders.
 - Not yet done: the last "Done when" item. The page was rendered in both states by hand and `npm run check` and the tests pass, but it was not driven in the development host.
