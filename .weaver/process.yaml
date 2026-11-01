@@ -1,0 +1,34 @@
+# How this repository tracks its work (DEC-015, REQ-005).
+# Weaver reads this file from the default branch. It spells out the defaults, which is what Weaver
+# does without a file, so this repository behaves the same as before. It is the worked example of
+# docs/onboarding/configure-your-process.md: change a value here through a reviewed pull request.
+version: 1
+
+columns:
+  # Where a card's column comes from: the status labels (`labels`), or the Project board's Status (`board-status`).
+  source: labels
+  # Column -> status label, used when the source is `labels` (DEC-003, DEC-009).
+  labels:
+    Backlog: status:backlog
+    Ready: status:ready
+    In progress: status:in-progress
+    Blocked: status:blocked
+    Review: status:review
+    Verified: status:verified
+  # Board Status option -> column, used when the source is `board-status`.
+  board:
+    Todo: Backlog
+    In Progress: In progress
+    Done: Verified
+
+evidence:
+  # A pull request is expected in Review and Verified (`required`), or not (`optional`).
+  pull-request: required
+  # Verified needs a merged pull request that closes the Issue (DEC-006).
+  closing-pull-request: true
+  # An `evidence_exception` in a task file is honored (DEC-006).
+  exceptions: true
+
+stale:
+  # Days without a change before an open card in an active column is idle.
+  idle-days: 14
