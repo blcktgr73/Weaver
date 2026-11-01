@@ -15,3 +15,9 @@ assignee: claude-code
 Tracked in [Issue #37](https://github.com/blcktgr73/Weaver/issues/37). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Define where the roster lives and its shape (kind, tool or model, how reached), read it in the workspace scan, and report an owner that is not in the roster as a gap.
+
+## Progress
+
+- The roster is the `roster` of the personal configuration (DEC-014), read when the Requirement view loads. An owner, reviewer, or approver who is not in it is shown as a gap on the task, and an approver who is an agent as well. With no roster there are no gaps.
+- Not done: the same gaps are not yet in the Problems panel of the workspace scan.
+
