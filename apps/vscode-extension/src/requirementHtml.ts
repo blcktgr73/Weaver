@@ -28,6 +28,7 @@ import {
 } from '@palab/weaver-markdown';
 
 import { coverageOf } from './coverage';
+import type { ProcessSummary } from './processStore';
 
 export type TaskStatus =
   | { ok: true; issue: IssueSnapshot; evidence?: TaskEvidence; evidenceError?: Notice; board?: BoardItem[]; rules?: ColumnRules; evidenceRules?: EvidenceRules; boardStatus?: string }
@@ -37,6 +38,8 @@ export interface StatusState {
   /** Task ID to the result of reading its Issue. */
   byTask: Record<string, TaskStatus>;
   loading: boolean;
+  /** The process of each repository the tasks live in (DEC-015), for the section that shows where each setting comes from. */
+  processes?: ProcessSummary[];
 }
 
 export function escapeHtml(value: string): string {
@@ -210,6 +213,32 @@ export function renderRequirementHtml(
     evidenceHtml += `<p class="muted small">${e(tt('ui.evidence.footnote'))}</p>`;
   }
 
+  const processHtml = (): string => {
+    const summaries = status?.processes ?? [];
+    if (summaries.length === 0) return `<p class="muted">${e(tt('ui.process.hint-load'))}</p>`;
+    const section = (summary: ProcessSummary, name: 'columns' | 'evidence' | 'stale'): string => {
+      const process = summary.process;
+      const value =
+        name === 'columns'
+          ? tt(`ui.process.columns.${process.columns.source}` as MessageKey)
+          : name === 'evidence'
+            ? tt('ui.process.evidence.value', {
+                pullRequest: tt(`ui.process.${process.evidence.pullRequest}` as MessageKey),
+                closing: tt(process.evidence.closingPullRequest ? 'ui.process.needed' : 'ui.process.not-needed'),
+                exceptions: tt(process.evidence.exceptions ? 'ui.process.honored' : 'ui.process.ignored'),
+              })
+            : tt('ui.process.stale.value', { days: process.stale.idleDays });
+      const fromFile = summary.sources[name] === 'repository';
+      return `<tr><td>${e(tt(`ui.process.section.${name}` as MessageKey))}</td><td>${e(value)}</td><td class="${fromFile ? 'ok' : 'muted'}">${e(tt(fromFile ? 'ui.process.source.repository' : 'ui.process.source.default'))}</td></tr>`;
+    };
+    return summaries
+      .map(
+        (summary) => `<h3>${e(summary.repository)} <span class="muted small">· ${e(tt(`ui.process.state.${summary.file}` as MessageKey))}</span></h3>
+      <table><tbody>${(['columns', 'evidence', 'stale'] as const).map((name) => section(summary, name)).join('')}</tbody></table>`,
+      )
+      .join('') + `<p class="muted small">${e(tt('ui.process.footnote'))}</p>`;
+  };
+
   const gapCount = issues.length + uncovered.length;
   const gapsHtml = gapCount
     ? `<ul class="plain">${issues
@@ -231,6 +260,7 @@ export function renderRequirementHtml(
 <style nonce="${nonce}">
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 24px 48px; line-height: 1.5; max-width: 1100px; }
   h1 { font-size: 1.6em; margin: 4px 0 12px; }
+  h3 { font-size: 1em; margin: 14px 0 4px; }
   h2 { font-size: 1.1em; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--vscode-panel-border); }
   .idline { margin-top: 20px; font-weight: 600; color: var(--vscode-descriptionForeground); }
   .badge { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 0.85em; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
@@ -286,6 +316,8 @@ export function renderRequirementHtml(
 
   <h2>${e(tt('ui.evidence.title'))}</h2>
   ${evidenceHtml}
+  <h2>${e(tt('ui.process.title'))}</h2>
+  ${processHtml()}
 
 <script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
