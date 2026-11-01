@@ -20,6 +20,7 @@ import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
 import { runInit } from './init';
+import { processText, readProcesses } from './processCommand';
 import { loadSetup } from './setup';
 import { planReconcile } from './reconcile';
 import { nextTaskNumber, planTaskCreate, usedTaskTexts } from './taskCreate';
@@ -49,7 +50,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence' && args.command !== 'reconcile' && args.command !== 'init') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence' && args.command !== 'reconcile' && args.command !== 'init' && args.command !== 'process') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
   if (args.command === 'init') return runInit(deps, locale, wantsText);
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
@@ -89,6 +90,19 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
 
   // Without a list, the repositories are the ones that have cards on the Project.
   const repositories = effectiveRepositories(setup, read.read.cards.map((card) => card.repository)).map((r) => r.repository);
+
+  if (args.command === 'process') {
+    const wanted = args.options.repository?.toLowerCase();
+    const reports = await readProcesses(
+      token,
+      repositories.filter((name) => !wanted || name.toLowerCase() === wanted),
+      locale,
+      deps.fetch as unknown as FetchFn | undefined,
+    );
+    if (wantsText) deps.out(processText(reports));
+    else deps.out(`${JSON.stringify({ schema: SCHEMA, repositories: reports })}\n`);
+    return EXIT.ok;
+  }
 
   /** Shows the plan, takes the confirmations, runs what was approved, and prints the result. */
   const confirmAndRun = async (actions: PlannedAction[], skipped: Skipped[] = [], options: { report?: ReportItem[]; dryRun?: boolean } = {}): Promise<number> => {

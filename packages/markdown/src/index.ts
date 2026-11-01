@@ -21,3 +21,4 @@ export * from './roster';
 export { setFrontmatterFields, yamlValue } from './frontmatter';
 export * from './assign';
 export * from './config';
+export * from './process';

@@ -138,7 +138,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
-    if (document.languageId === 'markdown') void refresh();
+    if (document.languageId === 'markdown' || /[\\/]\.weaver[\\/]process\.yaml$/.test(document.uri.fsPath)) void refresh();
   });
 
   const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);

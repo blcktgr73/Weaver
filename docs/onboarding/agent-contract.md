@@ -141,6 +141,8 @@ This page is the contract. Every JSON example below is checked by a test against
 }
 ```
 
+`weaver process [--repository owner/name]` prints how each repository of the Project tracks its work, from its `.weaver/process.yaml` ([DEC-015](../decisions/DEC-015-process-configuration.md)). For each repository it says whether the file exists (`read`, `missing`, or `failed`), for each of `columns`, `evidence`, and `stale` whether the file set it or it is the default, the values in use, and what is wrong in the file. A repository without the file uses the defaults, which are what Weaver does today.
+
 ## Write: the confirmation flow
 
 Every write is a *plan* of actions. An action names exactly what it changes and why, and has an `id` made from that content. **An action runs only after that one action is approved** ([DEC-008](../decisions/DEC-008-agent-identity-and-write-confirmation.md)). There is no `--yes`.
