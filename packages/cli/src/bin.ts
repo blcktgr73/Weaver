@@ -38,6 +38,15 @@ function ask(question: string): Promise<boolean> {
   }));
 }
 
+/** One line typed by the person. The question goes to standard error so that standard output stays JSON. */
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+  return new Promise((resolve) => rl.question(question, (answer) => {
+    rl.close();
+    resolve(answer);
+  }));
+}
+
 void run(process.argv.slice(2), {
   cwd: process.cwd(),
   env: process.env,
@@ -50,6 +59,7 @@ void run(process.argv.slice(2), {
   now: () => new Date(),
   interactive: Boolean(process.stdin.isTTY),
   ask,
+  prompt,
   log: fileActionLog(defaultLogPath(process.env)),
   system: {
     run: runProgram,

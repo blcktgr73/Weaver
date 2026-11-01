@@ -8,8 +8,9 @@ export const SCHEMA = 1;
 /**
  * Exit codes. 4 and 5 are the two ways a write ends without changing anything: nobody confirmed it
  * (an agent has to show the plan to the user and run again with `--approve`), or the user said no.
+ * 6 is a command that asks questions and was run without a terminal.
  */
-export const EXIT = { ok: 0, failed: 1, usage: 2, notFound: 3, unconfirmed: 4, declined: 5 } as const;
+export const EXIT = { ok: 0, failed: 1, usage: 2, notFound: 3, unconfirmed: 4, declined: 5, needsTerminal: 6 } as const;
 
 /** The programs and files a write command uses, so a test can replace them. */
 export interface System {
@@ -38,6 +39,8 @@ export interface Deps {
   interactive: boolean;
   /** Asks the person one yes/no question; false for anything but yes. */
   ask(question: string): Promise<boolean>;
+  /** Asks the person a question and returns what they typed. */
+  prompt(question: string): Promise<string>;
   /** Where each executed action is recorded. */
   log: ActionLog;
   system: System;

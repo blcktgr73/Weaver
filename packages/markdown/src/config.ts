@@ -1,4 +1,4 @@
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { FabricProject, FabricRegistry, FabricRepository, readFabricProject, readFabricRepositories } from './fabric';
 import type { MessageArgs } from './i18n';
 import { readRoster, Roster } from './roster';
@@ -85,4 +85,19 @@ export function effectiveRepositories(setup: Pick<Setup, 'repositories'>, cardRe
   const seen = new Map<string, string>();
   for (const name of cardRepositories) if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
   return [...seen.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).map((repository) => ({ repository }));
+}
+
+const CONFIG_HEADER = `# Weaver personal configuration (DEC-014). It belongs to you and is not committed anywhere.
+# Written by the Weaver setup; you can edit it by hand. Comments you add are lost when the setup writes it again.
+`;
+
+/**
+ * The text of a personal configuration. A repository without a title is written as `owner/name`;
+ * the roster and the repository list are left out when they are empty.
+ */
+export function serializeConfig(config: UserConfig): string {
+  const data: Record<string, unknown> = { project: { owner: config.project.owner, number: config.project.number } };
+  if (config.repositories?.length) data.repositories = config.repositories.map((r) => (r.title ? { repository: r.repository, title: r.title } : r.repository));
+  if (config.roster?.contributors.length) data.roster = { contributors: config.roster.contributors.map((c) => ({ ...c })) };
+  return `${CONFIG_HEADER}${stringifyYaml(data)}`;
 }

@@ -19,6 +19,7 @@ import { parseColumn, planCardMove, planEvidenceAttach } from './cardActions';
 import { CliCard, findCards, toCliCards } from './cards';
 import { Deps, EXIT, SCHEMA } from './contract';
 import { planProjectAdd } from './projectAdd';
+import { runInit } from './init';
 import { loadSetup } from './setup';
 import { planReconcile } from './reconcile';
 import { nextTaskNumber, planTaskCreate, usedTaskTexts } from './taskCreate';
@@ -48,7 +49,8 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${say('cli.usage')}\n`);
     return args.command || args.flags.has('help') ? EXIT.ok : EXIT.usage;
   }
-  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence' && args.command !== 'reconcile') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command !== 'list' && args.command !== 'show' && args.command !== 'project' && args.command !== 'task' && args.command !== 'card' && args.command !== 'evidence' && args.command !== 'reconcile' && args.command !== 'init') return fail(EXIT.usage, 'cli.unknown-command', { command: args.command });
+  if (args.command === 'init') return runInit(deps, locale, wantsText);
   if (args.command === 'show' && args.positional.length === 0) {
     return fail(EXIT.usage, 'cli.missing-argument', { command: 'show', argument: 'a card' });
   }

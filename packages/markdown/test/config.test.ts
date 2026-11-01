@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveRepositories, parseConfig, parseFabric, resolveSetup } from '../src';
+import { effectiveRepositories, parseConfig, parseFabric, resolveSetup, serializeConfig, type UserConfig } from '../src';
 
 const parse = (text: string) => parseConfig('config.yaml', text);
 const codes = (text: string) => parse(text).issues.map((i) => `${i.severity}:${i.code}`);
@@ -79,5 +79,37 @@ describe('effectiveRepositories', () => {
   it('takes every repository of the cards when there is no list, once each, in alphabetical order', () => {
     expect(effectiveRepositories({}, ['me/b', 'me/A', 'me/a', 'me/c', 'me/B'])).toEqual([{ repository: 'me/A' }, { repository: 'me/b' }, { repository: 'me/c' }]);
     expect(effectiveRepositories({}, [])).toEqual([]);
+  });
+});
+
+describe('serializeConfig', () => {
+  const full: UserConfig = {
+    project: { owner: 'me', number: 1 },
+    repositories: [{ repository: 'me/a' }, { repository: 'me/b', title: 'B lane' }],
+    roster: { contributors: [{ id: 'maria', kind: 'human', github: 'maria-dev' }, { id: 'bot', kind: 'agent', tool: 'Claude Code', reach: 'a: b' }] },
+  };
+
+  it('writes text that parseConfig reads back unchanged', () => {
+    const result = parseConfig('config.yaml', serializeConfig(full));
+    expect(result.issues).toEqual([]);
+    expect(result.config).toEqual(full);
+  });
+
+  it('writes a Project alone as a short file, and says that it is personal', () => {
+    const text = serializeConfig({ project: { owner: 'me', number: 3 } });
+    expect(text).toContain('not committed');
+    expect(text).not.toContain('repositories');
+    expect(text).not.toContain('roster');
+    expect(parseConfig('c', text).config).toEqual({ project: { owner: 'me', number: 3 } });
+  });
+
+  it('leaves out an empty repository list and an empty roster', () => {
+    const text = serializeConfig({ project: { owner: 'me', number: 3 }, repositories: [], roster: { contributors: [] } });
+    expect(parseConfig('c', text).config).toEqual({ project: { owner: 'me', number: 3 } });
+  });
+
+  it('keeps a value that needs quoting', () => {
+    const text = serializeConfig({ project: { owner: 'me', number: 3 }, roster: { contributors: [{ id: 'a', kind: 'agent', tool: 't', reach: 'the "main" session: yes' }] } });
+    expect(parseConfig('c', text).config?.roster?.contributors[0].reach).toBe('the "main" session: yes');
   });
 });

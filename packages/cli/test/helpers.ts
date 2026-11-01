@@ -71,6 +71,7 @@ export function setup(options: { token?: string | undefined; registry?: string; 
     login: async () => 'me',
     interactive: false,
     ask: async () => false,
+    prompt: async () => '',
     log: { append: async (entry) => void logged.push(entry) },
     system: {
       run: async (command, args, options) => {
