@@ -289,6 +289,18 @@ describe('task file helpers', () => {
     expect(text).not.toContain('assignee:');
   });
 
+  it('replaces the placeholder sentence when the first task starts the list, and keeps other text', () => {
+    const line = taskListLine('TASK-001', 'One', 1, 'https://github.com/o/r/issues/1');
+    const placeholder = '# R\n\n## Tasks\n\nTasks are not created yet. They are split once the open decisions are settled.\n\n## Evidence\n\ntext\n';
+    expect(addTaskToRequirement(placeholder, line)).toBe('# R\n\n## Tasks\n\n' + line + '\n\n## Evidence\n\ntext\n');
+    // A wrapped placeholder (two lines) goes as a whole; a section with other prose keeps it.
+    const wrapped = '## Tasks\n\nTasks are not created yet.\nThey come later.\n';
+    expect(addTaskToRequirement(wrapped, line)).toBe('## Tasks\n\n' + line + '\n');
+    expect(addTaskToRequirement('## Tasks\n\nNone yet.\n', line)).toBe('## Tasks\n\n' + line + '\n\nNone yet.\n');
+    // With CRLF the same holds.
+    expect(addTaskToRequirement('## Tasks\r\n\r\nTasks are not created yet.\r\n', line)).toBe('## Tasks\r\n\r\n' + line + '\r\n');
+  });
+
   it('adds a task line at the end of the list under Tasks, or starts the list', () => {
     const line = taskListLine('TASK-002', 'Two', 2, 'https://github.com/o/r/issues/2');
     const withList = '# R\n\n## Tasks\n\n- `TASK-001` One\n\n## Evidence\n\ntext\n';

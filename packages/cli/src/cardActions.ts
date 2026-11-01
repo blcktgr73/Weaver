@@ -8,7 +8,7 @@ import {
   Notice,
   planMove,
 } from '@palab/weaver-markdown';
-import { addIssueComment, applyMove, fetchEvidence, fetchPull, type FetchFn } from '@palab/weaver-github';
+import { addIssueComment, applyMove, fetchEvidence, fetchPull, NoticeError, errorNotice, type FetchFn } from '@palab/weaver-github';
 import { attribution, PlannedAction } from './actions';
 import type { CliCard } from './cards';
 
@@ -80,8 +80,10 @@ export function moveAction(
       const steps = await applyMove(token, card.url, plan, fetchFn);
       const failed = steps.find((step) => !step.ok);
       if (failed) {
-        const detail = failed.detail ? formatNotice(failed.detail, 'en') : '';
-        throw new Error(`${formatNotice(failed.name, 'en')} failed${detail ? `: ${detail}` : ''}. Steps done before: ${steps.filter((s) => s.ok).length}.`);
+        throw new NoticeError({
+          code: 'cli.err.move-step-failed',
+          args: { step: formatNotice(failed.name, locale), detail: failed.detail ? formatNotice(failed.detail, locale) : '', done: steps.filter((s) => s.ok).length },
+        });
       }
     },
   };
@@ -119,7 +121,7 @@ export async function planEvidenceAttach(input: EvidenceInput): Promise<Planned>
   try {
     pull = await fetchPull(input.token, target.repository, target.number, input.fetchFn);
   } catch (error) {
-    return { ok: false, refusal: { code: 'cli.pull-unreadable', args: { pull: input.pull, detail: (error as Error).message } } };
+    return { ok: false, refusal: { code: 'cli.pull-unreadable', args: { pull: input.pull, detail: formatNotice(errorNotice(error), locale) } } };
   }
   if (!pull.merged) return { ok: false, refusal: { code: 'cli.pull-not-merged', args: { pull: String(pull.number) } } };
 

@@ -1,3 +1,4 @@
+import { NoticeError } from './errors';
 import type { Fetch } from './project';
 
 const API = 'https://api.github.com/graphql';
@@ -16,11 +17,11 @@ async function call<T>(token: string, query: string, variables: Record<string, u
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
   });
-  if (response.status === 401) throw new Error('GitHub rejected the sign-in (401).');
+  if (response.status === 401) throw new NoticeError({ code: 'github.err.unauthorized' });
   const body = (await response.json()) as Reply<T>;
-  if (!response.ok) throw new Error(`GitHub answered ${response.status}.`);
-  if (body.errors?.length) throw new Error(body.errors.map((e) => e.message).join('; '));
-  if (!body.data) throw new Error('GitHub sent no data.');
+  if (!response.ok) throw new NoticeError({ code: 'github.err.http', args: { status: response.status } });
+  if (body.errors?.length) throw new NoticeError({ code: 'github.err.raw', args: { detail: body.errors.map((e) => e.message).join('; ') } });
+  if (!body.data) throw new NoticeError({ code: 'github.err.no-data' });
   return body.data;
 }
 
@@ -41,9 +42,9 @@ export async function addIssueToProject(
     fetchImpl,
   );
   const projectId = found.repositoryOwner?.projectV2?.id;
-  if (!projectId) throw new Error(`Project ${project.number} of ${project.owner} was not found, or this sign-in cannot see it.`);
+  if (!projectId) throw new NoticeError({ code: 'github.err.project-not-found', args: { number: project.number, owner: project.owner } });
   const contentId = found.resource?.id;
-  if (!contentId) throw new Error(`${issueUrl} is not an Issue that this sign-in can see.`);
+  if (!contentId) throw new NoticeError({ code: 'github.err.not-an-issue', args: { url: issueUrl } });
   await call(token, ADD, { p: projectId, c: contentId }, fetchImpl);
 }
 
@@ -65,9 +66,9 @@ export async function createIssue(
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
     body: JSON.stringify(issue),
   });
-  if (response.status === 401) throw new Error('GitHub rejected the sign-in (401).');
+  if (response.status === 401) throw new NoticeError({ code: 'github.err.unauthorized' });
   const body = (await response.json()) as { number?: number; html_url?: string; message?: string };
-  if (!response.ok) throw new Error(`GitHub answered ${response.status}${body.message ? `: ${body.message}` : ''}.`);
-  if (typeof body.number !== 'number' || typeof body.html_url !== 'string') throw new Error('GitHub sent no Issue.');
+  if (!response.ok) throw new NoticeError(body.message ? { code: 'github.err.http-detail', args: { status: response.status, detail: body.message } } : { code: 'github.err.http', args: { status: response.status } });
+  if (typeof body.number !== 'number' || typeof body.html_url !== 'string') throw new NoticeError({ code: 'github.err.no-issue' });
   return { number: body.number, url: body.html_url };
 }
