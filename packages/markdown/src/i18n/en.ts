@@ -76,6 +76,7 @@ export const en = {
   'ui.overview.loading': 'Loading the Project…',
   'ui.overview.no-registry': 'Weaver is not set up on this computer yet. Choose the GitHub Project to show, and Weaver keeps it in your own configuration.',
   'ui.overview.set-up': 'Set up',
+  'ui.overview.action-failed': 'Weaver: that action stopped: {detail}',
   'ui.status-bar.tooltip': 'Open the Weaver Overview',
   'ui.setup.none': 'Weaver is not set up yet. Run "Weaver: Set Up" to choose the Project to show.',
   'ui.setup.set-up-button': 'Set up',

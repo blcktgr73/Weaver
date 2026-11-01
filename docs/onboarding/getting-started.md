@@ -9,7 +9,7 @@ Build the VSIX from a checkout of this repository, or download the `weaver-vsix`
 ```bash
 npm ci
 npm run package        # writes dist/weaver-<version>.vsix
-code --install-extension dist/weaver-0.1.1.vsix
+code --install-extension dist/weaver-0.1.2.vsix
 ```
 
 Run the install command from the repository root, and keep the `dist/` prefix. For other ways to share or publish the build, see [Distributing the extension](distribution.md).

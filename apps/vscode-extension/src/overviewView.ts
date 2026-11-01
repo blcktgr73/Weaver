@@ -137,7 +137,10 @@ export class OverviewView {
         retainContextWhenHidden: true,
       });
       this.panel.onDidDispose(() => (this.panel = undefined));
-      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string; delta?: number }) => this.onMessage(message));
+      this.panel.webview.onDidReceiveMessage((message: { type: string; url?: string; id?: string; path?: string; delta?: number }) => {
+        // An action that fails must say so: a rejected promise inside a message handler would be silent.
+        this.onMessage(message).catch((error: unknown) => void vscode.window.showErrorMessage(text('ui.overview.action-failed', { detail: error instanceof Error ? error.message : String(error) })));
+      });
     }
     await this.load(false);
   }

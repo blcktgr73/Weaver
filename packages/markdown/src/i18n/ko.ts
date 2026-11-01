@@ -75,6 +75,7 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.loading': 'Project를 불러오는 중…',
   'ui.overview.no-registry': '이 컴퓨터에는 아직 Weaver 설정이 없습니다. 보여 줄 GitHub Project를 고르면 내 설정 파일에 저장합니다.',
   'ui.overview.set-up': '설정하기',
+  'ui.overview.action-failed': 'Weaver: 이 동작이 중간에 멈췄습니다: {detail}',
   'ui.status-bar.tooltip': 'Weaver 전체 보기 열기',
   'ui.setup.none': 'Weaver 설정이 아직 없습니다. "Weaver: 설정"을 실행해 보여 줄 Project를 고르세요.',
   'ui.setup.set-up-button': '설정하기',
