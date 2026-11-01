@@ -81,6 +81,8 @@ export interface MismatchInput {
   repositories: readonly string[];
   /** Recently merged pull requests of the registered repositories; leave empty when they were not read. */
   pulls?: readonly MergedPull[];
+  /** Repositories whose process takes the column from the board Status (DEC-015); the board cannot differ from itself. */
+  boardSourced?: readonly string[];
 }
 
 /**
@@ -91,6 +93,7 @@ export interface MismatchInput {
 export function findMismatches(input: MismatchInput): Mismatch[] {
   const { artifacts, cards, repositories } = input;
   const registered = new Set(repositories.map((name) => name.toLowerCase()));
+  const boardSourced = new Set((input.boardSourced ?? []).map((name) => name.toLowerCase()));
   const found: Mismatch[] = [];
   const cardByUrl = new Map(cards.map((card) => [normalizeIssueUrl(card.url), card]));
   const links = requirementsByIssue(artifacts);
@@ -123,7 +126,7 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
     }
     // The label rules already report an inconsistent card; compare the board only when they are quiet.
     const expected = expectedBoardStatus(card.placement.column);
-    if (card.boardStatus && card.placement.gaps.length === 0 && card.boardStatus !== expected) {
+    if (card.boardStatus && !boardSourced.has(repository) && card.placement.gaps.length === 0 && card.boardStatus !== expected) {
       found.push({
         kind: 'board-status-differs',
         subject: label,

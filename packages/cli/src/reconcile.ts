@@ -1,5 +1,6 @@
 import {
   Artifact,
+  ColumnRules,
   findMismatches,
   formatNotice,
   Locale,
@@ -27,6 +28,9 @@ export interface ReconcileInput {
   cards: readonly ProjectCard[];
   artifacts: readonly Artifact[];
   pulls: readonly MergedPull[];
+  /** The column rules of a repository's process (DEC-015); the defaults when it has none. */
+  rulesFor?: (repository: string) => ColumnRules | undefined;
+  idleDaysFor?: (repository: string) => number;
   now: Date;
   fetch?: Fetch;
   fetchFn?: FetchFn;
@@ -54,7 +58,13 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
   const byUrl = new Map(input.cards.map((card) => [normalizeIssueUrl(card.url), card]));
   const onProject = input.cards.map((card) => card.url);
 
-  for (const m of findMismatches({ artifacts: input.artifacts, cards: input.cards, repositories: input.repositories, pulls: input.pulls })) {
+  for (const m of findMismatches({
+    artifacts: input.artifacts,
+    cards: input.cards,
+    repositories: input.repositories,
+    pulls: input.pulls,
+    boardSourced: input.repositories.filter((name) => input.rulesFor?.(name)?.source === 'board-status'),
+  })) {
     const item = (tier: ReportItem['tier'], automated: boolean): ReportItem => ({
       tier,
       kind: m.kind,
@@ -139,13 +149,15 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
   // A closed task Issue keeps its old status label when a pull request closes it (DEC-003: closed means Verified).
   for (const card of input.cards) {
     const isTask = card.taskId !== undefined || card.labels.includes('task');
-    if (card.state === 'closed' && isTask && !planMove(card, 'Verified').noop) {
-      actions.push(moveAction(input.token, card, 'Verified', locale, input.fetchFn, [], { code: 'cli.reconcile.relabel-reason' }));
+    const rules = input.rulesFor?.(card.repository);
+    const plan = planMove(card, 'Verified', rules);
+    if (card.state === 'closed' && isTask && !plan.unavailable && !plan.noop) {
+      actions.push(moveAction(input.token, card, 'Verified', locale, input.fetchFn, [], { code: 'cli.reconcile.relabel-reason' }, rules));
     }
   }
 
   // Stale cards need a person's judgment.
-  const notices = cardNotices(input.cards, input.artifacts, input.now);
+  const notices = cardNotices(input.cards, input.artifacts, input.now, input.idleDaysFor);
   for (const card of input.cards) {
     for (const notice of notices.get(normalizeIssueUrl(card.url)) ?? []) {
       reports.push({

@@ -147,6 +147,8 @@ export const en = {
   'cli.card-move.summary': 'Move {ref} to {column}: {changes}{warnings}.',
   'cli.card-move.reason': 'The card is asked to move to {column}, and the labels, the Issue state, and the board Status are made to agree with it.',
   'cli.move-refused': 'Not moved: {ref} has no linked pull request and its task has no evidence exception ({gaps}).',
+  'cli.move-unavailable': 'Not moved: the board of {ref} has no Status that means "{column}".',
+  'cli.process-unreadable': '{repository}: its process file could not be read, so the defaults are used ({detail}).',
   'cli.bad-column': '"{column}" is not a column. Use Backlog, Ready, In progress, Blocked, Review, or Verified.',
   'cli.evidence.summary': 'Comment on {ref} that merged pull request #{pull} ({title}) is its evidence.',
   'cli.evidence.reason': 'The merged pull request is evidence for the task, and the comment makes the link visible on the Issue.',
@@ -217,6 +219,8 @@ export const en = {
   // Why a Kanban card needs attention
   'gap.multiple-status-labels': 'multiple status labels: {columns}',
   'gap.no-status-label': 'no status label',
+  'gap.no-board-status': 'the card has no board Status',
+  'gap.unmapped-board-status': 'the board Status "{status}" is not in this repository\'s process',
   'gap.closed-without-verified': 'closed without status:verified (verification gap)',
   'gap.open-but-verified': 'open but labeled status:verified',
 

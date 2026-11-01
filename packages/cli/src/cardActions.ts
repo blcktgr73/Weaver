@@ -1,4 +1,5 @@
 import {
+  ColumnRules,
   describeMove,
   evidenceGaps,
   formatNotice,
@@ -27,6 +28,8 @@ export interface MoveInput {
   /** The task has a human-approved reason to accept it without complete evidence (DEC-006). */
   evidenceException: boolean;
   locale: Locale;
+  /** The column rules of the card's repository (DEC-015); the defaults when left out. */
+  rules?: ColumnRules;
   fetchFn?: FetchFn;
 }
 
@@ -38,8 +41,9 @@ export interface MoveInput {
  */
 export async function planCardMove(input: MoveInput): Promise<Planned> {
   const { card, column, locale } = input;
-  const issue = { state: card.state, labels: card.labels };
-  const plan = planMove(issue, column);
+  const issue = { state: card.state, labels: card.labels, boardStatus: card.boardStatus };
+  const plan = planMove(issue, column, input.rules);
+  if (plan.unavailable) return { ok: false, refusal: { code: 'cli.move-unavailable', args: { ref: `${card.repository}#${card.number}`, column } } };
   if (plan.noop) return { ok: true, actions: [] };
 
   let warnings: string[] = [];
@@ -53,21 +57,22 @@ export async function planCardMove(input: MoveInput): Promise<Planned> {
     warnings = gaps.map((gap) => formatNotice(gap, locale));
   }
 
-  return { ok: true, actions: [moveAction(input.token, card, column, locale, input.fetchFn, warnings)] };
+  return { ok: true, actions: [moveAction(input.token, card, column, locale, input.fetchFn, warnings, undefined, input.rules)] };
 }
 
 /** The action that applies `planMove` to a card; the editor runs the same `applyMove`. */
 export function moveAction(
   token: string,
-  card: Pick<CliCard, 'repository' | 'number' | 'url' | 'state' | 'labels'>,
+  card: Pick<CliCard, 'repository' | 'number' | 'url' | 'state' | 'labels' | 'boardStatus'>,
   column: KanbanColumn,
   locale: Locale,
   fetchFn?: FetchFn,
   warnings: string[] = [],
   reason?: Notice,
+  rules?: ColumnRules,
 ): PlannedAction {
-  const issue = { state: card.state, labels: card.labels };
-  const plan = planMove(issue, column);
+  const issue = { state: card.state, labels: card.labels, boardStatus: card.boardStatus };
+  const plan = planMove(issue, column, rules);
   const ref = `${card.repository}#${card.number}`;
   const changes = describeMove(plan, issue).map((line) => formatNotice(line, locale));
   return {

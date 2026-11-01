@@ -1,6 +1,7 @@
 import * as path from 'path';
 import {
   Artifact,
+  DEFAULT_STALE_DAYS,
   RequirementArtifact,
   formatNotice,
   Locale,
@@ -12,7 +13,7 @@ import {
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
-import { readMergedPulls, readProject, type FetchFn } from '@palab/weaver-github';
+import { placeWithRules, readMergedPulls, readProject, type FetchFn } from '@palab/weaver-github';
 import { executeActions, finishActions, parseApproved, PlannedAction, ReportItem, Skipped } from './actions';
 import { Args, parseArgs } from './args';
 import { parseColumn, planCardMove, planEvidenceAttach } from './cardActions';
@@ -167,7 +168,24 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     return confirmAndRun(actions);
   }
 
-  const all = toCliCards(read.read.cards, artifacts, deps.now());
+  // How each repository tracks its work (DEC-015). One without a file, or whose file cannot be read,
+  // keeps today's defaults, and the person is told about the one that could not be read.
+  const processes = new Map(
+    (await readProcesses(token, repositories, locale, deps.fetch as unknown as FetchFn | undefined)).map((r) => [r.repository.toLowerCase(), r] as const),
+  );
+  for (const r of processes.values()) {
+    if (r.file === 'failed') deps.err(`${formatNotice({ code: 'cli.process-unreadable', args: { repository: r.repository, detail: r.error?.message ?? '' } }, locale)}\n`);
+  }
+  const rulesFor = (repository: string) => {
+    const found = processes.get(repository.toLowerCase());
+    return found?.file === 'read' ? found.process.columns : undefined;
+  };
+  const idleDaysFor = (repository: string) => {
+    const found = processes.get(repository.toLowerCase());
+    return found?.file === 'read' ? found.process.stale.idleDays : DEFAULT_STALE_DAYS;
+  };
+  const cards = placeWithRules(read.read.cards, rulesFor);
+  const all = toCliCards(cards, artifacts, deps.now(), idleDaysFor);
 
   if (args.command === 'reconcile') {
     const merged = await Promise.all(repositories.map((repository) => readMergedPulls(token, repository, 50, deps.fetch)));
@@ -177,7 +195,9 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       locale,
       project: setup.project,
       repositories,
-      cards: read.read.cards,
+      cards,
+      rulesFor,
+      idleDaysFor,
       artifacts,
       pulls: merged.flatMap((r) => (r.ok ? r.pulls : [])),
       now: deps.now(),
@@ -201,7 +221,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       const column = parseColumn(args.options.to);
       if (!column) return fail(EXIT.usage, 'cli.bad-column', { column: args.options.to });
       const task = card.task?.path ? artifacts.find((a) => a.kind === 'task' && a.path === card.task?.path) : undefined;
-      planned = await planCardMove({ token, card, column, evidenceException: task?.kind === 'task' && Boolean(task.evidenceException), locale, fetchFn });
+      planned = await planCardMove({ token, card, column, evidenceException: task?.kind === 'task' && Boolean(task.evidenceException), locale, rules: rulesFor(card.repository), fetchFn });
     } else {
       planned = await planEvidenceAttach({ token, login: await deps.login(), card, pull: args.options.pull, locale, fetchFn });
     }

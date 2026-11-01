@@ -40,6 +40,8 @@ export function setup(options: { token?: string | undefined; registry?: string; 
   const shell: { command: string; args: string[]; cwd?: string }[] = [];
   const written: { file: string; text: string }[] = [];
   const fetchImpl: Fetch = async (url, init) => {
+    // No repository has a process file unless a test says so (DEC-015).
+    if (url.includes('/contents/.weaver/')) return { ok: false, status: 404, json: async () => ({}), text: async () => '' } as never;
     if (url.includes('/repos/')) {
       writes.push(`REST ${url}`);
       return { ok: true, status: 201, json: async () => ({ number: 77, html_url: 'https://github.com/me/Weaver/issues/77' }) };
@@ -98,6 +100,7 @@ export function withGitHub(deps: Deps, options: { linkedPull?: boolean; pullMerg
   const original = deps.fetch as Fetch;
   deps.fetch = async (url, init) => {
     const reply = (json: unknown, status = 200) => ({ ok: status < 400, status, json: async () => json });
+    if (url.includes('/contents/.weaver/')) return original(url, init);
     if (url.includes('/repos/')) {
       const method = init?.method ?? 'GET';
       calls.push(`${method} ${url.replace('https://api.github.com', '')}`);

@@ -146,6 +146,8 @@ export const ko: Record<MessageKey, Message> = {
   'cli.card-move.summary': '{ref}을(를) {column}(으)로 옮깁니다: {changes}{warnings}.',
   'cli.card-move.reason': '카드를 {column}(으)로 옮기라는 요청이라서, 라벨, Issue 상태, 보드 Status를 여기에 맞춥니다.',
   'cli.move-refused': '옮기지 않았습니다: {ref}에는 연결된 풀 리퀘스트가 없고 태스크에 근거 예외도 없습니다({gaps}).',
+  'cli.move-unavailable': '옮기지 않았습니다: {ref}의 보드에는 "{column}"을 뜻하는 Status가 없습니다.',
+  'cli.process-unreadable': '{repository}: 프로세스 파일을 읽지 못해 기본값을 씁니다({detail}).',
   'cli.bad-column': '"{column}"은(는) 열이 아닙니다. Backlog, Ready, In progress, Blocked, Review, Verified 중에서 고르세요.',
   'cli.evidence.summary': '{ref}에 병합된 풀 리퀘스트 #{pull}({title})이(가) 근거라는 댓글을 답니다.',
   'cli.evidence.reason': '병합된 풀 리퀘스트는 태스크의 근거이고, 댓글로 Issue에서 그 연결을 볼 수 있게 합니다.',
@@ -215,6 +217,8 @@ export const ko: Record<MessageKey, Message> = {
 
   'gap.multiple-status-labels': '상태 라벨이 여러 개입니다: {columns}',
   'gap.no-status-label': '상태 라벨이 없습니다',
+  'gap.no-board-status': '카드에 보드 Status가 없습니다',
+  'gap.unmapped-board-status': '보드 Status "{status}"는 이 저장소의 프로세스에 없습니다',
   'gap.closed-without-verified': '닫혔지만 status:verified 라벨이 없습니다(검증 공백)',
   'gap.open-but-verified': '열려 있는데 status:verified 라벨이 붙어 있습니다',
 
