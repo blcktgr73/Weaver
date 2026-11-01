@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { planMove } from '@palab/weaver-markdown';
-import { addIssueComment, applyMove, fetchEvidence, fetchIssue, fetchPull, hasIssueComment, setBoardStatus, type FetchFn } from '../src';
+import { addIssueComment, applyMove, fetchEvidence, fetchIssue, fetchPull, hasIssueComment, setBoardStatus, setIssueAssignees, type FetchFn } from '../src';
 
 const ISSUE = 'https://github.com/me/Weaver/issues/5';
 
@@ -156,5 +156,24 @@ describe('setBoardStatus and hasIssueComment', () => {
     expect(await hasIssueComment('t', 'me/Weaver', 5, '<!-- weaver:pull-8 -->', fetchFn)).toBe(false);
     expect(calls[0].url).toContain('/repos/me/Weaver/issues/5/comments');
     await expect(hasIssueComment('t', 'me/Weaver', 5, 'x', routes(() => ({ status: 500 })).fetchFn)).rejects.toThrow('500');
+  });
+});
+
+describe('setIssueAssignees', () => {
+  it('sets the assignees of the Issue', async () => {
+    const { fetchFn, calls } = routes(() => ({ json: { assignees: [{ login: 'Maria-Dev' }] } }));
+    await setIssueAssignees('t', 'me/Weaver', 5, ['maria-dev'], fetchFn);
+    expect(calls).toEqual([{ method: 'PATCH', url: 'https://api.github.com/repos/me/Weaver/issues/5', body: { assignees: ['maria-dev'] } }]);
+  });
+
+  it('fails when GitHub quietly dropped a login, and when the call is refused', async () => {
+    await expect(setIssueAssignees('t', 'me/Weaver', 5, ['stranger'], routes(() => ({ json: { assignees: [] } })).fetchFn)).rejects.toThrow('stranger');
+    await expect(setIssueAssignees('t', 'me/Weaver', 5, ['x'], routes(() => ({ status: 403 })).fetchFn)).rejects.toThrow('403');
+  });
+
+  it('can clear the assignees', async () => {
+    const { fetchFn, calls } = routes(() => ({ json: { assignees: [] } }));
+    await setIssueAssignees('t', 'me/Weaver', 5, [], fetchFn);
+    expect(calls[0].body).toEqual({ assignees: [] });
   });
 });

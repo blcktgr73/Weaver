@@ -147,3 +147,30 @@ roster:                  # optional; see "Contributor roster" for the entries
 ```
 
 `project` and `repositories` follow the rules of the fabric registry; a workspace `fabric.yaml` overrides them for that workspace. `roster` always comes from this file.
+
+## Contributor roster
+
+The `roster` entry of the [user configuration](#user-configuration) lists the people and agents that tasks can be given to ([DEC-013](../decisions/DEC-013-contributor-roster.md)). It is not committed.
+
+```yaml
+roster:
+  contributors:
+    - id: maria            # the name task files use
+      kind: human        # human | agent
+      github: maria-dev  # optional; becomes the Issue assignee for a human
+    - id: claude-code
+      kind: agent
+      tool: Claude Code  # for an agent: the tool or product
+      model: opus        # optional
+      reach: runs in the maintainer's session
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `id` | yes | The name used in task files. Letters, digits, spaces, and `. _ @ -`. Unique without regard to case. |
+| `kind` | yes | `human` or `agent`. |
+| `name` | no | A display name. |
+| `github` | no | The GitHub login. |
+| `tool`, `model`, `reach` | agents | Which tool or model it is, and how it is reached. A missing `tool` or `reach` is a warning. |
+
+A task file may also name `reviewer`, `approved_by`, and `approved_on`. With a roster, an owner, reviewer, or approver that is not in it, an approver that is an agent, and Verified agent work without a human approval are shown as gaps.
