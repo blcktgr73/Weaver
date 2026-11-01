@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc -p ./",
     "check": "tsc -p ./ --noEmit",
+    "bundle": "esbuild src/bin.ts --bundle --platform=node --target=node20 --format=cjs --allow-overwrite --outfile=../../dist/weaver.js",
     "test": "vitest run"
   },
   "dependencies": {
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.21.5",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
   }

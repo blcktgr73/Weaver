@@ -21,8 +21,17 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run package
+      - name: Bundle the weaver tool and run it once
+        run: |
+          npm run package:cli
+          node dist/weaver.js --help
       - uses: actions/upload-artifact@v4
         with:
           name: weaver-vsix
           path: dist/weaver-*.vsix
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weaver-cli
+          path: dist/weaver.js
           if-no-files-found: error

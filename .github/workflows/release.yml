@@ -1,6 +1,6 @@
 name: Release
 
-# Pushing a tag such as v0.0.3 builds the VSIX and attaches it to a GitHub Release.
+# Pushing a tag such as v0.0.3 builds the VSIX and the weaver tool and attaches both to a GitHub Release.
 on:
   push:
     tags: ['v*']
@@ -28,11 +28,15 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run package
-      - name: Create the release and attach the VSIX
+      - name: Bundle the weaver tool and run it once before it is attached
+        run: |
+          npm run package:cli
+          node dist/weaver.js --help
+      - name: Create the release and attach the VSIX and the weaver tool
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/weaver-*.vsix \
+          gh release create "$GITHUB_REF_NAME" dist/weaver-*.vsix dist/weaver.js \
             --title "Weaver ${GITHUB_REF_NAME#v}" \
             --generate-notes \
             --prerelease

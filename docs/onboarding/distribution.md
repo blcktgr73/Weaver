@@ -36,7 +36,7 @@ The repository is licensed under MIT (`LICENSE`), and the VSIX includes it.
 
 ## GitHub Release
 
-Pushing a tag builds the VSIX in CI and attaches it to a GitHub Release (`.github/workflows/release.yml`). Releases are marked as pre-releases while the version is `0.0.x`.
+Pushing a tag builds the VSIX and the `weaver` command-line tool in CI and attaches both to a GitHub Release (`.github/workflows/release.yml`). `weaver.js` is one file that runs with Node 20 or later (`node weaver.js --help`); the workflow runs it once before it is attached. The tool is not part of the VSIX. Releases are marked as pre-releases while the version is `0.0.x`.
 
 1. Bump the version in `apps/vscode-extension/package.json` (and the lock file): `npm version <version> -w @palab/weaver-vscode-extension --no-git-tag-version`.
 2. Merge the bump to `main`.
