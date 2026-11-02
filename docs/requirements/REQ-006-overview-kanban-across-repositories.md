@@ -4,7 +4,7 @@ type: requirement
 title: One Overview Kanban shows all registered repositories and starts every exploration
 status: draft
 owner: PALab
-story_ids: [US-025, US-026, US-029, US-030, US-035, US-036]
+story_ids: [US-025, US-026, US-029, US-030, US-035, US-036, US-043]
 repository: blcktgr73/Weaver
 github_project: PALab Ops Kanban
 ---
@@ -48,6 +48,7 @@ The central Project is a shared copy that can be rebuilt. If it is lost or wrong
 - Each successful read of the Project is kept on the user's computer, never in the repository. When GitHub cannot be read, the Overview shows that board with its age, and falls back to the files only when no read of the same Project was kept.
 - The finished cards, those in the Verified column and those whose Issue is closed, are folded by default, and each lane shows only their count in the Verified column. A finished card that carries a gap, such as a closed Issue outside Verified, stays visible. One control on the Overview unfolds and folds them again, and they are folded again each time the Overview opens. Showing a requirement or a task on the Overview unfolds them when a highlighted card is among them. The folded cards still count in the lane totals and in the mismatch checks.
 - Weaver has an icon in the Activity Bar that opens a view listing its actions, and the Overview tab has a refresh icon and a menu with the same actions, so no action needs the command palette. The actions are: open the Overview, choose the repositories to show, open the personal configuration file, set up, set the clone folder, and clone the missing repositories. Choosing repositories writes only the `repositories` list of the personal configuration, after the person has seen the change, and keeps the comments of the file.
+- The refresh of the Overview also reads the repository files again, and a change made outside the editor (a `git pull`, a branch switch) is picked up without saving a document, so the warnings always match the files on disk.
 
 ## Open decisions
 
