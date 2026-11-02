@@ -101,6 +101,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-039` — As a team member, I can create a task from the editor with a title, a description, and an owner, and the task file, the Issue, and the Project card are made together. (Friction found on 2026-11-02: a task made by `task create` had an empty description, and the editor has no way to create one.)
 - `US-040` — As a task owner, I can add a progress note or a decision to a task file from the Requirement view, instead of editing the Markdown by hand or asking an agent.
 - `US-041` — As a team member, each card tells me in plain words why it is in its column and what to do next. (Friction found on 2026-11-02: a closed Issue that kept `status:backlog` showed as Review with only the code `gap.closed-without-verified`.)
+- `US-042` — As a team lead, I can copy a commented sample `process.yaml` into my own repository and edit it, because the sample says where the file goes, what each setting means, and which values it accepts. (Friction found on 2026-11-03: after setting `evidence.pull-request: optional` the card did not change, because the file was not on the default branch of that repository, and nothing said so. Belongs to `REQ-005`.)
 
 ### PALab project adoption
 
