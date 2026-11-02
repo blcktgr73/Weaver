@@ -1,4 +1,4 @@
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { parse as parseYaml, parseDocument, stringify as stringifyYaml } from 'yaml';
 import { FabricProject, FabricRegistry, FabricRepository, readFabricProject, readFabricRepositories } from './fabric';
 import type { MessageArgs } from './i18n';
 import { readRoster, Roster } from './roster';
@@ -109,4 +109,23 @@ export function serializeConfig(config: UserConfig): string {
   if (config.repositories?.length) data.repositories = config.repositories.map((r) => (r.title ? { repository: r.repository, title: r.title } : r.repository));
   if (config.roster?.contributors.length) data.roster = { contributors: config.roster.contributors.map((c) => ({ ...c })) };
   return `${CONFIG_HEADER}${stringifyYaml(data)}`;
+}
+
+/**
+ * The configuration text with a new `repositories` list and nothing else changed: comments, the
+ * roster, and the order of the other fields stay. `undefined` removes the list, so every repository
+ * of the Project is shown. A repository that was listed with a title keeps its title.
+ */
+export function setRepositories(text: string, repositories: readonly string[] | undefined): string {
+  const document = parseDocument(text);
+  if (repositories === undefined) {
+    document.delete('repositories');
+    return String(document);
+  }
+  const titled = new Map(readFabricRepositories(document.toJS()?.repositories, () => undefined).filter((r) => r.title).map((r) => [r.repository.toLowerCase(), r.title as string]));
+  document.set(
+    'repositories',
+    document.createNode(repositories.map((repository) => (titled.has(repository.toLowerCase()) ? { repository, title: titled.get(repository.toLowerCase()) } : repository))),
+  );
+  return String(document);
 }

@@ -2,7 +2,7 @@
   "name": "@palab/weaver-vscode-extension",
   "displayName": "PALab Weaver",
   "description": "Repository-native requirements and task traceability for humans and AI agents.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "palab",
   "license": "MIT",
   "engines": {
@@ -54,6 +54,20 @@
         "command": "weaver.showOnOverview",
         "title": "%weaver.command.showOnOverview.title%",
         "icon": "$(project)"
+      },
+      {
+        "command": "weaver.chooseRepositories",
+        "title": "%weaver.command.chooseRepositories.title%",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "weaver.openConfigFile",
+        "title": "%weaver.command.openConfigFile.title%"
+      },
+      {
+        "command": "weaver.refreshOverview",
+        "title": "%weaver.command.refreshOverview.title%",
+        "icon": "$(refresh)"
       }
     ],
     "configuration": {
@@ -99,6 +113,36 @@
           "command": "weaver.showOnOverview",
           "when": "resourceExtname == .md && weaver.documentKind =~ /^(requirement|task)$/ && activeCustomEditorId != weaver.requirementEditor",
           "group": "navigation"
+        },
+        {
+          "command": "weaver.refreshOverview",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "navigation@1"
+        },
+        {
+          "command": "weaver.chooseRepositories",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@1"
+        },
+        {
+          "command": "weaver.openConfigFile",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@2"
+        },
+        {
+          "command": "weaver.setUp",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@3"
+        },
+        {
+          "command": "weaver.setFabricRoot",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@4"
+        },
+        {
+          "command": "weaver.cloneRegistered",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@5"
         }
       ]
     },
@@ -113,7 +157,24 @@
         ],
         "priority": "default"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "weaver",
+          "title": "%weaver.viewContainer.title%",
+          "icon": "resources/weaver.svg"
+        }
+      ]
+    },
+    "views": {
+      "weaver": [
+        {
+          "id": "weaver.actions",
+          "name": "%weaver.view.actions.name%"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

@@ -5,6 +5,8 @@ import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEdit
 import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
 import { hasWorkspaceRegistry, OverviewView, readRegistry } from './overviewView';
 import { setUp } from './setupWizard';
+import { chooseRepositories, openConfigFile } from './chooseRepositories';
+import { SidebarProvider } from './sidebar';
 import { processStore } from './processStore';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
@@ -96,12 +98,15 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
-  // A way into the Overview that does not depend on the workspace: it no longer opens in every window.
-  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
-  statusBar.text = '$(project) Weaver';
-  statusBar.tooltip = message('ui.status-bar.tooltip');
-  statusBar.command = 'weaver.openOverview';
-  statusBar.show();
+  // A way into every action that does not depend on the workspace or on the command palette: the
+  // Weaver view of the Activity Bar, and the menu of the Overview tab (see package.json).
+  const sidebar = new SidebarProvider();
+  const sidebarView = vscode.window.registerTreeDataProvider('weaver.actions', sidebar);
+  const chooseRepos = vscode.commands.registerCommand('weaver.chooseRepositories', async () => {
+    if (await chooseRepositories()) await overview.reload();
+  });
+  const openConfig = vscode.commands.registerCommand('weaver.openConfigFile', () => openConfigFile());
+  const refreshOverview = vscode.commands.registerCommand('weaver.refreshOverview', () => overview.reload());
 
   // From a requirement view, a requirement file, or a task file: show its cards on the Overview (TASK-041).
   const showOnOverview = vscode.commands.registerCommand(
@@ -165,10 +170,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);
 
   const onLanguage = vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) void refresh();
+    if (event.affectsConfiguration('weaver.language') || event.affectsConfiguration('weaver.staleDays')) {
+      sidebar.refresh();
+      void refresh();
+    }
   });
 
-  context.subscriptions.push(diagnostics, statusBar, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // Only a workspace with its own `fabric.yaml` opens the Overview by itself (REQ-006, DEC-014).
     if (await hasWorkspaceRegistry()) {

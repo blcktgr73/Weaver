@@ -25,7 +25,7 @@ A repository that already tracks its work on the board and does not want labels 
 
 ## 2. Run the setup
 
-**In VS Code:** run **Weaver: Set Up** from the command palette (or press **Set up** in the empty Overview).
+**In VS Code:** choose **Set up** in the Weaver view of the Activity Bar (or run **Weaver: Set Up** from the command palette, or press **Set up** in the empty Overview). To show only some repositories later, choose **Choose the repositories to show**; it changes only the `repositories` list of the file and keeps your comments.
 
 **In a terminal:** run `weaver init`.
 

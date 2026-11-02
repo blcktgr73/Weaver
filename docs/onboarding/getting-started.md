@@ -9,7 +9,7 @@ Build the VSIX from a checkout of this repository, or download the `weaver-vsix`
 ```bash
 npm ci
 npm run package        # writes dist/weaver-<version>.vsix
-code --install-extension dist/weaver-0.1.2.vsix
+code --install-extension dist/weaver-0.2.0.vsix
 ```
 
 Run the install command from the repository root, and keep the `dist/` prefix. For other ways to share or publish the build, see [Distributing the extension](distribution.md).
@@ -107,7 +107,7 @@ The Overview shows the work of all registered repositories on one Kanban: the co
 1. Run **Weaver: Set Up** (or `weaver init` in a terminal). It asks which GitHub Project to show and which of its repositories to leave out, shows the file, and writes it to `~/.weaver/config.yaml` after you say yes. The file is yours and is never committed. To use a Project of your own or of an organization, and for the details of each step, follow [Register your own Project](register-your-project.md).
    To change how a repository's columns and evidence rules work, follow [Configure how your repository tracks its work](configure-your-process.md).
 
-2. Run **Weaver: Open Overview**, or press **Weaver** in the status bar. The Overview opens by itself only in a workspace that holds a shared `fabric.yaml` ([schema](../product/artifact-schema-v0.1.md#fabric-registry)), which a team can use so that everyone opens the same Project.
+2. Run **Weaver: Open Overview**, or open the **Weaver** view in the Activity Bar (the bar on the left) and choose **Open the Overview**. The menu on the tab of the Overview (`…`) and the Weaver view also hold **Choose the repositories to show**, **Open the configuration file**, **Set up**, **Set the clone folder**, and **Clone the missing repositories**, so the command palette is not needed. The Overview opens by itself only in a workspace that holds a shared `fabric.yaml` ([schema](../product/artifact-schema-v0.1.md#fabric-registry)), which a team can use so that everyone opens the same Project.
 3. Press **Sign in to GitHub** the first time. The board is read with your VS Code sign-in and needs the `repo` and `project` scopes.
 4. To try it from a checkout of this repository, run `npm run dev:overview`. It opens `examples/overview.code-workspace` (an example shared `fabric.yaml` plus `docs`). The repository root itself cannot be opened in a development host while it is already open in another VS Code window.
 

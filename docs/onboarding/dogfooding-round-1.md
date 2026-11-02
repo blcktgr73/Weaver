@@ -16,7 +16,7 @@ Tick each line as you go. If a line does not work, stop there and report it (see
 
 - [ ] Download `weaver-<version>.vsix` from the [latest Release](https://github.com/blcktgr73/Weaver/releases).
 - [ ] In VS Code: Extensions view, `…`, **Install from VSIX…**, and pick the file. (Or `code --install-extension <path to the file>`.)
-- [ ] The extension `palab.weaver` is listed, and a **Weaver** item is in the status bar.
+- [ ] The extension `palab.weaver` is listed, and a **Weaver** icon is in the Activity Bar (the bar on the left).
 
 **2. Set up**
 
@@ -28,7 +28,7 @@ Tick each line as you go. If a line does not work, stop there and report it (see
 
 **3. See the Overview**
 
-- [ ] Press **Weaver** in the status bar. The Overview opens with a lane for each repository of the Project.
+- [ ] In the Weaver view of the Activity Bar, choose **Open the Overview**. The Overview opens with a lane for each repository of the Project.
 - [ ] The cards are in columns that make sense for how your team works. If most cards sit in Backlog or Review with a note such as "no status label", write down which.
 - [ ] Press **Refresh**, then close and reopen the Overview.
 

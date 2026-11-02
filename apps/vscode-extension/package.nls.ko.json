@@ -14,5 +14,10 @@
   "weaver.command.openFabricRoot.title": "Weaver: 작업 폴더 열기",
   "weaver.config.fabricRoot.description": "전체 보기에 나오는 저장소의 클론을 모아 두는 로컬 폴더입니다. 이 컴퓨터에만 저장되고 저장소에는 쓰지 않습니다.",
   "weaver.config.staleDays.description": "준비됨, 진행 중, 막힘, 검토 열의 카드가 며칠 동안 변동이 없으면 전체 보기에서 정체로 표시할지 정하는 기준 일수입니다.",
-  "weaver.command.showOnOverview.title": "Weaver: 전체 보기에서 보기"
+  "weaver.command.showOnOverview.title": "Weaver: 전체 보기에서 보기",
+  "weaver.command.chooseRepositories.title": "Weaver: 보여 줄 저장소 고르기",
+  "weaver.command.openConfigFile.title": "Weaver: 설정 파일 열기",
+  "weaver.command.refreshOverview.title": "Weaver: 전체 보기 새로 고침",
+  "weaver.viewContainer.title": "Weaver",
+  "weaver.view.actions.name": "동작"
 }
