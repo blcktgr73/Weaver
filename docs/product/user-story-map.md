@@ -97,6 +97,10 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-032` — As a product person, I can draft a requirement in Notion and import it into the repository as a reviewed `REQ-###` Markdown file, so my discussion is not lost and the repository stays the source of truth.
 - `US-033` — As a stakeholder who works in Notion, I can see a requirement's current status, tasks, and evidence links on its Notion page, without opening the repository.
 - `US-034` — As a maintainer, I can tell which Notion page a requirement came from, and I can see when the page and the repository file have drifted apart.
+- `US-038` — As a maintainer, I can see the fixes that `reconcile` plans from the Overview and approve them one by one, without an agent or the command line. (Friction found on 2026-11-02: changing a status label needed `gh` or the CLI. Belongs to `REQ-009`.)
+- `US-039` — As a team member, I can create a task from the editor with a title, a description, and an owner, and the task file, the Issue, and the Project card are made together. (Friction found on 2026-11-02: a task made by `task create` had an empty description, and the editor has no way to create one.)
+- `US-040` — As a task owner, I can add a progress note or a decision to a task file from the Requirement view, instead of editing the Markdown by hand or asking an agent.
+- `US-041` — As a team member, each card tells me in plain words why it is in its column and what to do next. (Friction found on 2026-11-02: a closed Issue that kept `status:backlog` showed as Review with only the code `gap.closed-without-verified`.)
 - `US-042` — As a team lead, I can copy a commented sample `process.yaml` into my own repository and edit it, because the sample says where the file goes, what each setting means, and which values it accepts. (Friction found on 2026-11-03: after setting `evidence.pull-request: optional` the card did not change, because the file was not on the default branch of that repository, and nothing said so. Belongs to `REQ-005`.)
 
 ### PALab project adoption
