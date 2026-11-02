@@ -36,6 +36,7 @@ A repository describes its process in a file kept in Git. Weaver follows it, beh
 - `TASK-026` Drive evidence and verification rules from the configuration — [GitHub Issue #56](https://github.com/blcktgr73/Weaver/issues/56)
 - `TASK-027` Show which parts of the process are configured and which are defaults — [GitHub Issue #57](https://github.com/blcktgr73/Weaver/issues/57)
 - `TASK-028` Write the migration guide with this repository as the example — [GitHub Issue #58](https://github.com/blcktgr73/Weaver/issues/58)
+- `TASK-064` Read the lane used last first — [GitHub Issue #155](https://github.com/blcktgr73/Weaver/issues/155)
 
 The file format is decided in `TASK-023` before any code reads it. The first code step (`TASK-024`) must not change behavior.
 
