@@ -19,12 +19,13 @@ Finished work only grows, and on a Project with many repositories it hides the w
 ## Done when
 
 - Finished cards (Verified, or a closed Issue) are folded by default; each lane shows only their count in the Verified column. A finished card with a gap stays visible.
-- One control in the header unfolds and folds them again, and the choice is kept on this computer only.
+- One control beside the count in the Verified column unfolds and folds them again; they are folded each time the Overview opens.
 - Showing a requirement or a task on the Overview unfolds them when a highlighted card is among them.
 - The lane totals and the mismatch checks still include the folded cards.
 - The behavior is checked by hand in the development host.
 
 ## Progress
 
-- Built: `isFinished` and `foldFinished` in the shared package (a card is finished when it is in Verified or its Issue is closed, and it has no gap); the Overview folds finished cards by default, shows "N finished, folded" in the Verified column of each lane, and has one header button, "Show finished (N)" / "Hide finished"; the choice is kept on this computer; a highlighted finished card unfolds them. Lane totals and the mismatch checks still count every card.
+- Built: `isFinished` and `foldFinished` in the shared package (a card is finished when it is in Verified or its Issue is closed, and it has no gap); the Overview folds finished cards by default, puts one button in the Verified column of each lane, which reads "N finished, folded" or "N finished, shown" and toggles; the choice is not kept, so the Overview opens folded each time; a highlighted finished card unfolds them. Lane totals and the mismatch checks still count every card.
+- Seen in the development host: the fold and the button work. A first version put the fold and unfold control in the header; after unfolding there was nothing beside Verified to fold again with, so the control stays in the Verified column in both states. Unfolding sent the board back to its top left, because the page is set again on every change; the board now keeps its scroll place across those renders.
 - Not yet done: the last "Done when" item. The page was rendered in both states by hand and `npm run check` and the tests pass, but it was not driven in the development host.
