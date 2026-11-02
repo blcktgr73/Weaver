@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { effectiveRepositories, parseConfig, parseFabric, resolveSetup, serializeConfig, type UserConfig } from '../src';
+import { effectiveRepositories, parseConfig, parseFabric, resolveSetup, serializeConfig, setRepositories, type UserConfig } from '../src';
 
 const parse = (text: string) => parseConfig('config.yaml', text);
 const codes = (text: string) => parse(text).issues.map((i) => `${i.severity}:${i.code}`);
@@ -130,5 +130,40 @@ describe('config.example.yaml', () => {
   it('is what the setup would write for the same choices, apart from the comments', () => {
     const config = parse(text).config as UserConfig;
     expect(parse(serializeConfig(config)).config).toEqual(config);
+  });
+});
+
+describe('setRepositories', () => {
+  const text = [
+    '# my configuration',
+    'project:',
+    '  owner: o',
+    '  number: 1',
+    '# repositories to show',
+    'repositories:',
+    '  - o/a',
+    '  - repository: o/b',
+    '    title: Bee',
+    'roster:',
+    '  contributors:',
+    '    - id: me # that is me',
+    '      kind: human',
+    '',
+  ].join('\n');
+
+  it('replaces only the list and keeps the comments and the roster', () => {
+    const out = setRepositories(text, ['o/b', 'o/c']);
+    expect(out).toContain('# my configuration');
+    expect(out).toContain('# repositories to show');
+    expect(out).toContain('# that is me');
+    expect(parseConfig('c.yaml', out).config?.repositories).toEqual([{ repository: 'o/b', title: 'Bee' }, { repository: 'o/c' }]);
+    expect(parseConfig('c.yaml', out).config?.roster?.contributors).toHaveLength(1);
+  });
+
+  it('removes the list so the whole Project is shown', () => {
+    const out = setRepositories(text, undefined);
+    expect(out).not.toContain('o/a');
+    expect(parseConfig('c.yaml', out).config?.repositories).toBeUndefined();
+    expect(out).toContain('# that is me');
   });
 });

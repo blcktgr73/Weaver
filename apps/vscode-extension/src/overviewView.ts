@@ -156,6 +156,11 @@ export class OverviewView {
     await this.load(false);
   }
 
+  /** Reads the Project again for an Overview that is open; with none open there is nothing to refresh. */
+  async reload(): Promise<void> {
+    if (this.panel) await this.load(false);
+  }
+
   /** Opens the Overview and highlights the cards of a requirement, or of one task (TASK-041). */
   async showFocused(loaded: Loaded, target: FocusTarget): Promise<void> {
     this.focus = target;

@@ -8,7 +8,8 @@ import { getGitHubToken } from './github';
 import { message } from './locale';
 import { readRegistry } from './overviewView';
 
-const SETTING = 'weaver.fabricRoot';
+/** The key inside the `weaver` section, as in `getConfiguration('weaver')`. */
+const SETTING = 'fabricRoot';
 
 /** The local folder that holds the clones. It is a machine setting, never written to the repository. */
 export function fabricRoot(): string | undefined {
