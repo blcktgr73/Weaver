@@ -45,7 +45,6 @@ const REGISTRY_FILE = 'fabric.yaml';
 const HIDDEN_KEY = 'weaver.overview.hiddenProjects';
 const COLLAPSED_KEY = 'weaver.overview.collapsedProjects';
 const ORDER_KEY = 'weaver.overview.laneOrder';
-const FINISHED_KEY = 'weaver.overview.showFinished';
 const SNAPSHOT_KEY = 'weaver.overview.lastRead';
 /** How many repositories are asked for their process at a time (DEC-015). */
 const PROCESS_BATCH = 4;
@@ -103,8 +102,8 @@ export class OverviewView {
   private collapsed: Set<string>;
   /** The lane order the user chose, on this computer only. Lanes not in it keep the registry order. */
   private order: string[];
-  /** Finished cards (Verified, or a closed Issue) are folded unless the user asked to see them. */
-  private showFinished: boolean;
+  /** Finished cards (Verified, or a closed Issue) are folded unless the user asked to see them. Not kept: each time the Overview opens, they are folded. */
+  private showFinished = false;
 
   constructor(
     private readonly store: vscode.Memento,
@@ -113,7 +112,6 @@ export class OverviewView {
     this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
     this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
     this.order = store.get<string[]>(ORDER_KEY, []);
-    this.showFinished = store.get<boolean>(FINISHED_KEY, false);
   }
 
   /** The registered repositories in the order the user chose, then the registry order. */
@@ -141,6 +139,7 @@ export class OverviewView {
     if (this.panel) {
       this.panel.reveal();
     } else {
+      this.showFinished = false;
       this.panel = vscode.window.createWebviewPanel('weaver.overview', 'Weaver', vscode.ViewColumn.Active, {
         enableScripts: true,
         retainContextWhenHidden: true,
@@ -179,7 +178,6 @@ export class OverviewView {
       // A highlighted card that is folded away cannot be seen: unfold the finished cards.
       if (isFinished({ placement: card.placement, state: card.state })) {
         this.showFinished = true;
-        void this.store.update(FINISHED_KEY, true);
       }
       const lane = this.registry.registry.repositories.find((r) => r.repository.toLowerCase() === card.repository.toLowerCase());
       if (!lane) continue;
@@ -207,7 +205,6 @@ export class OverviewView {
     }
     else if (message.type === 'toggleFinished') {
       this.showFinished = !this.showFinished;
-      void this.store.update(FINISHED_KEY, this.showFinished);
       this.render();
     }
     else if (message.type === 'foldLane' && message.id) this.flip(this.collapsed, COLLAPSED_KEY, message.id);
