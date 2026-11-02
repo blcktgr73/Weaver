@@ -97,6 +97,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-032` — As a product person, I can draft a requirement in Notion and import it into the repository as a reviewed `REQ-###` Markdown file, so my discussion is not lost and the repository stays the source of truth.
 - `US-033` — As a stakeholder who works in Notion, I can see a requirement's current status, tasks, and evidence links on its Notion page, without opening the repository.
 - `US-034` — As a maintainer, I can tell which Notion page a requirement came from, and I can see when the page and the repository file have drifted apart.
+- `US-042` — As a team lead, I can copy a commented sample `process.yaml` into my own repository and edit it, because the sample says where the file goes, what each setting means, and which values it accepts. (Friction found on 2026-11-03: after setting `evidence.pull-request: optional` the card did not change, because the file was not on the default branch of that repository, and nothing said so. Belongs to `REQ-005`.)
 
 ### PALab project adoption
 
