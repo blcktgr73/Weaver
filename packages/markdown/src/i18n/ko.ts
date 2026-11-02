@@ -129,6 +129,7 @@ export const ko: Record<MessageKey, Message> = {
   'ui.overview.show-finished': '완료 보기 ({count})',
   'ui.overview.hide-finished': '완료 숨기기',
   'ui.overview.finished-folded': '완료 {count}장 접힘',
+  'ui.overview.finished-shown': '완료 {count}장 펼침',
   'ui.overview.toggle-project': '{title} 보기·숨기기',
   'ui.overview.fold': '{title} 접기',
   'ui.overview.unfold': '{title} 펼치기',

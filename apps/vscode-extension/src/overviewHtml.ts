@@ -72,13 +72,6 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 
   const button = (cmd: string, key: MessageKey) => `<button data-cmd="${cmd}">${e(tt(key))}</button>`;
 
-  /** One control that folds and unfolds the finished cards; absent when there are none. */
-  const finishedButton = (ready: Extract<OverviewState, { kind: 'ready' }>): string => {
-    const count = Object.values(ready.finished).reduce((sum, n) => sum + n, 0);
-    if (ready.showFinished) return button('toggleFinished', 'ui.overview.hide-finished');
-    return count ? `<button data-cmd="toggleFinished">${e(tt('ui.overview.show-finished', { count }))}</button>` : '';
-  };
-
   const cardHtml = (card: OverviewCard): string => {
     const gaps = card.placement.gaps.map((gap) => `<div class="warn small">⚠ ${e(formatNotice(gap, locale))}</div>`).join('');
     const requirement = card.requirement
@@ -98,16 +91,16 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
       </div>`;
   };
 
-  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean, index: number, count: number, reading = false, finishedFolded = 0): string => `<section class="lane">
+  const laneHtml = (lane: Lane<OverviewCard>, folded: boolean, index: number, count: number, reading = false, finished = 0, showFinished = false): string => `<section class="lane">
       <h2><button class="fold" data-fold="${e(lane.repository)}" aria-expanded="${!folded}" title="${e(tt(folded ? 'ui.overview.unfold' : 'ui.overview.fold', { title: lane.title }))}">${folded ? '\u25b8' : '\u25be'}</button>${e(lane.title)} <span class="muted small">${e(lane.repository)}</span>
         <span class="lane-move">${index > 0 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="-1" title="${e(tt('ui.overview.move-up', { title: lane.title }))}">\u25b2</button>` : ''}${index < count - 1 ? `<button class="mv" data-move-lane="${e(lane.repository)}" data-delta="1" title="${e(tt('ui.overview.move-down', { title: lane.title }))}">\u25bc</button>` : ''}</span>
         <span class="badge">${e(tt('ui.overview.cards', { count: lane.total }))}</span>${lane.blocked ? `<span class="badge blocked">${e(tt('ui.overview.blocked', { count: lane.blocked }))}</span>` : ''}</h2>
-      ${folded ? '' : reading ? `<p class="muted small">${e(tt('ui.overview.reading-process'))}</p>` : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${column === 'Verified' && finishedFolded ? `<button class="finished-fold" data-cmd="toggleFinished" title="${e(tt('ui.overview.show-finished', { count: finishedFolded }))}">▸ ${e(tt('ui.overview.finished-folded', { count: finishedFolded }))}</button>` : ''}${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
+      ${folded ? '' : reading ? `<p class="muted small">${e(tt('ui.overview.reading-process'))}</p>` : lane.total === 0 ? `<p class="muted small">${e(tt('ui.overview.no-cards'))}</p>` : `<div class="cols">${KANBAN_COLUMNS.map((column) => `<div class="col">${column === 'Verified' && finished ? `<button class="finished-fold" data-cmd="toggleFinished" aria-expanded="${showFinished}" title="${e(tt(showFinished ? 'ui.overview.hide-finished' : 'ui.overview.show-finished', { count: finished }))}">${showFinished ? '▾' : '▸'} ${e(tt(showFinished ? 'ui.overview.finished-shown' : 'ui.overview.finished-folded', { count: finished }))}</button>` : ''}${lane.columns[column].map(cardHtml).join('')}</div>`).join('')}</div>`}
     </section>`;
 
-  const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>, reading: Set<string> = new Set(), finishedFolded: Record<string, number> = {}): string =>
+  const boardOf = (lanes: Lane<OverviewCard>[], collapsed: Set<string>, reading: Set<string> = new Set(), finished: Record<string, number> = {}, showFinished = false): string =>
     `<div class="colhead cols">${KANBAN_COLUMNS.map((column) => `<div>${e(tt(`column.${column}` as MessageKey))}</div>`).join('')}</div>
-      ${lanes.map((lane, index) => laneHtml(lane, collapsed.has(lane.repository), index, lanes.length, reading.has(lane.repository), finishedFolded[lane.repository] ?? 0)).join('')}`;
+      ${lanes.map((lane, index) => laneHtml(lane, collapsed.has(lane.repository), index, lanes.length, reading.has(lane.repository), finished[lane.repository] ?? 0, showFinished)).join('')}`;
 
   let body: string;
   let filter = '';
@@ -156,7 +149,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
         : '';
       const readingNote = state.reading.length ? `<p class="muted small">${e(tt('ui.overview.reading-note', { count: state.reading.length }))}</p>` : '';
       body = readingNote + mismatchHtml + skippedChecks + (shown.length
-        ? `${boardOf(shown, collapsed, new Set(state.reading), state.showFinished ? {} : state.finished)}
+        ? `${boardOf(shown, collapsed, new Set(state.reading), state.finished, state.showFinished)}
       ${state.skipped ? `<p class="muted small">${e(tt('ui.overview.skipped', { count: state.skipped }))}</p>` : ''}`
         : `<p class="muted">${e(tt('ui.overview.all-hidden'))}</p>`);
       break;
@@ -228,7 +221,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </style>
 </head>
 <body>
-  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + finishedButton(state) + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>
+  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>
   ${filter}
   <div class="scroll"${state.kind === 'ready' ? ' data-keep-scroll' : ''}>${body}</div>
 <script nonce="${nonce}">

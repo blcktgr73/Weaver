@@ -130,6 +130,7 @@ export const en = {
   'ui.overview.show-finished': 'Show finished ({count})',
   'ui.overview.hide-finished': 'Hide finished',
   'ui.overview.finished-folded': '{count} finished, folded',
+  'ui.overview.finished-shown': '{count} finished, shown',
   'ui.overview.toggle-project': 'Show or hide {title}',
   'ui.overview.fold': 'Collapse {title}',
   'ui.overview.unfold': 'Expand {title}',
