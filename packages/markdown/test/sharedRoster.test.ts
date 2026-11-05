@@ -110,7 +110,7 @@ describe('the reference', () => {
     const good = parseProcess('p', 'version: 1\nroster:\n  from: {repository: my-org/agents, path: roster.yaml, ref: main}\n');
     expect(good.issues).toEqual([]);
     expect(good.rosterRef).toEqual({ repository: 'my-org/agents', path: 'roster.yaml', ref: 'main' });
-    expect(good.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default' });
+    expect(good.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default', task: 'default' });
 
     const noRef = parseProcess('p', 'roster:\n  from: {repository: my-org/agents, path: sub/roster.yaml}\n');
     expect(noRef.rosterRef).toEqual({ repository: 'my-org/agents', path: 'sub/roster.yaml' });
