@@ -195,6 +195,15 @@ contributors:
 
 Nodes, channel ids, tokens, and other instance details are not part of the schema. A field outside the schema is kept, not read, and reported as a warning.
 
+### The roster file
+
+The file a roster is kept in is a YAML mapping with one key, `contributors`, a list of the entries above. [`examples/roster.example.yaml`](../../examples/roster.example.yaml) is a commented sample to copy.
+
+- An organization keeps the file in a repository it owns (for example `roster.yaml` at the root of an `agents` repository) and points to it with `roster.from`. Weaver reads it and never writes to it; a change is a pull request.
+- Each `id` is unique without regard to case, and each `kind` is `human` or `agent`. A list with no entry, or an entry without `id` or `kind`, is an error of the file; the other problems (an agent without `tool`, a field outside the schema) are warnings.
+- Instance details (node addresses, channel ids, tokens) do not belong in it.
+- Adding and editing entries from the editor is [TASK-075](../tasks/TASK-075.md).
+
 A reference names the file that holds a shared roster: `{repository, path, ref}`, where `ref` defaults to the default branch.
 
 ```yaml

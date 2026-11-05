@@ -15,3 +15,5 @@ assignee: claude-code
 Tracked in [Issue #168](https://github.com/blcktgr73/Weaver/issues/168). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Implement reading by reference, the local cache with its age shown, offline use, and the rule that instance settings are ignored. Writing to the referenced repository is not possible.
+
+The reader must read `examples/roster.example.yaml` ([TASK-074](TASK-074.md)) with no issue; add that as a test.

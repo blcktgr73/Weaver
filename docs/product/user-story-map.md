@@ -107,6 +107,7 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-044` — As an organization that runs several agents, I keep the roster and the process profile in my own repository and Weaver reads them by reference, so no one copies them by hand and they do not drift. (Belongs to `REQ-011`.)
 - `US-045` — As a team member, I see who holds a card and who should take it next, and I approve the proposal, so the next assignee is not decided in several places. (Belongs to `REQ-012`.)
 - `US-046` — As a team member, when files of a repository change outside the editor (a `git pull`, a branch switch), the Overview's refresh reads them again, so its warnings match the files on disk. (Defect found on 2026-11-03: after `git pull` added `TASK-064.md`, the warning that Issue #155 had no task file stayed, because the local files are read again only when a document is saved or the view is opened anew. Belongs to `REQ-006`. To be fixed.)
+- `US-047` — As an organization, I keep my people and agents in one roster file with a fixed form, and I add or change an entry from the editor without writing YAML by hand. (Belongs to `REQ-011`.)
 
 ### PALab project adoption
 
