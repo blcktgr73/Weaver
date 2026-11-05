@@ -104,6 +104,10 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-043` — As a team member, when files of a repository change outside the editor (a `git pull`, a branch switch), the Overview's refresh reads them again, so its warnings match the files on disk. (Defect found on 2026-11-03: after `git pull` added `TASK-064.md`, the warning that Issue #155 had no task file stayed, because the local files are read again only when a document is saved or the view is opened anew. Belongs to `REQ-006`. To be fixed.)
 - `US-042` — As a team lead, I can copy a commented sample `process.yaml` into my own repository and edit it, because the sample says where the file goes, what each setting means, and which values it accepts. (Friction found on 2026-11-03: after setting `evidence.pull-request: optional` the card did not change, because the file was not on the default branch of that repository, and nothing said so. Belongs to `REQ-005`.)
 
+- `US-043` — As a team lead, I can declare the fields my tasks must carry and where each one lives, so an agent can pick up a card made by `task create` without a person filling in our contract first. (Belongs to `REQ-010`.)
+- `US-044` — As an organization that runs several agents, I keep the roster and the process profile in my own repository and Weaver reads them by reference, so no one copies them by hand and they do not drift. (Belongs to `REQ-011`.)
+- `US-045` — As a team member, I see who holds a card and who should take it next, and I approve the proposal, so the next assignee is not decided in several places. (Belongs to `REQ-012`.)
+
 ### PALab project adoption
 
 - As a PALab maintainer, I can register another project repository without moving it first.
