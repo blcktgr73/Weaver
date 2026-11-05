@@ -17,9 +17,11 @@ describe('readMarkdownFiles', () => {
     await write('node_modules/x/README.md', 'skipped');
     await write('examples/sample/tasks/TASK-100.md', 'skipped');
     await write('dist/out.md', 'skipped');
+    await write('.claude/worktrees/agent-1/docs/tasks/TASK-001.md', 'skipped');
+    await write('.claude/notes.md', 'kept');
 
     const files = await readMarkdownFiles(root);
-    expect(files.map((f) => f.path).sort()).toEqual(['README.md', 'docs/tasks/TASK-001.md']);
+    expect(files.map((f) => f.path).sort()).toEqual(['.claude/notes.md', 'README.md', 'docs/tasks/TASK-001.md']);
     await fs.rm(root, { recursive: true });
   });
 });
