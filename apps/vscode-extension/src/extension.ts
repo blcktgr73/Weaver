@@ -8,6 +8,7 @@ import { setUp } from './setupWizard';
 import { chooseRepositories, openConfigFile } from './chooseRepositories';
 import { SidebarProvider } from './sidebar';
 import { processStore } from './processStore';
+import { rosterStore } from './rosterStore';
 import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
@@ -19,6 +20,7 @@ const IGNORED_PATH = /[\\/](node_modules|\.git|dist|out)[\\/]/;
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   processStore.init(context.globalState);
+  rosterStore.init(context.globalState);
   const view = new RequirementView();
   const overview = new OverviewView(context.globalState, view, () => refresh());
 

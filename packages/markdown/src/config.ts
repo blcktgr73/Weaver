@@ -107,7 +107,12 @@ const CONFIG_HEADER = `# Weaver personal configuration (DEC-014). It belongs to 
 export function serializeConfig(config: UserConfig): string {
   const data: Record<string, unknown> = { project: { owner: config.project.owner, number: config.project.number } };
   if (config.repositories?.length) data.repositories = config.repositories.map((r) => (r.title ? { repository: r.repository, title: r.title } : r.repository));
-  if (config.roster?.contributors.length) data.roster = { contributors: config.roster.contributors.map((c) => ({ ...c })) };
+  if (config.roster?.contributors.length || config.roster?.from) {
+    data.roster = {
+      ...(config.roster.from ? { from: { ...config.roster.from } } : {}),
+      ...(config.roster.contributors.length ? { contributors: config.roster.contributors.map((c) => ({ ...c })) } : {}),
+    };
+  }
   return `${CONFIG_HEADER}${stringifyYaml(data)}`;
 }
 

@@ -56,6 +56,8 @@ export type OverviewState =
       skippedChecks: Notice[];
       /** Repositories whose process file is being read: their lanes wait, and the checks leave them out. */
       reading: string[];
+      /** The shared roster in use (DEC-017): where it comes from and how long ago GitHub confirmed the kept copy. No age: nothing is kept. */
+      roster?: { reference: string; age?: SnapshotAge };
       /** True while some cards are highlighted, so the header can offer to clear them. */
       focusActive: boolean;
       /** Finished cards (Verified, or a closed Issue) are folded unless this is set. Kept on this computer only. */
@@ -156,6 +158,10 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     }
   }
 
+  const rosterLine =
+    state.kind === 'ready' && state.roster
+      ? `<p class="muted small">${e(state.roster.age ? tt('ui.overview.roster', { reference: state.roster.reference, age: tt(`ui.age.${state.roster.age.unit}` as MessageKey, { count: state.roster.age.count }) }) : tt('ui.overview.roster-none', { reference: state.roster.reference }))}</p>`
+      : '';
   const projectLine = state.kind === 'ready' ? `<span class="muted">${e(tt('ui.overview.project', { title: state.projectTitle }))}</span>` : '';
 
   return `<!DOCTYPE html>
@@ -221,7 +227,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </style>
 </head>
 <body>
-  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>
+  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>${rosterLine}
   ${filter}
   <div class="scroll"${state.kind === 'ready' ? ' data-keep-scroll' : ''}>${body}</div>
 <script nonce="${nonce}">

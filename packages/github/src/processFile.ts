@@ -12,23 +12,30 @@ export type ProcessFileResult =
   | { status: 'read'; text: string; etag?: string }
   | { status: 'failed'; error: Notice };
 
+/** The answer for any one file of a repository; the process file is the first of its kinds. */
+export type RepositoryFileResult = ProcessFileResult;
+
 const API = 'https://api.github.com';
 
 /**
- * Reads the process file of a repository. Pass the `etag` of the text you already have, and GitHub
- * answers "unchanged" without sending it again, at almost no cost against the rate limit. A
- * repository without the file is a normal answer (`missing`), not an error; any other failure
- * comes back as a notice so that one repository cannot stop the others from being read.
+ * Reads one file of a repository as raw text (the contents API). Pass the `etag` of the text you
+ * already have, and GitHub answers "unchanged" without sending it again, at almost no cost against
+ * the rate limit. A file that is not there is a normal answer (`missing`), not an error; any other
+ * failure comes back as a notice so that one repository cannot stop the others from being read.
+ * `ref` is a branch, tag, or commit; left out, the default branch is read.
  */
-export async function fetchProcessFile(
+export async function fetchRepositoryFile(
   token: string,
   repository: string,
-  options: { etag?: string } = {},
+  path: string,
+  options: { etag?: string; ref?: string } = {},
   fetchFn: FetchFn = fetch,
-): Promise<ProcessFileResult> {
+): Promise<RepositoryFileResult> {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const query = options.ref ? `?ref=${encodeURIComponent(options.ref)}` : '';
   let response;
   try {
-    response = await fetchFn(`${API}/repos/${repository}/contents/${PROCESS_FILE}`, {
+    response = await fetchFn(`${API}/repos/${repository}/contents/${encodedPath}${query}`, {
       headers: {
         Accept: 'application/vnd.github.raw+json',
         Authorization: `Bearer ${token}`,
@@ -48,4 +55,14 @@ export async function fetchProcessFile(
   } catch (error) {
     return { status: 'failed', error: { code: 'github.err.network', args: { detail: (error as Error).message } } };
   }
+}
+
+/** Reads the process file of a repository (DEC-015). */
+export async function fetchProcessFile(
+  token: string,
+  repository: string,
+  options: { etag?: string } = {},
+  fetchFn: FetchFn = fetch,
+): Promise<ProcessFileResult> {
+  return fetchRepositoryFile(token, repository, PROCESS_FILE, options, fetchFn);
 }
