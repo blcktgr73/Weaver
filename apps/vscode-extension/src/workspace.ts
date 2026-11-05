@@ -16,7 +16,7 @@ import {
 import { readUserConfig } from './userConfig';
 import { describeRef, rosterStore } from './rosterStore';
 
-const EXCLUDE = '**/{node_modules,.git,dist,out}/**';
+const EXCLUDE = '**/{node_modules,.git,dist,out,examples,.claude/worktrees}/**';
 const MAX_FILES = 2000;
 /** A repository's process file (DEC-015). A workspace may hold the folders of a few repositories. */
 const PROCESS_FILE_GLOB = '**/.weaver/process.yaml';

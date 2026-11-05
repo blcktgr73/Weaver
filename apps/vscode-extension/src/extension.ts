@@ -15,7 +15,7 @@ import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } fr
 const SETUP_PROMPTED_KEY = 'weaver.setup.prompted';
 const WATCH_DELAY_MS = 400;
 /** The folders the scan skips (see workspace.ts) are not watched either. */
-const IGNORED_PATH = /[\\/](node_modules|\.git|dist|out)[\\/]/;
+const IGNORED_PATH = /[\\/](node_modules|\.git|dist|out|examples|\.claude[\\/]worktrees)[\\/]/;
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
