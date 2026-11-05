@@ -15,3 +15,5 @@ assignee: claude-code
 Tracked in [Issue #163](https://github.com/blcktgr73/Weaver/issues/163). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Write a decision record that fixes the shape of the `task` section (fields, `source`, mapping, `require-file`) and how a violation is reported. Add the independence principle to `AGENTS.md`. No code reads the section yet.
+
+Result: [DEC-016](../decisions/DEC-016-task-contract-in-process-file.md) (proposed, open points for the maintainer at its end) and the independence principle in [AGENTS.md](../../AGENTS.md).
