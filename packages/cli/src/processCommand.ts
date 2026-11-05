@@ -1,4 +1,4 @@
-import { formatNotice, Locale, parseProcess, ProcessConfig, ProcessSection, SectionSource, t, defaultProcess, validationKey } from '@palab/weaver-markdown';
+import { defaultSources, formatNotice, Locale, parseProcess, ProcessConfig, ProcessSection, SectionSource, t, defaultProcess, validationKey } from '@palab/weaver-markdown';
 import { fetchProcessFile, mapLimit, PROCESS_READ_LIMIT, type FetchFn } from '@palab/weaver-github';
 
 export { mapLimit } from '@palab/weaver-github';
@@ -26,7 +26,7 @@ export { PROCESS_READ_LIMIT };
 export async function readProcesses(token: string, repositories: readonly string[], locale: Locale, fetchFn?: FetchFn): Promise<ProcessReport[]> {
   return mapLimit(repositories, PROCESS_READ_LIMIT, async (repository): Promise<ProcessReport> => {
     const result = await fetchProcessFile(token, repository, {}, fetchFn);
-    const defaults = { process: defaultProcess(), sources: { columns: 'default', evidence: 'default', stale: 'default' } as Record<ProcessSection, SectionSource> };
+    const defaults = { process: defaultProcess(), sources: defaultSources() as Record<ProcessSection, SectionSource> };
 
     if (result.status === 'read') {
       const parsed = parseProcess(`${repository}/.weaver/process.yaml`, result.text);
@@ -50,7 +50,7 @@ export async function readProcesses(token: string, repositories: readonly string
 export function processText(reports: readonly ProcessReport[]): string {
   const lines: string[] = [];
   for (const r of reports) {
-    const sources = (['columns', 'evidence', 'stale'] as const).map((section) => `${section}=${r.sources[section]}`).join(' ');
+    const sources = (['columns', 'evidence', 'stale', 'task'] as const).map((section) => `${section}=${r.sources[section]}`).join(' ');
     lines.push(`${r.repository}\t${r.file}\t${sources}`);
     for (const issue of r.issues) lines.push(`  ${issue.severity}: ${issue.message}`);
     if (r.error) lines.push(`  error: ${r.error.message}`);

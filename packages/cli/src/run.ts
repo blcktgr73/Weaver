@@ -11,6 +11,7 @@ import {
   MessageArgs,
   MessageKey,
   effectiveRepositories,
+  planTaskFields,
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
@@ -147,6 +148,17 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     if (unknown) return fail(EXIT.usage, 'cli.unknown-criterion', { criterion: unknown, requirement: requirement.id });
     const assigneeType = args.options['assignee-type'] ?? 'agent';
     if (assigneeType !== 'human' && assigneeType !== 'agent') return fail(EXIT.usage, 'cli.bad-assignee-type');
+    // The task contract of the repository (DEC-016). Without a file or a `task` section nothing changes.
+    const given: Record<string, string> = {};
+    for (const entry of args.repeated.field ?? []) {
+      const at = entry.indexOf('=');
+      if (at < 1) return fail(EXIT.usage, 'cli.bad-field');
+      given[entry.slice(0, at).trim()] = entry.slice(at + 1).trim();
+    }
+    const [processReport] = await readProcesses(token, [repository], locale, deps.fetch as unknown as FetchFn | undefined);
+    const contract = processReport?.file === 'read' && processReport.process.task ? planTaskFields(processReport.process.task, given) : undefined;
+    if (!contract && Object.keys(given).length > 0) return fail(EXIT.usage, 'cli.task-create.contract-gaps', { repository, gaps: Object.keys(given).map((field) => formatNotice({ code: 'gap.task-field-undeclared', args: { field } }, locale)) });
+    if (contract && contract.gaps.length > 0) return fail(EXIT.usage, 'cli.task-create.contract-gaps', { repository, gaps: contract.gaps.map((gap) => formatNotice(gap, locale)) });
     const firstTask = artifacts.find((a) => a.kind === 'task');
     const actions = planTaskCreate({
       token,
@@ -160,6 +172,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       assigneeType,
       assignee: args.options.assignee,
       area: args.options.area,
+      contract,
       number: nextTaskNumber(await usedTaskTexts(artifacts, read.read.cards, repository, deps.system)),
       taskDirectory: firstTask ? path.posix.dirname(firstTask.path) : 'docs/tasks',
       root,

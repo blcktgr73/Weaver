@@ -3,6 +3,7 @@ import { parse as parseYaml } from 'yaml';
 import type { MessageArgs } from './i18n';
 import { KANBAN_COLUMNS, KanbanColumn, LABEL_FOR_COLUMN } from './kanban';
 import { DEFAULT_STALE_DAYS } from './stale';
+import { readTaskContract, TaskContract } from './taskContract';
 import type { ValidationIssue } from './types';
 
 export const COLUMN_SOURCES = ['labels', 'board-status'] as const;
@@ -33,9 +34,11 @@ export interface ProcessConfig {
     /** Days without a change before an open card in an active column is idle. */
     idleDays: number;
   };
+  /** The task contract of the organization (DEC-016). Absent when the file has no 	ask section, which keeps today's behavior. */
+  task?: TaskContract;
 }
 
-export const PROCESS_SECTIONS = ['columns', 'evidence', 'stale'] as const;
+export const PROCESS_SECTIONS = ['columns', 'evidence', 'stale', 'task'] as const;
 export type ProcessSection = (typeof PROCESS_SECTIONS)[number];
 
 /** Where a section came from: the repository's file, or the defaults. */
@@ -55,6 +58,9 @@ export function defaultProcess(): ProcessConfig {
 }
 
 export const DEFAULT_PROCESS: Readonly<ProcessConfig> = defaultProcess();
+
+/** Every section is the default: nothing was read from a file. */
+export const defaultSources = (): Record<ProcessSection, SectionSource> => ({ columns: 'default', evidence: 'default', stale: 'default', task: 'default' });
 
 export interface ProcessParseResult {
   /** The shared roster the file names with `roster.from` (DEC-017). Not a section: it has no default and no source. */
@@ -156,7 +162,7 @@ function readStale(data: Record<string, unknown>, add: Add): ProcessConfig['stal
 export function parseProcess(path: string, text: string): ProcessParseResult {
   const issues: ValidationIssue[] = [];
   const report = (severity: ValidationIssue['severity'], code: string, args?: MessageArgs) => issues.push({ severity, code, ...(args ? { args } : {}), path });
-  const allDefault = (): ProcessParseResult => ({ process: defaultProcess(), sources: { columns: 'default', evidence: 'default', stale: 'default' }, issues });
+  const allDefault = (): ProcessParseResult => ({ process: defaultProcess(), sources: defaultSources(), issues });
 
   let data: unknown;
   try {
@@ -178,8 +184,8 @@ export function parseProcess(path: string, text: string): ProcessParseResult {
 
   const rosterRef = readRosterEntry(data.roster, (code, args) => report('warning', code, args));
   const process = defaultProcess();
-  const sources: Record<ProcessSection, SectionSource> = { columns: 'default', evidence: 'default', stale: 'default' };
-  const readers = { columns: readColumns, evidence: readEvidence, stale: readStale } as const;
+  const sources = defaultSources();
+  const readers = { columns: readColumns, evidence: readEvidence, stale: readStale, task: readTaskContract } as const;
 
   for (const section of PROCESS_SECTIONS) {
     const value = data[section];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addIssueToProject, createIssue, type Fetch } from '../src';
+import { addIssueToProject, createIssue, setProjectField, type Fetch } from '../src';
 
 const project = { owner: 'me', number: 1 };
 
@@ -21,7 +21,7 @@ const lookup = (extra: Record<string, unknown> = {}) => ({
 describe('addIssueToProject', () => {
   it('looks up the Project and the Issue, then adds the Issue', async () => {
     const { fetchImpl, asked } = fake({ body: lookup() }, { body: { data: { addProjectV2ItemById: { item: { id: 'ITEM' } } } } });
-    await addIssueToProject('t', project, 'https://github.com/me/Weaver/issues/5', fetchImpl);
+    expect(await addIssueToProject('t', project, 'https://github.com/me/Weaver/issues/5', fetchImpl)).toBe('ITEM');
     expect(asked).toHaveLength(2);
     expect(asked[0].variables).toEqual({ o: 'me', n: 1, u: 'https://github.com/me/Weaver/issues/5' });
     expect(asked[1].variables).toEqual({ p: 'PROJECT', c: 'ISSUE' });
@@ -63,5 +63,35 @@ describe('createIssue', () => {
     const refuse = (status: number, message: string): Fetch => async () => ({ ok: false, status, json: async () => ({ message }) });
     await expect(createIssue('t', 'me/x', { title: '', body: '', labels: [] }, refuse(404, 'Not Found'))).rejects.toThrow('404: Not Found');
     await expect(createIssue('t', 'me/x', { title: '', body: '', labels: [] }, refuse(401, 'Bad credentials'))).rejects.toThrow('401');
+  });
+});
+
+describe('setProjectField', () => {
+  const board = (field: unknown) => ({ body: { data: { repositoryOwner: { projectV2: { id: 'PROJECT', field } } } } });
+  const ok = { body: { data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'ITEM' } } } } };
+
+  it('sets a text field by its name', async () => {
+    const { fetchImpl, asked } = fake(board({ __typename: 'ProjectV2Field', id: 'F', dataType: 'TEXT' }), ok);
+    await setProjectField('t', project, 'ITEM', 'Thread', 'a link', fetchImpl);
+    expect(asked[0].variables).toEqual({ o: 'me', n: 1, f: 'Thread' });
+    expect(asked[1].variables).toEqual({ p: 'PROJECT', i: 'ITEM', f: 'F', v: 'a link' });
+  });
+
+  it('sets a single-select field to the option with that name', async () => {
+    const { fetchImpl, asked } = fake(board({ __typename: 'ProjectV2SingleSelectField', id: 'F', options: [{ id: 'A', name: 'P0' }, { id: 'B', name: 'P1' }] }), ok);
+    await setProjectField('t', project, 'ITEM', 'Priority', 'P1', fetchImpl);
+    expect(asked[1].variables).toEqual({ p: 'PROJECT', i: 'ITEM', f: 'F', o: 'B' });
+  });
+
+  it('changes nothing when the field, the option, or the type is wrong', async () => {
+    let r = fake(board(null));
+    await expect(setProjectField('t', project, 'ITEM', 'Nope', 'x', r.fetchImpl)).rejects.toMatchObject({ notice: { code: 'github.err.project-field-not-found' } });
+    expect(r.asked).toHaveLength(1);
+    r = fake(board({ __typename: 'ProjectV2SingleSelectField', id: 'F', options: [{ id: 'A', name: 'P0' }] }));
+    await expect(setProjectField('t', project, 'ITEM', 'Priority', 'P9', r.fetchImpl)).rejects.toMatchObject({ notice: { code: 'github.err.project-field-no-option' } });
+    expect(r.asked).toHaveLength(1);
+    r = fake(board({ __typename: 'ProjectV2Field', id: 'F', dataType: 'DATE' }));
+    await expect(setProjectField('t', project, 'ITEM', 'Due', '2026-01-01', r.fetchImpl)).rejects.toMatchObject({ notice: { code: 'github.err.project-field-type' } });
+    expect(r.asked).toHaveLength(1);
   });
 });

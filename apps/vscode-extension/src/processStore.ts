@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode';
-import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig, ProcessSection, SectionSource, defaultProcess } from '@palab/weaver-markdown';
+import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig, ProcessSection, SectionSource, defaultProcess, defaultSources } from '@palab/weaver-markdown';
 import { ProcessCacheEntry, refreshProcessFiles } from '@palab/weaver-github';
 
 const KEY = 'weaver.process.cache';
@@ -71,7 +71,7 @@ export class ProcessStore {
     const config = this.config(repository);
     if (config) return { repository, file: 'read', sources: config.sources, process: config };
     const entry = this.entries.get(repository.toLowerCase());
-    return { repository, file: entry ? 'missing' : 'unknown', sources: { columns: 'default', evidence: 'default', stale: 'default' }, process: defaultProcess() };
+    return { repository, file: entry ? 'missing' : 'unknown', sources: defaultSources(), process: defaultProcess() };
   }
 
   evidenceFor = (repository: string): EvidenceRules | undefined => this.config(repository)?.evidence;

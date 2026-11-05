@@ -271,6 +271,124 @@ describe('weaver task create', () => {
   });
 });
 
+describe('weaver task create with a task contract (DEC-016)', () => {
+  // Neutral names: the contract is the organization's, not Weaver's.
+  const PROCESS = [
+    'task:',
+    '  fields:',
+    '    owner:',
+    '      required: true',
+    '      values: [alpha, beta]',
+    '      label: "owner:{value}"',
+    '    priority:',
+    '      values: [P0, P1]',
+    '      source: project',
+    '      project-field: Priority',
+    '  body:',
+    '    sections: [Context, Done when]',
+    '',
+  ].join('\n');
+  const BASE = ['task', 'create', '--title', 'Add the export button', '--requirement', 'REQ-001'];
+
+  /** The repository has the process file, and the Project has a Priority field; every write is recorded. */
+  function withContract(text: string | null = PROCESS) {
+    const s = setup();
+    const original = s.deps.fetch as Fetch;
+    const posted: { url: string; body: Record<string, unknown> }[] = [];
+    s.deps.fetch = (async (url: string, init: { method?: string; body?: string }) => {
+      if (url.includes('/contents/.weaver/')) {
+        if (text === null) return original(url, init as never);
+        return { ok: true, status: 200, headers: { get: () => null }, text: async () => text };
+      }
+      const body = init?.body ? (JSON.parse(init.body) as Record<string, unknown>) : {};
+      const reply = (json: unknown) => ({ ok: true, status: 200, json: async () => json });
+      if (typeof body.query === 'string' && body.query.includes('field(name:$f)')) {
+        return reply({ data: { repositoryOwner: { projectV2: { id: 'PROJECT', field: { __typename: 'ProjectV2SingleSelectField', id: 'FIELD', options: [{ id: 'OPT0', name: 'P0' }, { id: 'OPT1', name: 'P1' }] } } } } });
+      }
+      if (typeof body.query === 'string' && body.query.includes('updateProjectV2ItemFieldValue')) {
+        posted.push({ url: 'field', body });
+        return reply({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'ITEM' } } } });
+      }
+      if (url.endsWith('/issues')) posted.push({ url, body });
+      return original(url, init as never);
+    }) as unknown as Fetch;
+    return { ...s, posted };
+  }
+
+  const FIELDS = ['--field', 'owner=alpha', '--field', 'priority=P1'];
+
+  it('shows the labels, the Project field, and the file in the plan, and creates nothing until they are approved', async () => {
+    const { deps, out, err, posted } = withContract();
+    expect(await run([...BASE, ...FIELDS], deps)).toBe(EXIT.unconfirmed);
+    expect(JSON.parse(out.join('')).actions.map((a: { kind: string }) => a.kind)).toEqual(['issue.create', 'project.add', 'project.field', 'files.pull-request']);
+    const shown = err.join('');
+    expect(shown).toContain('owner:alpha');
+    expect(shown).toContain('Priority');
+    expect(shown).toContain('owner=alpha');
+    expect(shown).toContain('Context, Done when');
+    expect(posted).toEqual([]);
+  });
+
+  it('writes only what the plan showed: the label, the board field, the file field, and the empty headings', async () => {
+    const first = withContract();
+    await run([...BASE, ...FIELDS], first.deps);
+    const ids = (JSON.parse(first.out.join('')).actions as { id: string }[]).map((a) => a.id).join(',');
+
+    const { deps, out, posted, written } = withContract();
+    expect(await run([...BASE, ...FIELDS, '--approve', ids], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).status).toBe('done');
+    expect((posted.find((p) => p.url.endsWith('/issues'))?.body as { labels: string[] }).labels).toEqual(['task', 'status:backlog', 'owner:alpha']);
+    expect(posted.find((p) => p.url === 'field')?.body.variables).toEqual({ p: 'PROJECT', i: 'ITEM', f: 'FIELD', o: 'OPT1' });
+    const task = written.find((w) => w.file.endsWith('TASK-041.md'))?.text ?? '';
+    expect(task).toContain('owner: alpha');
+    expect(task).not.toContain('priority');
+    expect(task).toMatch(/## Context\n\n## Done when\n/);
+  });
+
+  it('stops with a gap and creates nothing when a required field has no value or a value is not allowed', async () => {
+    for (const [fields, gap] of [
+      [[], 'the required task field "owner" has no value'],
+      [['--field', 'owner=gamma'], 'is not one of: alpha, beta'],
+      [['--field', 'owner=alpha', '--field', 'size=L'], 'declares no field "size"'],
+    ] as const) {
+      const { deps, out, posted } = withContract();
+      expect(await run([...BASE, ...fields], deps)).toBe(EXIT.usage);
+      const { error } = JSON.parse(out.join(''));
+      expect(error.code).toBe('cli.task-create.contract-gaps');
+      expect(error.message).toContain(gap);
+      expect(posted).toEqual([]);
+    }
+  });
+
+  it('keeps today\'s behavior without a task section, and refuses a field it cannot place', async () => {
+    const plain = withContract('columns:\n  source: labels\n');
+    expect(await run(BASE, plain.deps)).toBe(EXIT.unconfirmed);
+    expect(JSON.parse(plain.out.join('')).actions.map((a: { kind: string }) => a.kind)).toEqual(['issue.create', 'project.add', 'files.pull-request']);
+    expect(plain.err.join('')).toContain('with the labels task, status:backlog.');
+
+    const none = withContract(null);
+    expect(await run([...BASE, '--field', 'owner=alpha'], none.deps)).toBe(EXIT.usage);
+    expect(JSON.parse(none.out.join('')).error.code).toBe('cli.task-create.contract-gaps');
+  });
+
+  it('refuses a --field that is not written name=value', async () => {
+    const { deps, out } = withContract();
+    expect(await run([...BASE, '--field', 'owner'], deps)).toBe(EXIT.usage);
+    expect(JSON.parse(out.join('')).error.code).toBe('cli.bad-field');
+  });
+
+  it('reads --field as many times as it is given', () => {
+    const args = parseArgs(['task', 'create', '--field', 'a=1', '--field', 'b=2']);
+    expect('unknown' in args ? [] : args.repeated.field).toEqual(['a=1', 'b=2']);
+  });
+
+  it('writes the declared fields and headings into the task file', () => {
+    const text = renderTaskFile({ id: 'TASK-001', title: 'T', requirement: 'REQ-001', issueUrl: 'https://github.com/me/x/issues/1', issueNumber: 1, repository: 'me/x', criteria: [], assigneeType: 'agent', fileFields: [{ name: 'owner', value: 'alpha' }, { name: 'note', value: 'a: b' }], sections: ['Context'] });
+    expect(text).toContain('assignee_type: agent\nowner: alpha\nnote: "a: b"\n---');
+    expect(text.endsWith('the Kanban column comes from the Issue.\n\n## Context\n')).toBe(true);
+  });
+});
+
 describe('task file helpers', () => {
   it('numbers after the largest task anywhere, ignoring other text', () => {
     expect(nextTaskNumber(['TASK-009', '[TASK-012] x', 'docs/task-040-y', 'no task'])).toBe(41);

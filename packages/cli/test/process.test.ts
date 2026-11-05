@@ -58,10 +58,10 @@ describe('readProcesses', () => {
   it('shows what the file sets, and the defaults for a repository without one', async () => {
     const { fetchFn } = contents({ 'me/a': { status: 200, text: 'version: 1\ncolumns:\n  source: board-status\nevidence:\n  pull-request: optional\n', etag: '"x"' } });
     const [a, b] = await readProcesses('t', ['me/a', 'me/b'], 'en', fetchFn);
-    expect(a).toMatchObject({ repository: 'me/a', file: 'read', sources: { columns: 'repository', evidence: 'repository', stale: 'default' }, issues: [] });
+    expect(a).toMatchObject({ repository: 'me/a', file: 'read', sources: { columns: 'repository', evidence: 'repository', stale: 'default', task: 'default' }, issues: [] });
     expect(a.process.columns.source).toBe('board-status');
     expect(a.process.evidence.pullRequest).toBe('optional');
-    expect(b).toMatchObject({ file: 'missing', sources: { columns: 'default', evidence: 'default', stale: 'default' }, issues: [] });
+    expect(b).toMatchObject({ file: 'missing', sources: { columns: 'default', evidence: 'default', stale: 'default', task: 'default' }, issues: [] });
     expect(b.process).toEqual(defaultProcess());
   });
 
@@ -69,7 +69,7 @@ describe('readProcesses', () => {
     const text = 'columns:\n  source: magic\nstale:\n  idle-days: 7\n';
     const { fetchFn } = contents({ 'me/a': { status: 200, text } });
     const [en] = await readProcesses('t', ['me/a'], 'en', fetchFn);
-    expect(en.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'repository' });
+    expect(en.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'repository', task: 'default' });
     expect(en.process.stale.idleDays).toBe(7);
     expect(en.issues.map((i) => `${i.severity}:${i.code}`)).toEqual(['error:process-invalid-column-source', 'warning:process-section-ignored']);
     expect(en.issues[0].message).toContain('"labels" or "board-status"');
@@ -91,7 +91,7 @@ describe('processText', () => {
   it('prints a line per repository with where each section comes from, and its problems', async () => {
     const { fetchFn } = contents({ 'me/a': { status: 200, text: 'stale:\n  idle-days: 0\n' }, 'me/b': { status: 403 } });
     const text = processText(await readProcesses('t', ['me/a', 'me/b', 'me/c'], 'en', fetchFn));
-    expect(text).toContain('me/a\tread\tcolumns=default evidence=default stale=default');
+    expect(text).toContain('me/a\tread\tcolumns=default evidence=default stale=default task=default');
     expect(text).toContain('  error: ');
     expect(text).toContain('me/b\tfailed\t');
     expect(text).toContain('me/c\tmissing\t');
@@ -121,7 +121,7 @@ describe('weaver process', () => {
   it('says that a repository without the file uses the defaults', async () => {
     const { deps, out } = withContents({});
     await run(['process', '--text'], deps);
-    expect(out.join('')).toBe('me/Weaver\tmissing\tcolumns=default evidence=default stale=default\n');
+    expect(out.join('')).toBe('me/Weaver\tmissing\tcolumns=default evidence=default stale=default task=default\n');
   });
 
   it('can be limited to one repository, and then finds nothing for one that is not there', async () => {

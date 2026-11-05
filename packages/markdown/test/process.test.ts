@@ -35,7 +35,7 @@ describe('parseProcess: a file that holds nothing, or something partial', () => 
     for (const text of ['', '   \n', 'version: 1\n', '# only a comment\n']) {
       const result = parse(text);
       expect(result.process).toEqual(defaultProcess());
-      expect(result.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default' });
+      expect(result.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default', task: 'default' });
       expect(result.issues).toEqual([]);
     }
   });
@@ -44,7 +44,7 @@ describe('parseProcess: a file that holds nothing, or something partial', () => 
     const result = parse('version: 1\ncolumns:\n  source: board-status\n');
     expect(result.process.columns.source).toBe('board-status');
     expect(result.process.evidence).toEqual(defaultProcess().evidence);
-    expect(result.sources).toEqual({ columns: 'repository', evidence: 'default', stale: 'default' });
+    expect(result.sources).toEqual({ columns: 'repository', evidence: 'default', stale: 'default', task: 'default' });
     expect(result.issues).toEqual([]);
   });
 
@@ -83,7 +83,7 @@ describe('parseProcess: a section with an error is ignored and the others still 
     const result = parse('columns:\n  source: magic\nevidence:\n  pull-request: optional\n');
     expect(codes('columns:\n  source: magic\nevidence:\n  pull-request: optional\n')).toEqual(['error:process-invalid-column-source', 'warning:process-section-ignored']);
     expect(result.process.columns).toEqual(defaultProcess().columns);
-    expect(result.sources).toEqual({ columns: 'default', evidence: 'repository', stale: 'default' });
+    expect(result.sources).toEqual({ columns: 'default', evidence: 'repository', stale: 'default', task: 'default' });
     expect(result.process.evidence.pullRequest).toBe('optional');
   });
 
@@ -119,7 +119,7 @@ describe('parseProcess: a file that cannot be used at all', () => {
   it('ignores the whole file when it is not valid YAML', () => {
     const result = parse('columns: [unclosed');
     expect(result.process).toEqual(defaultProcess());
-    expect(result.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default' });
+    expect(result.sources).toEqual({ columns: 'default', evidence: 'default', stale: 'default', task: 'default' });
     expect(codes('columns: [unclosed')).toEqual(['error:process-invalid-yaml']);
   });
 
