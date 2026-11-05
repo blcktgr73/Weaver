@@ -1,6 +1,6 @@
 # DEC-013: The contributor roster is a part of the personal configuration, and task files record reviewer and approval
 
-- Status: proposed
+- Status: accepted on 2026-11-05, amended by [DEC-017](./DEC-017-shared-roster-by-reference.md): items 1 and 2 below (location and shape) are changed as marked; items 3 to 5 stand
 - Date: 2026-11-01
 - Related: `REQ-002`, `TASK-013`, `TASK-014`, `TASK-015`, [DEC-005](./DEC-005-task-files.md), [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md), [DEC-014](./DEC-014-user-configuration.md)
 
@@ -10,8 +10,8 @@
 
 ## Decision
 
-1. **Location.** The roster is the `roster` entry of the personal configuration `~/.weaver/config.yaml` ([DEC-014](./DEC-014-user-configuration.md)). It is not committed. There is no `roster.yaml`. Without a roster, nothing judges an owner and the owner can be typed by hand.
-2. **Shape.** A `roster` mapping with a `contributors` list. Each entry has `id` (the name task files use) and `kind` (`human` or `agent`). Optional: `name`, `github` (the login; for a human it becomes the Issue assignee), and for an agent `tool`, `model`, and `reach` (how it is reached). An agent without `tool` or `reach` is accepted with a warning. Ids and logins are matched without regard to case.
+1. **Location.** *(Amended by [DEC-017](./DEC-017-shared-roster-by-reference.md): the roster of an organization is read by reference from a repository it owns, and the personal roster below is an overlay on it.)* The roster is the `roster` entry of the personal configuration `~/.weaver/config.yaml` ([DEC-014](./DEC-014-user-configuration.md)). It is not committed. There is no `roster.yaml`. Without a roster, nothing judges an owner and the owner can be typed by hand.
+2. **Shape.** *(Amended by DEC-017: an entry also has `roles`, a list of strings, and `reach` is one entry or a list of `{type, value}`; a plain string is still read as `{type: text, value}`.)* A `roster` mapping with a `contributors` list. Each entry has `id` (the name task files use) and `kind` (`human` or `agent`). Optional: `name`, `github` (the login; for a human it becomes the Issue assignee), and for an agent `tool`, `model`, and `reach` (how it is reached). An agent without `tool` or `reach` is accepted with a warning. Ids and logins are matched without regard to case.
 3. **Task fields.** `assignee` and `assignee_type` stay as they are. New, all optional: `reviewer` (who reviews, apart from who does it), `approved_by`, and `approved_on` (a date). The approver must be a human in the roster.
 4. **Gaps, not errors.** An owner, reviewer, or approver that is not in the roster, an approver that is an agent, and agent work that is Verified with no human approval are shown as gaps in the Requirement view. They do not fail validation, because the roster can be adopted step by step.
 5. **Writing.** The editor changes `assignee`, `assignee_type`, `reviewer`, `approved_by`, and `approved_on` in the task file, and the Issue assignee, only after the person confirms what will change. A human owner with a `github` login becomes the Issue assignee; for an agent the Issue assignee is left as it is, because an agent normally has no GitHub account (DEC-008).
@@ -24,5 +24,5 @@
 
 ## Not decided yet
 
-- A roster per repository, for a person who works with different teams.
+- A roster per repository, for a person who works with different teams. A referenced roster ([DEC-017](./DEC-017-shared-roster-by-reference.md)) covers most of this need.
 - Handing a task to a remote agent (`TASK-016`, deferred).
