@@ -4,7 +4,7 @@ type: requirement
 title: A shared roster and process profile are read from a reference
 status: draft
 owner: PALab
-story_ids: [US-044]
+story_ids: [US-044, US-047]
 repository: blcktgr73/Weaver
 github_project: PALab Ops Kanban
 ---
@@ -27,11 +27,15 @@ An organization keeps the roster and the process profile in its own repository. 
 - A person's own roster ([DEC-013](../decisions/DEC-013-contributor-roster.md)) still works; the rule for combining it with a referenced roster is fixed in a decision.
 - The process profile (the task section of [REQ-010](./REQ-010-organization-defined-task-contract.md)) can also come from a reference, and the decision says where the reference is declared.
 - Weaver never writes to the referenced repository. A change to the original goes through review in the repository that owns it.
+- The file that holds the roster has a fixed form (a YAML mapping with a `contributors` list, in a repository the organization owns), described in the artifact schema and shown by a commented sample, so a person can write it by hand.
+- A person can add, change, and remove a contributor from the editor, after seeing the change and keeping the comments of the file. The edit goes to the personal roster or to a local file the person commits; it is never written to a referenced repository.
 
 ## Tasks
 
 - `TASK-069` Decide the roster schema and the reference mechanism — [GitHub Issue #167](https://github.com/blcktgr73/Weaver/issues/167)
 - `TASK-070` Read the roster and the profile from a reference with a cache — [GitHub Issue #168](https://github.com/blcktgr73/Weaver/issues/168)
+- `TASK-074` Fix the form of the roster file and add a sample — [GitHub Issue #177](https://github.com/blcktgr73/Weaver/issues/177)
+- `TASK-075` Add and edit contributors from the editor — [GitHub Issue #178](https://github.com/blcktgr73/Weaver/issues/178)
 
 Origin: proposal [#161](https://github.com/blcktgr73/Weaver/issues/161). The shape is decided in the first task of each requirement before any code follows it.
 

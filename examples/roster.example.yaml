@@ -1,0 +1,37 @@
+# The roster: the people and agents that work can be given to (DEC-013, DEC-017).
+#
+# Keep this file in a repository your organization owns, and point to it from the
+# `.weaver/process.yaml` of each repository that uses it:
+#
+#   roster:
+#     from: {repository: your-org/agents, path: roster.yaml, ref: main}
+#
+# Weaver only reads this file and never writes to it. Change it by pull request.
+# Never write node addresses, channel ids, tokens, or other instance details here;
+# Weaver keeps such a field out of use and warns about it.
+
+contributors:
+  - id: maria                  # required. The name task files use. Unique without regard to case.
+    kind: human                # required. human | agent
+    name: Maria Kim            # optional. A display name.
+    github: maria-dev          # optional. For a human it becomes the Issue assignee.
+    roles: [owner, approver]   # optional. Plain strings; what a role means is your policy.
+
+  - id: claude-code
+    kind: agent
+    tool: Claude Code          # for an agent: the tool or product. A missing one is a warning.
+    model: opus                # optional.
+    roles: [implementer]
+    reach:                     # how work gets to it: one entry or a list of {type, value}.
+      - type: label            # Weaver acts only on `label`: the label is added to the Issue.
+        value: dispatch:claude-code
+
+  - id: reviewer-agent
+    kind: agent
+    tool: Claude Code
+    roles: [reviewer]
+    reach:
+      - type: label
+        value: dispatch:reviewer-agent
+      - type: text             # any other type is kept and shown, never acted on.
+        value: also reachable by a comment in the Issue
