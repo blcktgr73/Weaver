@@ -173,4 +173,38 @@ roster:
 | `github` | no | The GitHub login. |
 | `tool`, `model`, `reach` | agents | Which tool or model it is, and how it is reached. A missing `tool` or `reach` is a warning. |
 
+### Three layers and the shared roster
+
+[DEC-017](../decisions/DEC-017-shared-roster-by-reference.md) adds two layers to the party fields above, and lets an organization provide the roster from a repository it owns.
+
+```yaml
+contributors:
+  - id: reviewer-agent        # party: who
+    kind: agent
+    tool: Claude Code
+    roles: [reviewer]         # role: what it can take; plain strings, the meaning is the organization's
+    reach:                    # reach: how work gets to it; one entry or a list
+      - type: label
+        value: dispatch:reviewer-agent
+```
+
+| Field | Meaning |
+| --- | --- |
+| `roles` | A list of plain strings. Weaver matches a task or a rule to a role; it defines none. |
+| `reach` | `{type, value}` or a list of them. Weaver acts only on `type: label` (the label is added to the Issue). Another type is kept and shown, not acted on. A plain string is read as `{type: text, value}`. |
+
+Nodes, channel ids, tokens, and other instance details are not part of the schema. A field outside the schema is kept, not read, and reported as a warning.
+
+A reference names the file that holds a shared roster: `{repository, path, ref}`, where `ref` defaults to the default branch.
+
+```yaml
+# .weaver/process.yaml of a repository (a personal config may hold one `roster.from` too; this one wins)
+roster:
+  from: {repository: my-org/agents, path: roster.yaml, ref: main}
+task:
+  from: {repository: my-org/agents, path: task-contract.yaml}   # the profile of REQ-010; a section written in place wins field by field
+```
+
+Weaver reads the file through GitHub with the person's token, keeps the last text on the person's computer with its `ETag`, shows its age, and works from it when offline. It never writes to the referenced repository. A missing, unreadable, or partly invalid file gives gaps and warnings, not errors. A personal `roster.contributors` is an overlay: the same id (without regard to case) overrides the fields it sets, an id only in it is added, and it never removes a referenced contributor.
+
 A task file may also name `reviewer`, `approved_by`, and `approved_on`. With a roster, an owner, reviewer, or approver that is not in it, an approver that is an agent, and Verified agent work without a human approval are shown as gaps.
