@@ -45,7 +45,12 @@ function str(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 }
 
-export function parseArtifact(path: string, text: string): ParseResult {
+export interface ParseOptions {
+  /** Front matter keys of a task that the organization's task contract declares (DEC-016); they are not unknown. */
+  declaredTaskFields?: readonly string[];
+}
+
+export function parseArtifact(path: string, text: string, options: ParseOptions = {}): ParseResult {
   const match = FRONTMATTER.exec(text);
   if (!match) return { isArtifact: false, issues: [] };
 
@@ -95,8 +100,9 @@ export function parseArtifact(path: string, text: string): ParseResult {
   }
 
   const known = type === 'requirement' ? KNOWN_REQUIREMENT_FIELDS : KNOWN_TASK_FIELDS;
+  const declared = type === 'task' ? options.declaredTaskFields ?? [] : [];
   for (const key of Object.keys(fm)) {
-    if (!known.includes(key)) add('warning', 'unknown-field', { field: key });
+    if (!known.includes(key) && !declared.includes(key)) add('warning', 'unknown-field', { field: key });
   }
 
   const status = statusRaw as LifecycleStatus | undefined;

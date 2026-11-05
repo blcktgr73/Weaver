@@ -2,6 +2,7 @@ import type { MessageArgs } from './i18n';
 import type { KanbanColumn, KanbanPlacement } from './kanban';
 import { normalizeIssueUrl, requirementsByIssue } from './overview';
 import type { Artifact } from './types';
+import { contractGaps, type ContractGapKind, type TaskContract } from './taskContract';
 
 export type MismatchKind =
   | 'task-without-issue'
@@ -9,7 +10,8 @@ export type MismatchKind =
   | 'issue-not-on-project'
   | 'card-without-file'
   | 'merged-pr-not-linked'
-  | 'board-status-differs';
+  | 'board-status-differs'
+  | ContractGapKind;
 
 /** One place where the repository files, the Issues, and the central Project do not agree. */
 export interface Mismatch {
@@ -34,6 +36,10 @@ export interface MismatchCard {
   /** A closed Issue has nothing left to close, so a pull request that did not close it is not a mismatch. */
   state?: 'open' | 'closed';
   placement: KanbanPlacement;
+  /** The labels of the Issue. Left out, they were not read and a label is not judged. */
+  labels?: readonly string[];
+  /** The Project fields that were read, by name (the `project-field` of a task contract). Left out, they were not read. */
+  fields?: Record<string, string>;
 }
 
 export interface MergedPull {
@@ -87,6 +93,8 @@ export interface MismatchInput {
   exceptionsIgnored?: readonly string[];
   /** Repositories whose process does not need a pull request that closes the Issue (DEC-015). */
   closingNotRequired?: readonly string[];
+  /** The task contract of a repository's process (DEC-016); without one, tasks are not judged against a contract. */
+  contractFor?: (repository: string) => TaskContract | undefined;
 }
 
 /**
@@ -112,6 +120,13 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
     if (artifact.kind !== 'task') continue;
     const repository = artifact.repository?.toLowerCase();
     if (repository && !registered.has(repository)) continue;
+    const contract = repository ? input.contractFor?.(repository) : undefined;
+    if (contract) {
+      const card = artifact.issue ? cardByUrl.get(normalizeIssueUrl(artifact.issue)) : undefined;
+      for (const gap of contractGaps(artifact.frontmatter, contract, card?.labels ? { labels: card.labels, ...(card.fields ? { fields: card.fields } : {}) } : undefined)) {
+        found.push({ kind: gap.kind, subject: artifact.id, args: { task: artifact.id, ...gap.args }, path: artifact.path });
+      }
+    }
     if (!artifact.issue) {
       found.push({ kind: 'task-without-issue', subject: artifact.id, args: { task: artifact.id }, path: artifact.path });
     } else if (!ISSUE_URL.test(artifact.issue.trim())) {
@@ -127,7 +142,9 @@ export function findMismatches(input: MismatchInput): Mismatch[] {
   for (const card of cards) {
     const repository = card.repository.toLowerCase();
     const label = `#${card.number}`;
-    if (seen.has(repository) && !links.has(normalizeIssueUrl(card.url))) {
+    // A repository whose process lets a card be an Issue with no file does not miss it (DEC-016 item 3).
+    const filesNeeded = input.contractFor?.(repository)?.requireFile !== false;
+    if (filesNeeded && seen.has(repository) && !links.has(normalizeIssueUrl(card.url))) {
       found.push({ kind: 'card-without-file', subject: label, args: { number: card.number, repository: card.repository, title: card.title }, url: card.url });
     }
     // The label rules already report an inconsistent card; compare the board only when they are quiet.

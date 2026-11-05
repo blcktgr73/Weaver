@@ -214,3 +214,34 @@ describe('readProject', () => {
     }
   });
 });
+
+describe('readProject: Project fields of a task contract (DEC-016)', () => {
+  it('asks for nothing extra and puts no fields on the cards when none are named', async () => {
+    let query = '';
+    const fetchImpl: Fetch = async (_url, init) => {
+      query = JSON.parse(init.body).query;
+      return { ok: true, status: 200, json: async () => page([issue('me/a', 1)], null) };
+    };
+    const result = await readProject('t', project, undefined, fetchImpl);
+    expect(query).not.toContain('f0:');
+    expect(result.ok && result.read.cards[0]).not.toHaveProperty('fields');
+  });
+
+  it('reads the named fields, single select or text, and leaves out a field with no value', async () => {
+    let query = '';
+    const fetchImpl: Fetch = async (_url, init) => {
+      query = JSON.parse(init.body).query;
+      const nodes = [
+        { ...issue('me/a', 1), f0: { name: 'high' }, f1: { text: 'waiting' }, f2: null },
+        issue('me/a', 2),
+      ];
+      return { ok: true, status: 200, json: async () => page(nodes, null) };
+    };
+    const result = await readProject('t', project, undefined, fetchImpl, ['Level', 'Blocker "x"', 'Empty']);
+    expect(query).toContain('f0:fieldValueByName(name:"Level")');
+    expect(query).toContain('f1:fieldValueByName(name:"Blocker \\"x\\"")');
+    const cards = result.ok ? result.read.cards : [];
+    expect(cards[0].fields).toEqual({ Level: 'high', 'Blocker "x"': 'waiting' });
+    expect(cards[1].fields).toEqual({});
+  });
+});

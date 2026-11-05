@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   Artifact,
+  declaredTaskFieldsOf,
   loadWorkspace,
   parseProcess,
   rosterGaps,
@@ -20,6 +21,8 @@ const MAX_FILES = 2000;
 /** A repository's process file (DEC-015). A workspace may hold the folders of a few repositories. */
 const PROCESS_FILE_GLOB = '**/.weaver/process.yaml';
 const MAX_PROCESS_FILES = 20;
+
+const PROCESS_FILE_PATH = '.weaver/process.yaml';
 
 export interface Loaded extends WorkspaceResult {
   uris: Map<string, vscode.Uri>;
@@ -41,24 +44,30 @@ export async function loadWorkspaceArtifacts(): Promise<Loaded> {
       return { path, text: decoder.decode(bytes) };
     }),
   );
-  const loaded = loadWorkspace(files);
 
-  // The process files of the repositories in the workspace are checked too, so that a mistake
-  // shows in the Problems panel. A wrong section keeps its defaults; nothing else changes here.
+  // The process files of the repositories in the workspace are read first: the task fields a process
+  // declares (DEC-016) are not unknown fields in the task files next to it.
   const processFiles = await vscode.workspace.findFiles(PROCESS_FILE_GLOB, EXCLUDE, MAX_PROCESS_FILES);
   // A process file may name the shared roster of its organization (`roster.from`, DEC-017); the first one found does.
   let rosterRef: RosterRef | undefined;
   let rosterRefPath: string | undefined;
+  const processIssues: ValidationIssue[] = [];
+  const declared: { root: string; fields: string[] }[] = [];
   for (const uri of processFiles) {
     const path = vscode.workspace.asRelativePath(uri, false);
     uris.set(path, uri);
     const parsed = parseProcess(path, decoder.decode(await vscode.workspace.fs.readFile(uri)));
-    loaded.issues.push(...parsed.issues);
+    processIssues.push(...parsed.issues);
+    if (parsed.process.task) declared.push({ root: path.slice(0, path.length - PROCESS_FILE_PATH.length), fields: parsed.process.task.fields.map((f) => f.name) });
     if (!rosterRef && parsed.rosterRef) {
       rosterRef = parsed.rosterRef;
       rosterRefPath = path;
     }
   }
+  const loaded = loadWorkspace(files, { declaredTaskFields: (path) => declaredTaskFieldsOf(declared, path) });
+  // The process files are checked too, so that a mistake shows in the Problems panel. A wrong
+  // section keeps its defaults; nothing else changes here.
+  loaded.issues.push(...processIssues);
 
   // Who works on, reviews, and approves a task is judged against the roster of the personal configuration
   // (DEC-013, DEC-014). With no roster there is nothing to judge against, so no problem is raised.

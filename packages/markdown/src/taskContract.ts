@@ -187,3 +187,85 @@ export function planTaskFields(contract: TaskContract, given: Readonly<Record<st
   }
   return plan;
 }
+
+/** The kinds of difference between a task and the contract (DEC-016 item 9), apart from a missing body section. */
+export type ContractGapKind = 'task-field-missing' | 'task-field-value' | 'task-field-differs' | 'task-field-in-file';
+
+export interface ContractGap {
+  kind: ContractGapKind;
+  /** Message arguments; the catalog key is `mismatch.<kind>`. */
+  args: MessageArgs;
+}
+
+/** What the board shows for a task: the labels of its Issue and, when they were read, its Project fields. */
+export interface BoardProjection {
+  labels: readonly string[];
+  /** The values of the Project fields that were read. A missing entry is a field with no value. Left out, Project fields are not judged. */
+  fields?: Readonly<Record<string, string>>;
+}
+
+/** The text of a field in a task file, or undefined when it is empty. */
+function fileValue(frontmatter: Record<string, unknown>, name: string): string | undefined {
+  const value = frontmatter[name];
+  if (typeof value === 'string') return value.trim() === '' ? undefined : value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
+}
+
+/** The value a label of the template carries, or undefined when the label is not of the template. */
+function valueOfLabel(template: string, label: string): string | undefined {
+  const [head, ...rest] = template.split('{value}');
+  const tail = rest.join('{value}');
+  if (!label.startsWith(head) || !label.endsWith(tail) || label.length <= head.length + tail.length) return undefined;
+  return label.slice(head.length, label.length - tail.length);
+}
+
+/**
+ * Judges a task file against the contract of its repository (DEC-016 items 5 and 9). A required
+ * `file` field with no value, a value outside `values`, a `project` field written in the file, and,
+ * when the board is given, a `file` field that differs from its label or Project field are gaps.
+ * The file wins, so a gap always says what the board should show. The caller names the task.
+ */
+export function contractGaps(frontmatter: Record<string, unknown>, contract: TaskContract, board?: BoardProjection): ContractGap[] {
+  const gaps: ContractGap[] = [];
+  for (const field of contract.fields) {
+    const value = fileValue(frontmatter, field.name);
+    if (field.source === 'project') {
+      if (value !== undefined) gaps.push({ kind: 'task-field-in-file', args: { field: field.name } });
+      continue;
+    }
+    if (value === undefined) {
+      if (field.required) gaps.push({ kind: 'task-field-missing', args: { field: field.name } });
+      continue;
+    }
+    if (field.values && !field.values.includes(value)) {
+      gaps.push({ kind: 'task-field-value', args: { field: field.name, value, values: field.values.join(', ') } });
+      continue;
+    }
+    if (!board) continue;
+    if (field.label) {
+      const expected = labelOf(field.label, value);
+      if (!board.labels.includes(expected)) {
+        const shown = board.labels.map((label) => valueOfLabel(field.label as string, label)).find((v) => v !== undefined);
+        gaps.push({ kind: 'task-field-differs', args: { field: field.name, file: value, board: shown ?? '-' } });
+      }
+    } else if (field.projectField && board.fields) {
+      const shown = board.fields[field.projectField];
+      if (shown !== value) gaps.push({ kind: 'task-field-differs', args: { field: field.name, file: value, board: shown ?? '-' } });
+    }
+  }
+  return gaps;
+}
+
+/**
+ * The task fields declared by the process of the repository a task file is in: of the process files
+ * whose folder holds the task file, the one with the longest folder. `root` is the process file's
+ * path without `.weaver/process.yaml`, and may be empty.
+ */
+export function declaredTaskFieldsOf(declared: readonly { root: string; fields: readonly string[] }[], taskPath: string): readonly string[] {
+  let best: { root: string; fields: readonly string[] } | undefined;
+  for (const item of declared) {
+    if (taskPath.startsWith(item.root) && (!best || item.root.length > best.root.length)) best = item;
+  }
+  return best?.fields ?? [];
+}
