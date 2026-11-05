@@ -24,6 +24,7 @@ import { applyMove, fetchBoardItems, fetchEvidence, fetchIssue, getGitHubToken }
 import { coverageOf } from './coverage';
 import { currentLocale, message } from './locale';
 import { processStore } from './processStore';
+import { rosterOf } from './rosterStore';
 import { readUserConfig } from './userConfig';
 import { errorNotice, setIssueAssignees } from '@palab/weaver-github';
 import { escapeHtml, isOpenableUrl, renderRequirementHtml, StatusState, TaskStatus } from './requirementHtml';
@@ -174,7 +175,7 @@ export class RequirementView {
         return summary.sources.stale === 'default' ? { ...summary, process: { ...summary.process, stale: { idleDays: staleSetting } } } : summary;
       });
       const user = await readUserConfig();
-      entry.status = { byTask, loading: false, processes, ...(user.kind === 'ok' && user.config.roster ? { roster: user.config.roster } : {}) };
+      entry.status = { byTask, loading: false, processes, ...(rosterOf(user) ? { roster: rosterOf(user) } : {}) };
     } catch (error) {
       entry.status = { byTask: entry.status.byTask, loading: false };
       void vscode.window.showWarningMessage(message('ui.msg.status-read-failed', { detail: (error as Error).message }));
@@ -263,7 +264,7 @@ export class RequirementView {
 
     // Who: the roster, or somebody typed by hand. An approval of agent work has to come from a person.
     const user = await readUserConfig();
-    const roster = user.kind === 'ok' ? user.config.roster : undefined;
+    const roster = rosterOf(user);
     type Item = vscode.QuickPickItem & { contributor?: Contributor };
     const items: Item[] = (roster?.contributors ?? [])
       .filter((c) => role !== 'approval' || c.kind === 'human')

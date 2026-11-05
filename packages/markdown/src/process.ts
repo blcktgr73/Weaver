@@ -1,3 +1,4 @@
+import { readRosterRef, RosterRef } from './roster';
 import { parse as parseYaml } from 'yaml';
 import type { MessageArgs } from './i18n';
 import { KANBAN_COLUMNS, KanbanColumn, LABEL_FOR_COLUMN } from './kanban';
@@ -56,6 +57,8 @@ export function defaultProcess(): ProcessConfig {
 export const DEFAULT_PROCESS: Readonly<ProcessConfig> = defaultProcess();
 
 export interface ProcessParseResult {
+  /** The shared roster the file names with `roster.from` (DEC-017). Not a section: it has no default and no source. */
+  rosterRef?: RosterRef;
   /** Always present: what was read, with the defaults where a section or field is missing or was ignored. */
   process: ProcessConfig;
   /** For each section, whether it came from the file or is the default. */
@@ -171,8 +174,9 @@ export function parseProcess(path: string, text: string): ProcessParseResult {
     report('error', 'process-unsupported-version', { version: String(data.version) });
     return allDefault();
   }
-  for (const field of Object.keys(data)) if (field !== 'version' && !(PROCESS_SECTIONS as readonly string[]).includes(field)) report('warning', 'unknown-field', { field });
+  for (const field of Object.keys(data)) if (field !== 'version' && field !== 'roster' && !(PROCESS_SECTIONS as readonly string[]).includes(field)) report('warning', 'unknown-field', { field });
 
+  const rosterRef = readRosterEntry(data.roster, (code, args) => report('warning', code, args));
   const process = defaultProcess();
   const sources: Record<ProcessSection, SectionSource> = { columns: 'default', evidence: 'default', stale: 'default' };
   const readers = { columns: readColumns, evidence: readEvidence, stale: readStale } as const;
@@ -195,5 +199,16 @@ export function parseProcess(path: string, text: string): ProcessParseResult {
       sources[section] = 'repository';
     }
   }
-  return { process, sources, issues };
+  return { process, sources, issues, ...(rosterRef ? { rosterRef } : {}) };
+}
+
+/** The `roster` entry of a process file: only `from` is read here; the entries of a roster live in the roster file. */
+function readRosterEntry(value: unknown, report: (code: string, args?: MessageArgs) => void): RosterRef | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!isMapping(value)) {
+    report('process-section-not-a-mapping', { section: 'roster' });
+    return undefined;
+  }
+  for (const field of Object.keys(value)) if (field !== 'from') report('unknown-field', { field: `roster.${field}` });
+  return readRosterRef(value.from, (_severity, code, args) => report(code, args), 'roster.from');
 }

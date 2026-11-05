@@ -35,6 +35,7 @@ import { log } from './log';
 import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { processStore } from './processStore';
+import { rosterStore } from './rosterStore';
 import { readUserConfig } from './userConfig';
 import { isOpenableUrl } from './requirementHtml';
 import { REQUIREMENT_EDITOR } from './requirementEditor';
@@ -434,6 +435,16 @@ export class OverviewView {
     this.token = token;
     this.render();
     if (result.ok) void this.readProcesses(token, request, repositories);
+    void this.readRoster(token);
+  }
+
+  /** Asks GitHub whether the shared roster changed (DEC-017). A newer one is read into the workspace check; no network keeps the copy. */
+  private async readRoster(token: string): Promise<void> {
+    try {
+      if (await rosterStore.refresh(token)) await this.rereadFiles();
+    } catch (error) {
+      log(`roster refresh failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private token: string | undefined;
@@ -577,6 +588,7 @@ export class OverviewView {
       skippedChecks: this.skippedChecks,
       reading: [...this.reading],
       focusActive: focused.size > 0,
+      ...(rosterStore.shown() ? { roster: rosterStore.shown() } : {}),
     };
   }
 
