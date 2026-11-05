@@ -584,6 +584,7 @@ export class OverviewView {
         exceptionsIgnored: checkedRepositories.filter((name) => processStore.evidenceFor(name)?.exceptions === false),
         closingNotRequired: checkedRepositories.filter((name) => processStore.evidenceFor(name)?.closingPullRequest === false),
         boardSourced: checkedRepositories.filter((name) => processStore.rulesFor(name)?.source === 'board-status'),
+        contractFor: processStore.taskFor,
       }),
       skippedChecks: this.skippedChecks,
       reading: [...this.reading],

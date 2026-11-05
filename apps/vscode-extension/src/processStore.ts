@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode';
-import { ColumnRules, EvidenceRules, parseProcess, ProcessConfig, ProcessSection, SectionSource, defaultProcess, defaultSources } from '@palab/weaver-markdown';
+import { ColumnRules, EvidenceRules, TaskContract, parseProcess, ProcessConfig, ProcessSection, SectionSource, defaultProcess, defaultSources } from '@palab/weaver-markdown';
 import { ProcessCacheEntry, refreshProcessFiles } from '@palab/weaver-github';
 
 const KEY = 'weaver.process.cache';
@@ -75,6 +75,8 @@ export class ProcessStore {
   }
 
   evidenceFor = (repository: string): EvidenceRules | undefined => this.config(repository)?.evidence;
+  /** The task contract the repository declares (DEC-016), or undefined when it declares none. */
+  taskFor = (repository: string): TaskContract | undefined => this.config(repository)?.task;
 
   /** The idle days the repository's file sets, or none when it leaves them to the default. */
   staleDaysFor = (repository: string): number | undefined => {

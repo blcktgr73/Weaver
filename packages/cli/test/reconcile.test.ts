@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadWorkspace, placeIssue, type MergedPull } from '@palab/weaver-markdown';
+import { loadWorkspace, parseProcess, placeIssue, type MergedPull, type TaskContract } from '@palab/weaver-markdown';
 import type { FetchFn, ProjectCard } from '@palab/weaver-github';
 import { actionId, executeActions, planReconcile, type ExecuteContext, type ReconcileInput } from '../src';
 
@@ -149,5 +149,43 @@ describe('planReconcile', () => {
     expect((posted?.body as { body: string }).body).toContain('Made by the Weaver steward on behalf of @me.');
     expect((posted?.body as { body: string }).body).toContain('<!-- weaver:pull-50 -->');
     expect(log).toHaveLength(1);
+  });
+});
+
+describe('planReconcile: the task contract (DEC-016)', () => {
+  const contractFor = (section: string) => {
+    const task = parseProcess('process.yaml', `task:\n${section}`).process.task as TaskContract;
+    return () => task;
+  };
+  const owner = '  fields:\n    owner:\n      label: "owner:{value}"\n    level:\n      project-field: Level\n';
+  const withOwner = loadWorkspace([
+    { path: 'req.md', text: files['req.md'] },
+    { path: 'TASK-010.md', text: task('TASK-010', `issue: ${url(10)}\nowner: alpha\nlevel: high\n`) },
+  ], { declaredTaskFields: () => ['owner', 'level'] }).artifacts;
+  const base = { artifacts: withOwner, pulls: [] as MergedPull[] };
+
+  it('only reports a field that differs from its label or Project field; nothing is changed', async () => {
+    const cards = [card(10, { boardStatus: 'In Progress', labels: ['task', 'status:in-progress', 'owner:beta'], fields: { Level: 'low' } })];
+    const plan = await planReconcile(input({ ...base, cards, contractFor: contractFor(owner) }));
+    expect(plan.actions).toEqual([]);
+    expect(plan.reports.map((r) => `${r.tier}:${r.kind}:${r.subject}`)).toEqual(['report:task-field-differs:TASK-010', 'report:task-field-differs:TASK-010']);
+    expect(plan.reports[0].message).toContain('"owner"');
+    expect(plan.reports[0].path).toBe('TASK-010.md');
+  });
+
+  it('is quiet when the card agrees with the file, and without a contract', async () => {
+    const agree = [card(10, { boardStatus: 'In Progress', labels: ['task', 'status:in-progress', 'owner:alpha'], fields: { Level: 'high' } })];
+    expect((await planReconcile(input({ ...base, cards: agree, contractFor: contractFor(owner) }))).reports).toEqual([]);
+    const differs = [card(10, { boardStatus: 'In Progress', labels: ['task', 'status:in-progress', 'owner:beta'] })];
+    expect((await planReconcile(input({ ...base, cards: differs }))).reports).toEqual([]);
+  });
+
+  it('does not ask for a file for a card when the process lets a card be an Issue only', async () => {
+    const lone = [card(10, { boardStatus: 'In Progress', labels: ['task', 'status:in-progress', 'owner:alpha'], fields: { Level: 'high' } }), card(99, { boardStatus: 'In Progress' })];
+    const asks = await planReconcile(input({ ...base, cards: lone, contractFor: contractFor(`  require-file: true\n${owner}`) }));
+    expect(asks.reports.some((r) => r.kind === 'card-without-file')).toBe(true);
+    const light = await planReconcile(input({ ...base, cards: lone, contractFor: contractFor(`  require-file: false\n${owner}`) }));
+    expect(light.reports.some((r) => r.kind === 'card-without-file')).toBe(false);
+    expect(light.actions.some((a) => a.kind.includes('draft') || a.kind.includes('pull'))).toBe(false);
   });
 });

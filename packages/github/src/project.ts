@@ -18,6 +18,8 @@ export interface ProjectCard {
   assignees: string[];
   /** The board `Status` field, when the item has one. */
   boardStatus?: string;
+  /** The values of the extra Project fields that were asked for (a task contract's `project-field`); a field with no value is left out. */
+  fields?: Record<string, string>;
   /** When the Issue last changed, as an ISO date. */
   updatedAt?: string;
   /** Pull requests that close or mention the Issue. */
@@ -40,10 +42,15 @@ const API = 'https://api.github.com/graphql';
 const PAGE = 100;
 const MAX_PAGES = 50;
 
-const QUERY = `query($o:String!,$n:Int!,$c:String){repositoryOwner(login:$o){... on ProjectV2Owner{projectV2(number:$n){title items(first:${PAGE},after:$c){pageInfo{hasNextPage endCursor} nodes{fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} content{__typename ... on Issue{number title url state updatedAt closedByPullRequestsReferences(first:1,includeClosedPrs:true){totalCount} timelineItems(first:0,itemTypes:[CROSS_REFERENCED_EVENT]){totalCount} repository{nameWithOwner} labels(first:20){nodes{name}} assignees(first:10){nodes{login}}}}}}}}}}`;
+const buildQuery = (fields: readonly string[]): string =>
+  `query($o:String!,$n:Int!,$c:String){repositoryOwner(login:$o){... on ProjectV2Owner{projectV2(number:$n){title items(first:${PAGE},after:$c){pageInfo{hasNextPage endCursor} nodes{fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} ${fields
+    .map((name, i) => `f${i}:fieldValueByName(name:${JSON.stringify(name)}){... on ProjectV2ItemFieldSingleSelectValue{name} ... on ProjectV2ItemFieldTextValue{text}}`)
+    .join(' ')} content{__typename ... on Issue{number title url state updatedAt closedByPullRequestsReferences(first:1,includeClosedPrs:true){totalCount} timelineItems(first:0,itemTypes:[CROSS_REFERENCED_EVENT]){totalCount} repository{nameWithOwner} labels(first:20){nodes{name}} assignees(first:10){nodes{login}}}}}}}}}}`;
 
 interface ItemNode {
   fieldValueByName: { name?: string } | null;
+  /** The extra fields asked for, as `f0`, `f1`, and so on, in the order they were asked. */
+  [alias: `f${number}`]: { name?: string; text?: string } | null | undefined;
   content: null | {
     __typename: string;
     number?: number;
@@ -94,12 +101,15 @@ export async function readProject(
   /** The repositories to read; left out, every repository that has Issues on the Project is read. */
   repositories: readonly string[] | undefined,
   fetchImpl: Fetch = fetch as unknown as Fetch,
+  /** Project fields to read besides `Status`, so a task contract's `project-field` can be compared (DEC-016). */
+  extraFields: readonly string[] = [],
 ): Promise<ProjectResult> {
   const registered = repositories ? new Set(repositories.map((name) => name.toLowerCase())) : undefined;
   const cards: ProjectCard[] = [];
   let skipped = 0;
   let title = '';
   let cursor: string | null = null;
+  const query = buildQuery(extraFields);
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     let response;
@@ -107,7 +117,7 @@ export async function readProject(
       response = await fetchImpl(API, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: QUERY, variables: { o: project.owner, n: project.number, c: cursor } }),
+        body: JSON.stringify({ query, variables: { o: project.owner, n: project.number, c: cursor } }),
       });
     } catch {
       return { ok: false, error: { code: 'project.unreachable' } };
@@ -137,6 +147,12 @@ export async function readProject(
       const state = issue.state === 'CLOSED' ? 'closed' : 'open';
       const labels = (issue.labels?.nodes ?? []).map((label) => label.name);
       const taskId = TASK_TITLE.exec(issue.title ?? '')?.[1];
+      const fields: Record<string, string> = {};
+      extraFields.forEach((name, i) => {
+        const value = node[`f${i}`];
+        const text = value?.name ?? value?.text;
+        if (text) fields[name] = text;
+      });
       cards.push({
         repository,
         number: issue.number as number,
@@ -146,6 +162,7 @@ export async function readProject(
         labels,
         assignees: (issue.assignees?.nodes ?? []).map((a) => a.login),
         ...(node.fieldValueByName?.name ? { boardStatus: node.fieldValueByName.name } : {}),
+        ...(extraFields.length > 0 ? { fields } : {}),
         ...(taskId ? { taskId } : {}),
         ...(issue.updatedAt ? { updatedAt: issue.updatedAt } : {}),
         ...(issue.closedByPullRequestsReferences && issue.timelineItems

@@ -3,6 +3,7 @@ import {
   ColumnRules,
   EvidenceRules,
   findMismatches,
+  TaskContract,
   formatNotice,
   Locale,
   MergedPull,
@@ -36,6 +37,8 @@ export interface ReconcileInput {
   rulesFor?: (repository: string) => ColumnRules | undefined;
   idleDaysFor?: (repository: string) => number;
   evidenceFor?: (repository: string) => EvidenceRules | undefined;
+  /** The task contract of a repository's process (DEC-016); a task is judged against it, a card with no file is allowed when it says so. */
+  contractFor?: (repository: string) => TaskContract | undefined;
   /** What the two fixes that change repository files need; without it they stay reports. */
   files?: FilesContext;
   now: Date;
@@ -73,6 +76,7 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
     boardSourced: input.repositories.filter((name) => input.rulesFor?.(name)?.source === 'board-status'),
     exceptionsIgnored: input.repositories.filter((name) => input.evidenceFor?.(name)?.exceptions === false),
     closingNotRequired: input.repositories.filter((name) => input.evidenceFor?.(name)?.closingPullRequest === false),
+    ...(input.contractFor ? { contractFor: input.contractFor } : {}),
   })) {
     const item = (tier: ReportItem['tier'], automated: boolean): ReportItem => ({
       tier,
@@ -161,6 +165,11 @@ export async function planReconcile(input: ReconcileInput): Promise<ReconcilePla
         break;
       }
       case 'broken-issue-link':
+      // A difference from the contract changes a person's file or a board field, so it is only reported (DEC-016 item 9).
+      case 'task-field-missing':
+      case 'task-field-value':
+      case 'task-field-differs':
+      case 'task-field-in-file':
         reports.push(item('report', false));
         break;
     }

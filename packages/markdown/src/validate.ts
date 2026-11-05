@@ -50,11 +50,16 @@ export function validateWorkspace(artifacts: Artifact[]): ValidationIssue[] {
   return issues;
 }
 
-export function loadWorkspace(files: SourceFile[]): WorkspaceResult {
+export interface LoadOptions {
+  /** The task fields the process of a task's repository declares (DEC-016), by the path of the task file. */
+  declaredTaskFields?: (path: string) => readonly string[];
+}
+
+export function loadWorkspace(files: SourceFile[], options: LoadOptions = {}): WorkspaceResult {
   const artifacts: Artifact[] = [];
   const issues: ValidationIssue[] = [];
   for (const file of files) {
-    const result = parseArtifact(file.path, file.text);
+    const result = parseArtifact(file.path, file.text, options.declaredTaskFields ? { declaredTaskFields: options.declaredTaskFields(file.path) } : {});
     issues.push(...result.issues);
     if (result.artifact) artifacts.push(result.artifact);
   }

@@ -202,7 +202,18 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     const found = processes.get(repository.toLowerCase());
     return found?.file === 'read' ? found.process.evidence : undefined;
   };
-  const cards = placeWithRules(read.read.cards, rulesFor);
+  const contractFor = (repository: string) => {
+    const found = processes.get(repository.toLowerCase());
+    return found?.file === 'read' ? found.process.task : undefined;
+  };
+  // A contract field that lives in a Project field can be compared only when that field is read (DEC-016 item 5).
+  const projectFields = [...new Set(repositories.flatMap((name) => contractFor(name)?.fields.flatMap((f) => (f.projectField ? [f.projectField] : [])) ?? []))];
+  let boardCards = read.read.cards;
+  if (args.command === 'reconcile' && projectFields.length > 0) {
+    const again = await readProject(token, setup.project, setup.repositories?.map((r) => r.repository), deps.fetch, projectFields);
+    if (again.ok) boardCards = again.read.cards;
+  }
+  const cards = placeWithRules(boardCards, rulesFor);
   const all = toCliCards(cards, artifacts, deps.now(), idleDaysFor, evidenceFor);
 
   if (args.command === 'reconcile') {
@@ -217,6 +228,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       rulesFor,
       idleDaysFor,
       evidenceFor,
+      contractFor,
       files: {
         token,
         login: await deps.login(),
