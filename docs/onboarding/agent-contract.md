@@ -211,7 +211,7 @@ After the user approved that action, the same command with `--approve 0b184aa2fc
 | Command | What it does |
 | --- | --- |
 | `weaver project add <issue>...` | Adds Issues of registered repositories to the Project. An Issue already there, of an unregistered repository, or not an Issue address is left out with a reason. |
-| `weaver task create --title <t> --requirement <REQ-###> [--criteria AC-001,..] [--assignee <name>] [--assignee-type human\|agent] [--area <name>] [--repository <owner/name>]` | Creates the Issue, adds it to the Project, and opens a pull request with the task file and the requirement's task line. |
+| `weaver task create --title <t> --requirement <REQ-###> [--criteria AC-001,..] [--assignee <name>] [--assignee-type human\|agent] [--area <name>] [--repository <owner/name>] [--field <name>=<value>]...` | Creates the Issue, adds it to the Project, and opens a pull request with the task file and the requirement's task line. |
 | `weaver card move <card> --to <column>` | Makes the status label, the Issue state, and the board Status agree with the column. A move to `Verified` needs a linked pull request or an `evidence_exception` in the task. |
 | `weaver evidence attach <card> --pull <number or address>` | Comments on the Issue that a merged pull request is its evidence. |
 | `weaver reconcile [--apply]` | Plans the fixes for what the Overview reports. Without `--apply` it only shows the plan and the report, and exits 0. |

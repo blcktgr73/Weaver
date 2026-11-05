@@ -60,7 +60,9 @@ export function planProjectAdd(refs: readonly string[], input: ProjectAddInput):
         target: `${issue.repository}#${issue.number}`,
         summary: { code: 'cli.project-add.summary', args: { ref: `${issue.repository}#${issue.number}`, owner: input.project.owner, number: input.project.number } },
         reason: { code: 'cli.project-add.reason' },
-        run: () => addIssueToProject(input.token, input.project, issue.url, input.fetch),
+        run: async () => {
+          await addIssueToProject(input.token, input.project, issue.url, input.fetch);
+        },
       });
     }
   }

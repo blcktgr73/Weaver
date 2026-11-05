@@ -1,6 +1,6 @@
 import * as path from 'path';
-import { Artifact, Locale, RequirementArtifact } from '@palab/weaver-markdown';
-import { addIssueToProject, createIssue, NoticeError, type Fetch } from '@palab/weaver-github';
+import { Artifact, Locale, RequirementArtifact, TaskFieldPlan, yamlValue } from '@palab/weaver-markdown';
+import { addIssueToProject, createIssue, NoticeError, setProjectField, type Fetch } from '@palab/weaver-github';
 import { attribution, PlannedAction } from './actions';
 import type { System } from './contract';
 import { openFilesPullRequest } from './filesPullRequest';
@@ -28,6 +28,10 @@ export interface TaskFileInput {
   criteria: string[];
   assigneeType: 'human' | 'agent';
   assignee?: string;
+  /** The fields the organization's task contract declares, written to the front matter (DEC-016). */
+  fileFields?: { name: string; value: string }[];
+  /** Empty headings for the task body (DEC-016 item 8). */
+  sections?: string[];
 }
 
 export function renderTaskFile(input: TaskFileInput): string {
@@ -42,9 +46,10 @@ export function renderTaskFile(input: TaskFileInput): string {
     `assignee_type: ${input.assigneeType}`,
     ...(input.criteria.length ? [`criteria: [${input.criteria.join(', ')}]`] : []),
     ...(input.assignee ? [`assignee: ${input.assignee}`] : []),
+    ...(input.fileFields ?? []).map((f) => `${f.name}: ${yamlValue(f.value)}`),
     '---',
   ];
-  return `${front.join('\n')}\n\n# ${input.id} ${input.title}\n\nTracked in [Issue #${input.issueNumber}](${input.issueUrl}). Ownership is recorded here; the Kanban column comes from the Issue.\n`;
+  return `${front.join('\n')}\n\n# ${input.id} ${input.title}\n\nTracked in [Issue #${input.issueNumber}](${input.issueUrl}). Ownership is recorded here; the Kanban column comes from the Issue.\n${(input.sections ?? []).map((heading) => `\n## ${heading}\n`).join('')}`;
 }
 
 /** The task line of a requirement: `- \`TASK-###\` Title — [GitHub Issue #n](url)`. */
@@ -92,6 +97,8 @@ export interface TaskCreateInput {
   criteria: string[];
   assigneeType: 'human' | 'agent';
   assignee?: string;
+  /** What the task contract of the repository gives for this task (DEC-016); absent without a `task` section. */
+  contract?: TaskFieldPlan;
   area?: string;
   /** The number the new task takes. */
   number: number;
@@ -110,9 +117,9 @@ export interface TaskCreateInput {
  */
 export function planTaskCreate(input: TaskCreateInput): PlannedAction[] {
   const id = taskIdOf(input.number);
-  const labels = ['task', 'status:backlog', ...(input.area ? [`area:${input.area}`] : [])];
+  const labels = [...new Set(['task', 'status:backlog', ...(input.area ? [`area:${input.area}`] : []), ...(input.contract?.labels ?? [])])];
   const taskPath = `${input.taskDirectory}/${id}.md`.replace(/^\.\//, '');
-  const created: { number?: number; url?: string } = {};
+  const created: { number?: number; url?: string; item?: string } = {};
   const reason = { code: 'cli.task-create.reason' as const };
 
   const issue: PlannedAction = {
@@ -136,15 +143,41 @@ export function planTaskCreate(input: TaskCreateInput): PlannedAction[] {
     dependsOn: [issue],
     run: async () => {
       if (!created.url) throw new NoticeError({ code: 'cli.err.issue-not-created' });
-      await addIssueToProject(input.token, input.project, created.url, input.fetch);
+      created.item = await addIssueToProject(input.token, input.project, created.url, input.fetch);
     },
   };
+
+  // A field that lives on the board is set after the card exists, one action each, so the plan shows it.
+  const fieldActions: PlannedAction[] = (input.contract?.projectFields ?? []).map((f) => ({
+    kind: 'project.field',
+    target: `${input.repository} ${id}`,
+    summary: { code: 'cli.task-create.project-field' as const, args: { field: f.field, value: f.value } },
+    reason,
+    dependsOn: [card],
+    run: async () => {
+      if (!created.item) throw new NoticeError({ code: 'github.err.no-data' });
+      await setProjectField(input.token, input.project, created.item, f.field, f.value, input.fetch);
+    },
+  }));
 
   const branch = `docs/${id.toLowerCase()}-${slugOf(input.title)}`;
   const files: PlannedAction = {
     kind: 'files.pull-request',
     target: `${input.repository} ${branch}`,
-    summary: { code: 'cli.task-create.files', args: { repository: input.repository, path: taskPath, task: id, requirement: input.requirement.id } },
+    summary:
+      input.contract && (input.contract.fileFields.length > 0 || input.contract.sections.length > 0)
+        ? {
+            code: 'cli.task-create.files-fields',
+            args: {
+              repository: input.repository,
+              path: taskPath,
+              task: id,
+              requirement: input.requirement.id,
+              fields: input.contract.fileFields.map((f) => `${f.name}=${f.value}`).join(', ') || '-',
+              sections: input.contract.sections.join(', ') || '-',
+            },
+          }
+        : { code: 'cli.task-create.files', args: { repository: input.repository, path: taskPath, task: id, requirement: input.requirement.id } },
     reason,
     dependsOn: [issue],
     run: async () => {
@@ -181,6 +214,8 @@ Adds ${taskPath} and lists ${id} under ${input.requirement.id}. Issue: ${created
               criteria: input.criteria,
               assigneeType: input.assigneeType,
               assignee: input.assignee,
+              fileFields: input.contract?.fileFields,
+              sections: input.contract?.sections,
             }),
           );
         },
@@ -188,7 +223,7 @@ Adds ${taskPath} and lists ${id} under ${input.requirement.id}. Issue: ${created
     },
   };
 
-  return [issue, card, files];
+  return [issue, card, ...fieldActions, files];
 }
 
 /** The artifacts that could take a task number, plus open pull requests when `gh` can list them. */

@@ -12,7 +12,7 @@ describe("this repository's own .weaver/process.yaml", () => {
   it('is valid, sets every section, and spells out exactly the defaults, so it changes no behavior', async () => {
     const result = parseProcess('.weaver/process.yaml', await read('.weaver/process.yaml'));
     expect(result.issues).toEqual([]);
-    expect(result.sources).toEqual({ columns: 'repository', evidence: 'repository', stale: 'repository' });
+    expect(result.sources).toEqual({ columns: 'repository', evidence: 'repository', stale: 'repository', task: 'default' });
     expect(result.process).toEqual(defaultProcess());
   });
 });

@@ -32,6 +32,8 @@ const KNOWN_TASK_FIELDS = [
   'branch', 'pull_request', 'issue', 'tests', 'blockers', 'criteria',
   'evidence_exception', 'reviewer', 'approved_by', 'approved_on',
 ];
+/** The front matter keys of a task that Weaver owns. A declared task field must not reuse one (DEC-016 item 4). */
+export const RESERVED_TASK_KEYS: readonly string[] = [...KNOWN_TASK_FIELDS, 'reviewers', 'approvals'];
 
 /** A date as written in YAML: a quoted string, or an unquoted date that the parser turned into a Date. */
 function dateStr(value: unknown): string | undefined {

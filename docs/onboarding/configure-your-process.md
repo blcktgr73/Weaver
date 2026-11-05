@@ -24,11 +24,11 @@ This repository's own [`.weaver/process.yaml`](../../.weaver/process.yaml) spell
 weaver process --text
 ```
 
-prints one line per repository of your Project, and for each of the three sections whether the file sets it or it is a default:
+prints one line per repository of your Project, and for each section (`columns`, `evidence`, `stale`, `task`) whether the file sets it or it is a default:
 
 ```
-me/Weaver    read     columns=repository evidence=repository stale=repository
-me/Other     missing  columns=default evidence=default stale=default
+me/Weaver    read     columns=repository evidence=repository stale=repository task=default
+me/Other     missing  columns=default evidence=default stale=default task=default
 ```
 
 Without `--text` you get the values in use too. `missing` means the repository has no file. The Requirement view shows the same thing in a "Process" section.
@@ -107,7 +107,7 @@ An integer of 1 or more. A repository that leaves it out uses the `weaver.staleD
 
 ## Step 4. Commit it as a reviewed change
 
-Add `.weaver/process.yaml` in a pull request like any other change, and say in the description which of the three sections you set and why. A team can start with one section and add the others later: a section you leave out stays at its default.
+Add `.weaver/process.yaml` in a pull request like any other change, and say in the description which of the sections you set and why. A team can start with one section and add the others later: a section you leave out stays at its default.
 
 ## How a mistake is handled
 
