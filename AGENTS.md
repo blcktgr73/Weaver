@@ -12,6 +12,11 @@ Keep requirements, tasks, and implementation evidence connected across the repos
 - Pull requests and CI results are evidence of execution and verification.
 - External tools are projections, collaboration surfaces, or integrations unless a decision explicitly says otherwise.
 
+## Independence principle
+
+- Weaver core never depends on an organization's policy. Policy (task fields, roles, routing, columns) arrives as configuration, such as `.weaver/process.yaml`, and Weaver only carries it out.
+- PALab's operating contract is one example profile, not a default. No Weaver code, schema, or test may assume PALab's field names, roles, labels, or board. See [DEC-007](docs/decisions/DEC-007-central-project-is-configuration.md) and [DEC-016](docs/decisions/DEC-016-task-contract-in-process-file.md).
+
 ## Development workflow
 
 1. Start from a requirement or user story.

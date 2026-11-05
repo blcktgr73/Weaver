@@ -30,6 +30,10 @@ An organization declares the fields its tasks must carry, and where each field l
 - `AGENTS.md` states that Weaver core never depends on an organization's policy, and that PALab's contract is one example profile.
 - Messages are in the catalog in English and Korean.
 
+## Decisions taken
+
+- [DEC-016](../decisions/DEC-016-task-contract-in-process-file.md) (proposed) fixes the shape of the `task` section, the `source: file | project` rule, the mapping to a label or a Project field, light cards, and the gap kinds. `AGENTS.md` now states the independence principle.
+
 ## Tasks
 
 - `TASK-065` Decide the task section of the process file and state the independence principle — [GitHub Issue #163](https://github.com/blcktgr73/Weaver/issues/163)
