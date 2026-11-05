@@ -4,7 +4,7 @@ type: requirement
 title: One Overview Kanban shows all registered repositories and starts every exploration
 status: draft
 owner: PALab
-story_ids: [US-025, US-026, US-029, US-030, US-035, US-036, US-043]
+story_ids: [US-025, US-026, US-029, US-030, US-035, US-036, US-046]
 repository: blcktgr73/Weaver
 github_project: PALab Ops Kanban
 ---
@@ -111,6 +111,7 @@ The editor behaviors in the right column cannot be driven by the test suite; the
 - `TASK-061` Move the committed registry and roster out of the repository and write the migration note — [GitHub Issue #126](https://github.com/blcktgr73/Weaver/issues/126)
 - `TASK-062` Fold the finished cards of the Overview by default — [GitHub Issue #149](https://github.com/blcktgr73/Weaver/issues/149)
 - `TASK-063` Reach the Overview and its settings from the Activity Bar and the Overview tab — [GitHub Issue #152](https://github.com/blcktgr73/Weaver/issues/152)
+- `TASK-073` Read the workspace files on refresh and when files change on disk — [GitHub Issue #172](https://github.com/blcktgr73/Weaver/issues/172)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 

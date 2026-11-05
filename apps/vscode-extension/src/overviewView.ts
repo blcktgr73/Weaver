@@ -108,6 +108,8 @@ export class OverviewView {
   constructor(
     private readonly store: vscode.Memento,
     private readonly requirements: RequirementView,
+    /** Reads the workspace files again (TASK-073). Refreshing must not rely on a document having been saved. */
+    private readonly rereadFiles: () => Promise<unknown> = async () => undefined,
   ) {
     this.hidden = new Set(store.get<string[]>(HIDDEN_KEY, []));
     this.collapsed = new Set(store.get<string[]>(COLLAPSED_KEY, []));
@@ -158,7 +160,13 @@ export class OverviewView {
 
   /** Reads the Project again for an Overview that is open; with none open there is nothing to refresh. */
   async reload(): Promise<void> {
-    if (this.panel) await this.load(false);
+    if (this.panel) await this.refreshAll();
+  }
+
+  /** The files of the workspace first, so the warnings match the disk, then the Project. */
+  private async refreshAll(): Promise<void> {
+    await this.rereadFiles();
+    await this.load(false);
   }
 
   /** Opens the Overview and highlights the cards of a requirement, or of one task (TASK-041). */
@@ -202,7 +210,7 @@ export class OverviewView {
   private async onMessage(message: { type: string; url?: string; id?: string; path?: string; delta?: number }): Promise<void> {
     log(`message ${message.type}${message.id ? ` ${message.id}` : ''}`);
     if (message.type === 'signIn') await this.load(true);
-    else if (message.type === 'refresh') await this.load(false);
+    else if (message.type === 'refresh') await this.refreshAll();
     else if (message.type === 'setUp') await vscode.commands.executeCommand('weaver.setUp');
     else if (message.type === 'toggleLane' && message.id) {
       this.flip(this.hidden, HIDDEN_KEY, message.id);

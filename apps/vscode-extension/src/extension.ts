@@ -12,12 +12,15 @@ import { RequirementView } from './requirementView';
 import { Loaded, loadWorkspaceArtifacts, publishDiagnostics, requirementsOf } from './workspace';
 
 const SETUP_PROMPTED_KEY = 'weaver.setup.prompted';
+const WATCH_DELAY_MS = 400;
+/** The folders the scan skips (see workspace.ts) are not watched either. */
+const IGNORED_PATH = /[\\/](node_modules|\.git|dist|out)[\\/]/;
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('weaver');
   processStore.init(context.globalState);
   const view = new RequirementView();
-  const overview = new OverviewView(context.globalState, view);
+  const overview = new OverviewView(context.globalState, view, () => refresh());
 
   // Tells the menus whether the active file is a Weaver document (TASK-018).
   let latest: Loaded | undefined;
@@ -163,8 +166,28 @@ export function activate(context: vscode.ExtensionContext): void {
     { supportsMultipleEditorsPerDocument: true, webviewOptions: { retainContextWhenHidden: false } },
   );
 
+  // A change on disk made outside the editor (an agent, `git checkout`, `git pull`) is read without a
+  // button press (TASK-073). A branch switch touches many files, so the reads are gathered into one.
+  let pending: ReturnType<typeof setTimeout> | undefined;
+  const scheduleRefresh = (): void => {
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(() => {
+      pending = undefined;
+      void refresh();
+    }, WATCH_DELAY_MS);
+  };
   const onSave = vscode.workspace.onDidSaveTextDocument((document) => {
-    if (document.languageId === 'markdown' || /[\\/]\.weaver[\\/]process\.yaml$/.test(document.uri.fsPath)) void refresh();
+    if (document.languageId === 'markdown' || /[\\/]\.weaver[\\/]process\.yaml$/.test(document.uri.fsPath)) scheduleRefresh();
+  });
+  const watchers = ['**/*.md', '**/.weaver/process.yaml'].map((glob) => {
+    const watcher = vscode.workspace.createFileSystemWatcher(glob);
+    const changed = (uri: vscode.Uri): void => {
+      if (!IGNORED_PATH.test(uri.fsPath)) scheduleRefresh();
+    };
+    watcher.onDidCreate(changed);
+    watcher.onDidChange(changed);
+    watcher.onDidDelete(changed);
+    return watcher;
   });
 
   const onActiveEditor = vscode.window.onDidChangeActiveTextEditor(publishDocumentKind);
@@ -176,7 +199,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
-  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, ...watchers, { dispose: () => pending && clearTimeout(pending) }, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // Only a workspace with its own `fabric.yaml` opens the Overview by itself (REQ-006, DEC-014).
     if (await hasWorkspaceRegistry()) {
