@@ -6,13 +6,14 @@ The file lives in the repository, in Git, and is the only place the process is s
 
 ## What the file can set
 
-Three sections. Each one is optional, and a field you leave out keeps its default.
+Four sections. Each one is optional, and a field you leave out keeps its default.
 
 | Section | What it decides | Default |
 | --- | --- | --- |
 | `columns` | Where a card's column comes from: the `status:*` labels or the Project board's Status. | labels |
 | `evidence` | Whether a pull request is expected in Review and Verified, whether Verified needs a merged pull request that closes the Issue, and whether a task's `evidence_exception` counts. | all expected, exceptions honored |
 | `stale` | How many days without a change make an open card idle. | 14 |
+| `task` | The fields a task of your organization carries (owner, priority, a blocker, and so on), which are required, which values are allowed, and where each one lives. | no fields, one task file per card |
 
 The six columns (Backlog, Ready, In progress, Blocked, Review, Verified) and their order are fixed in version 1. A repository maps its own work onto them.
 
@@ -105,7 +106,37 @@ stale:
 
 An integer of 1 or more. A repository that leaves it out uses the `weaver.staleDays` setting of each person's editor, which is 14 unless changed.
 
-## Step 4. Commit it as a reviewed change
+## Step 4. Declare the fields of your tasks (optional)
+
+Skip this step if a task needs nothing beyond what Weaver already keeps (`assignee`, `reviewers`, `criteria`). If your team runs agents or a board on a card contract, say what the contract is, and Weaver carries it out ([DEC-016](../decisions/DEC-016-task-contract-in-process-file.md)):
+
+```yaml
+version: 1
+task:
+  require-file: true
+  fields:
+    owner:
+      required: true
+      values: [maria, build-agent]
+      source: file
+      label: "owner:{value}"
+    priority:
+      values: [P0, P1, P2]
+      source: project
+      project-field: Priority
+  body:
+    sections: [Context, Done when]
+```
+
+- `fields` names each field of a task file. A field name uses lowercase letters, digits, and hyphens, and cannot reuse a key Weaver owns (`id`, `title`, `issue`, `assignee`, and so on).
+- `required: true` reports a task that has no value; `values` reports a value that is not on the list.
+- `source: file` (the default) keeps the value in the task file; `label: "owner:{value}"` also shows it on the Issue as a label. `source: project` keeps it on the Project board in the field named by `project-field`.
+- A field can have a `label` or a `project-field`, not both, and a field with `source: project` needs one of them.
+- `body.sections` lists the headings a task body must contain, in order. `require-file: false` lets a card be an Issue only.
+
+The names above are examples. Use your own. Nothing in Weaver assumes a field name, a role, or a board ([DEC-007](../decisions/DEC-007-central-project-is-configuration.md)), so a repository that leaves this section out behaves exactly as before. In the editor, a field you declare is no longer reported as an unknown field in a task file. `weaver reconcile` lists a task whose value is missing, is not allowed, or differs between the file and the board, and in a task file the file wins.
+
+## Step 5. Commit it as a reviewed change
 
 Add `.weaver/process.yaml` in a pull request like any other change, and say in the description which of the sections you set and why. A team can start with one section and add the others later: a section you leave out stays at its default.
 
