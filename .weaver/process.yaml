@@ -32,3 +32,22 @@ evidence:
 stale:
   # Days without a change before an open card in an active column is idle.
   idle-days: 14
+
+# The `task` section is optional and left out on purpose: this repository adds no task fields, so it
+# behaves as before. An organization that runs agents or a board on a card contract would add it
+# (DEC-016, docs/onboarding/configure-your-process.md Step 4). The names are examples, not defaults:
+#
+#   task:
+#     require-file: true
+#     fields:
+#       owner:
+#         required: true
+#         values: [maria, build-agent]
+#         source: file
+#         label: "owner:{value}"
+#       priority:
+#         values: [P0, P1, P2]
+#         source: project
+#         project-field: Priority
+#     body:
+#       sections: [Context, Done when]

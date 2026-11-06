@@ -35,4 +35,14 @@ describe('docs/onboarding/configure-your-process.md', () => {
     expect(process.columns.source).toBe('board-status');
     expect(process.evidence).toEqual({ pullRequest: 'optional', closingPullRequest: false, exceptions: true });
   });
+
+  it('has an example of the task section that declares its fields without a problem', async () => {
+    const text = await read('docs/onboarding/configure-your-process.md');
+    const block = [...text.matchAll(/```yaml\n([\s\S]*?)\n```/g)].map((match) => match[1]).find((b) => b.includes('task:') && b.includes('fields:'));
+    expect(block).toBeDefined();
+    const result = parseProcess('example.yaml', block as string);
+    expect(result.issues).toEqual([]);
+    expect(result.sources.task).toBe('repository');
+    expect(result.process.task.fields.map((field) => field.name)).toEqual(['owner', 'priority']);
+  });
 });
