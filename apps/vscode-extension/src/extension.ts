@@ -6,6 +6,7 @@ import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
 import { hasWorkspaceRegistry, OverviewView, readRegistry } from './overviewView';
 import { setUp } from './setupWizard';
 import { chooseRepositories, openConfigFile } from './chooseRepositories';
+import { editContributors } from './editContributors';
 import { SidebarProvider } from './sidebar';
 import { processStore } from './processStore';
 import { rosterStore } from './rosterStore';
@@ -111,6 +112,10 @@ export function activate(context: vscode.ExtensionContext): void {
     if (await chooseRepositories()) await overview.reload();
   });
   const openConfig = vscode.commands.registerCommand('weaver.openConfigFile', () => openConfigFile());
+  // A change to the personal roster moves the warnings about owners, so the workspace is read again (TASK-075).
+  const editRoster = vscode.commands.registerCommand('weaver.editContributors', async () => {
+    if (await editContributors()) await overview.reload();
+  });
   const refreshOverview = vscode.commands.registerCommand('weaver.refreshOverview', () => overview.reload());
 
   // From a requirement view, a requirement file, or a task file: show its cards on the Overview (TASK-041).
@@ -201,7 +206,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
-  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, ...watchers, { dispose: () => pending && clearTimeout(pending) }, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, editRoster, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, ...watchers, { dispose: () => pending && clearTimeout(pending) }, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // Only a workspace with its own `fabric.yaml` opens the Overview by itself (REQ-006, DEC-014).
     if (await hasWorkspaceRegistry()) {

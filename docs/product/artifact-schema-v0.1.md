@@ -202,7 +202,7 @@ The file a roster is kept in is a YAML mapping with one key, `contributors`, a l
 - An organization keeps the file in a repository it owns (for example `roster.yaml` at the root of an `agents` repository) and points to it with `roster.from`. Weaver reads it and never writes to it; a change is a pull request.
 - Each `id` is unique without regard to case, and each `kind` is `human` or `agent`. A list with no entry, or an entry without `id` or `kind`, is an error of the file; the other problems (an agent without `tool`, a field outside the schema) are warnings.
 - Instance details (node addresses, channel ids, tokens) do not belong in it.
-- Adding and editing entries from the editor is [TASK-075](../tasks/TASK-075.md).
+- The editor adds, changes, and removes an entry ([TASK-075](../tasks/TASK-075.md)): **Weaver: Add or Change Contributors**, also in the Weaver view and the Overview menu. It writes either to the personal roster or to a roster file the person picks in a local clone, after showing the change. Only that entry changes; the comments of the file and the other entries stay. It never writes to a referenced repository, so a change to a shared roster is committed and reviewed by the person in the repository that owns it.
 
 A reference names the file that holds a shared roster: `{repository, path, ref}`, where `ref` defaults to the default branch.
 
