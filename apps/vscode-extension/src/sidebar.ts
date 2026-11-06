@@ -12,6 +12,7 @@ function actions(): Action[] {
   return [
     { label: message('ui.sidebar.open-overview'), command: 'weaver.openOverview', icon: 'project' },
     { label: message('ui.sidebar.choose-repositories'), command: 'weaver.chooseRepositories', icon: 'checklist' },
+    { label: message('ui.sidebar.edit-roster'), command: 'weaver.editContributors', icon: 'organization' },
     { label: message('ui.sidebar.open-config'), command: 'weaver.openConfigFile', icon: 'settings-gear' },
     { label: message('ui.sidebar.set-up'), command: 'weaver.setUp', icon: 'wand' },
     { label: message('ui.sidebar.set-root'), command: 'weaver.setFabricRoot', icon: 'folder' },

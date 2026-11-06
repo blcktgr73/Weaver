@@ -65,6 +65,10 @@
         "title": "%weaver.command.openConfigFile.title%"
       },
       {
+        "command": "weaver.editContributors",
+        "title": "%weaver.command.editContributors.title%"
+      },
+      {
         "command": "weaver.refreshOverview",
         "title": "%weaver.command.refreshOverview.title%",
         "icon": "$(refresh)"
@@ -128,6 +132,11 @@
           "command": "weaver.openConfigFile",
           "when": "activeWebviewPanelId == 'weaver.overview'",
           "group": "1_weaver@2"
+        },
+        {
+          "command": "weaver.editContributors",
+          "when": "activeWebviewPanelId == 'weaver.overview'",
+          "group": "1_weaver@2.5"
         },
         {
           "command": "weaver.setUp",
