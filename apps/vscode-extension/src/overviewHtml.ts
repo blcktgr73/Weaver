@@ -58,6 +58,8 @@ export type OverviewState =
       reading: string[];
       /** The shared roster in use (DEC-017): where it comes from and how long ago GitHub confirmed the kept copy. No age: nothing is kept. */
       roster?: { reference: string; age?: SnapshotAge };
+      /** The file that decided the Project and the repositories, when it is not the personal file; a file in a parent folder is never silent (DEC-018 item 9). */
+      config?: { file: string; source: 'workspace' | 'root' };
       /** True while some cards are highlighted, so the header can offer to clear them. */
       focusActive: boolean;
       /** Finished cards (Verified, or a closed Issue) are folded unless this is set. Kept on this computer only. */
@@ -162,6 +164,8 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
     state.kind === 'ready' && state.roster
       ? `<p class="muted small">${e(state.roster.age ? tt('ui.overview.roster', { reference: state.roster.reference, age: tt(`ui.age.${state.roster.age.unit}` as MessageKey, { count: state.roster.age.count }) }) : tt('ui.overview.roster-none', { reference: state.roster.reference }))}</p>`
       : '';
+  const configLine =
+    state.kind === 'ready' && state.config ? `<p class="muted small" title="${e(state.config.file)}">${e(tt('ui.overview.config', { file: state.config.file }))}</p>` : '';
   const projectLine = state.kind === 'ready' ? `<span class="muted">${e(tt('ui.overview.project', { title: state.projectTitle }))}</span>` : '';
 
   return `<!DOCTYPE html>
@@ -227,7 +231,7 @@ export function renderOverviewHtml(state: OverviewState, nonce: string, cspSourc
 </style>
 </head>
 <body>
-  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>${rosterLine}
+  <header><h1>${e(tt('ui.overview.title'))}</h1>${projectLine}${state.kind === 'ready' ? button('refresh', 'ui.overview.refresh') + button('cloneMissing', 'ui.overview.clone') + (state.focusActive ? button('clearFocus', 'ui.overview.clear-focus') : '') : ''}</header>${configLine}${rosterLine}
   ${filter}
   <div class="scroll"${state.kind === 'ready' ? ' data-keep-scroll' : ''}>${body}</div>
 <script nonce="${nonce}">

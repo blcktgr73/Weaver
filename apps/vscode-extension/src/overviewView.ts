@@ -36,6 +36,7 @@ import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { processStore } from './processStore';
 import { rosterStore } from './rosterStore';
+import { readRootConfig, rememberRootFile } from './rootConfig';
 import { readUserConfig } from './userConfig';
 import { isOpenableUrl } from './requirementHtml';
 import { REQUIREMENT_EDITOR } from './requirementEditor';
@@ -55,8 +56,11 @@ const PULL_LIMIT = 4;
 export type Registry =
   | { kind: 'none' }
   | { kind: 'invalid'; issues: ValidationIssue[] }
-  /** `derived`: the personal configuration gives no repository list, so the repositories are the ones the Project has cards of. */
-  | { kind: 'ok'; registry: FabricRegistry; source: 'workspace' | 'user'; derived: boolean };
+  /**
+   * `derived`: the configuration gives no repository list, so the repositories are the ones the Project has cards of.
+   * `file` is the path of the file that decided, so the Overview can name it (DEC-018 item 9).
+   */
+  | { kind: 'ok'; registry: FabricRegistry; source: 'workspace' | 'root' | 'user'; derived: boolean; file?: string };
 
 /** True when the workspace has a shared `fabric.yaml` (DEC-010); only then does the Overview open by itself. */
 export async function hasWorkspaceRegistry(): Promise<boolean> {
@@ -65,20 +69,30 @@ export async function hasWorkspaceRegistry(): Promise<boolean> {
 }
 
 /**
- * The Project and repositories to show (DEC-014): the workspace `fabric.yaml` when there is one,
- * else the personal configuration. A file that exists but is wrong is reported, not skipped.
+ * The Project and repositories to show: the workspace `fabric.yaml` when there is one, else the nearest
+ * root file above the workspace folder (DEC-018), else the personal configuration (DEC-014). A file
+ * that exists but is wrong is reported, not skipped. The folder of the root file that decided is
+ * remembered as the default clone folder.
  */
 export async function readRegistry(): Promise<Registry> {
+  rememberRootFile(undefined);
   const [uri] = await vscode.workspace.findFiles(REGISTRY_FILE, '**/{node_modules,.git}/**', 1);
   if (uri) {
     const text = new TextDecoder('utf-8').decode(await vscode.workspace.fs.readFile(uri));
     const result = parseFabric(vscode.workspace.asRelativePath(uri, false), text);
-    return result.registry ? { kind: 'ok', registry: result.registry, source: 'workspace', derived: false } : { kind: 'invalid', issues: result.issues };
+    return result.registry ? { kind: 'ok', registry: result.registry, source: 'workspace', derived: false, file: uri.fsPath } : { kind: 'invalid', issues: result.issues };
+  }
+  const root = await readRootConfig();
+  if (root.kind === 'invalid') return { kind: 'invalid', issues: root.issues };
+  if (root.kind === 'ok') {
+    rememberRootFile(root.path);
+    const { project, repositories } = root.config;
+    return { kind: 'ok', registry: { project, repositories: repositories ?? [] }, source: 'root', derived: repositories === undefined, file: root.path };
   }
   const user = await readUserConfig();
   if (user.kind !== 'ok') return user.kind === 'none' ? { kind: 'none' } : { kind: 'invalid', issues: user.issues };
   const { project, repositories } = user.config;
-  return { kind: 'ok', registry: { project, repositories: repositories ?? [] }, source: 'user', derived: repositories === undefined };
+  return { kind: 'ok', registry: { project, repositories: repositories ?? [] }, source: 'user', derived: repositories === undefined, file: user.path };
 }
 
 /** The Overview Kanban: one lane per registered repository, columns by stage, cards linked to requirements (REQ-006). */
@@ -590,6 +604,7 @@ export class OverviewView {
       reading: [...this.reading],
       focusActive: focused.size > 0,
       ...(rosterStore.shown() ? { roster: rosterStore.shown() } : {}),
+      ...(this.registry.kind === 'ok' && this.registry.file && this.registry.source !== 'user' ? { config: { file: this.registry.file, source: this.registry.source } } : {}),
     };
   }
 

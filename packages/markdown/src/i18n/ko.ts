@@ -70,6 +70,7 @@ export const ko: Record<MessageKey, Message> = {
   // 전체 보기(Overview) 칸반
   'ui.overview.title': '전체 보기',
   'ui.overview.project': 'Project: {title}',
+  'ui.overview.config': 'Project와 저장소는 {file}에서 왔습니다.',
   'ui.overview.cards': { one: '카드 {count}장', other: '카드 {count}장' },
   'ui.overview.blocked': '막힘 {count}',
   'ui.overview.no-cards': '카드 없음',
@@ -301,6 +302,8 @@ export const ko: Record<MessageKey, Message> = {
   'ui.sidebar.clone': '없는 저장소 클론',
   'ui.repos.from-workspace': '저장소 목록이 이 작업 폴더의 fabric.yaml에서 오므로, 그 파일을 고쳐 주세요.',
   'ui.repos.open-fabric': 'fabric.yaml 열기',
+  'ui.repos.from-root': '저장소 목록이 이 폴더 위의 루트 파일 {file}에서 오므로, 그 파일을 고쳐 주세요.',
+  'ui.repos.open-root': '루트 파일 열기',
   'ui.repos.no-config': 'Weaver: 아직 개인 설정이 없습니다. 먼저 설정(Set Up)을 실행해 주세요.',
   'ui.repos.invalid-config': 'Weaver: 개인 설정에 오류가 있습니다. 먼저 {path}를 고쳐 주세요.',
   'ui.repos.open-config': '파일 열기',

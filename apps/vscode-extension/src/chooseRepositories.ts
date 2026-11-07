@@ -33,6 +33,13 @@ export async function chooseRepositories(): Promise<boolean> {
     }
     return false;
   }
+  if (registry.kind === 'ok' && registry.source === 'root' && registry.file) {
+    // The list belongs to the root file that decided (DEC-018 item 4); the personal file is not the place to change it.
+    const open = message('ui.repos.open-root');
+    const choice = await vscode.window.showInformationMessage(message('ui.repos.from-root', { file: registry.file }), open);
+    if (choice === open) await vscode.window.showTextDocument(vscode.Uri.file(registry.file));
+    return false;
+  }
 
   const user = await readUserConfig();
   if (user.kind === 'none') {
