@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { findRootConfig, formatNotice, parseConfig, parseFabric, parseRoster, parseRootConfig, resolveSetup, rootConfigCandidates, stackRosters, type Roster, type RootConfig, type UserConfig } from '../src';
@@ -226,5 +227,32 @@ describe('findRootConfig', () => {
     expect(warned.kind === 'ok' && warned.issues.map((i) => i.code)).toEqual(['root-process-section']);
     const only = await findRootConfig(path.resolve('/home/me/work'), personal, reader({ [personal]: PROJECT }));
     expect(only).toEqual({ kind: 'none' });
+  });
+});
+
+describe('the example root file', () => {
+  const file = path.resolve(__dirname, '../../../examples/operating-root/.weaver/config.yaml');
+  const result = parseRootConfig(file, readFileSync(file, 'utf8'));
+
+  it('is valid, with no warning: every agent says its tool and how it is reached', () => {
+    expect(result.issues).toEqual([]);
+    expect(result.config?.project).toEqual({ owner: 'your-organization', number: 1 });
+    expect(result.config?.repositories?.map((r) => r.repository)).toEqual(['your-organization/app', 'your-organization/docs']);
+  });
+
+  it('shows each form of reach, and the label is the one Weaver acts on', () => {
+    const byId = Object.fromEntries((result.config?.roster?.contributors ?? []).map((c) => [c.id, c]));
+    expect(byId['claude-code'].reach).toBe('assigned as the Issue assignee');
+    expect(byId['build-agent'].reach).toEqual([{ type: 'label', value: 'owner:build-agent' }]);
+    expect(byId['review-agent'].reach).toEqual([
+      { type: 'label', value: 'owner:review-agent' },
+      { type: 'text', value: 'runs when the label is added, on the office machine' },
+    ]);
+  });
+
+  it('decides as a root file would', () => {
+    const setup = resolveSetup(undefined, undefined, { config: result.config as UserConfig, path: file });
+    expect(setup?.source).toBe('root');
+    expect(setup?.roster?.contributors.map((c) => c.id)).toEqual(['maria', 'claude-code', 'build-agent', 'review-agent']);
   });
 });

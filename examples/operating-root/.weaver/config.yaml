@@ -1,0 +1,73 @@
+# Example of a root file (DEC-018, REQ-014).
+#
+# Put this file at <your projects folder>/.weaver/config.yaml, for example C:\work\.weaver\config.yaml.
+# It is for you and this computer: it is not committed, and it is not inside a repository.
+#
+# What it does
+#   Weaver (the editor and the `weaver` tool) walks up from the folder it runs in and takes the nearest
+#   .weaver/config.yaml. Every project under this folder then shows the Project and repositories below.
+#   The order is: a fabric.yaml in the workspace, then this file, then ~/.weaver/config.yaml.
+#   The file that decides is named in the Overview and in `weaver list`.
+#
+# The folder that holds this .weaver folder is also where the repositories are cloned.
+# There is nothing to set for that; `weaver.fabricRoot` in VS Code still wins if you set it.
+#
+# What does not belong here
+#   How a repository tracks its work (columns, evidence, stale, task) is written in that repository's
+#   .weaver/process.yaml. Those sections are reported here and are not applied.
+
+# The GitHub Project to show. Required. The owner is a user or an organization login.
+project:
+  owner: your-organization
+  number: 1
+
+# The repositories to show, in the order of the lanes. Optional: left out, every repository that has
+# cards on the Project is shown. A file with no list does not take the list of another file.
+repositories:
+  - your-organization/app
+  - repository: your-organization/docs
+    title: Documentation
+
+# The people and agents you work with. Optional. It is laid under ~/.weaver/config.yaml: an id in both
+# takes the fields your personal file sets, and nothing is removed.
+roster:
+  contributors:
+    # A person. `github` is the login that becomes the Issue assignee.
+    - id: maria
+      kind: human
+      name: Maria
+      github: maria-gh
+
+    # An agent says which tool it is (`tool`) and how work reaches it (`reach`).
+    # `reach` has three forms. Use one of them.
+    #
+    # 1. A sentence for people. Weaver shows it and never acts on it.
+    - id: claude-code
+      kind: agent
+      tool: Claude Code
+      model: opus
+      reach: assigned as the Issue assignee
+
+    # 2. A label. Weaver adds this label to the Issue when the work is given to the agent, and the
+    #    agent's own router picks it up from there. `label` is the only type Weaver acts on.
+    - id: build-agent
+      kind: agent
+      tool: Codex
+      reach:
+        - type: label
+          value: "owner:build-agent"
+
+    # 3. Several entries. A `text` entry is a sentence for people; a type Weaver does not know is
+    #    kept and shown, and never acted on.
+    - id: review-agent
+      kind: agent
+      tool: Claude Code
+      roles: [review]
+      reach:
+        - type: label
+          value: "owner:review-agent"
+        - type: text
+          value: runs when the label is added, on the office machine
+
+    # Never write instance details here: node addresses, chat channel ids, tokens, or passwords. They are
+    # not part of the roster, Weaver never reads them, and a field it does not know is reported.
