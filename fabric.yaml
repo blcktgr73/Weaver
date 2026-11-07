@@ -1,0 +1,10 @@
+# The Project and repositories this workspace shows on the Overview (DEC-014 item 3, DEC-010).
+# This is the organization's board, shared by everyone who opens this repository, so it is committed.
+# It wins over a person's ~/.weaver/config.yaml for `project` and `repositories`; the roster still comes
+# from the personal file. Another project of the organization keeps its own fabric.yaml at its root.
+project:
+  owner: ebrAIn-Lab-3B
+  number: 1
+
+repositories:
+  - ebrAIn-Lab-3B/Weaver
