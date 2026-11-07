@@ -5,7 +5,7 @@ title: A steward agent keeps the Kanban, the Issues, and the repository files in
 status: draft
 owner: PALab
 story_ids: [US-027, US-028, US-031]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -72,17 +72,17 @@ Also not covered by tests: the `[y/N]` question at a terminal (`readline` in `bi
 
 ## Tasks
 
-- `TASK-043` Create the weaver command-line tool with a JSON contract and list and show — [GitHub Issue #94](https://github.com/blcktgr73/Weaver/issues/94)
-- `TASK-044` Confirm each write and record it in a local action log — [GitHub Issue #95](https://github.com/blcktgr73/Weaver/issues/95)
-- `TASK-045` Add existing Issues to the Project from the command line — [GitHub Issue #96](https://github.com/blcktgr73/Weaver/issues/96)
-- `TASK-046` Create a task with its Issue and Project card in one operation — [GitHub Issue #97](https://github.com/blcktgr73/Weaver/issues/97)
-- `TASK-047` Move a card and attach evidence from the command line — [GitHub Issue #98](https://github.com/blcktgr73/Weaver/issues/98)
-- `TASK-048` Reconcile mismatches according to the steward tiers — [GitHub Issue #99](https://github.com/blcktgr73/Weaver/issues/99)
-- `TASK-049` Write the agent contract for the weaver tool — [GitHub Issue #100](https://github.com/blcktgr73/Weaver/issues/100)
-- `TASK-051` Keep a requirement tidy when task create adds the first task — [GitHub Issue #113](https://github.com/blcktgr73/Weaver/issues/113)
-- `TASK-052` Show the errors of the weaver tool in the chosen language — [GitHub Issue #114](https://github.com/blcktgr73/Weaver/issues/114)
-- `TASK-053` Reconcile the two mismatches that need a file change as pull requests — [GitHub Issue #115](https://github.com/blcktgr73/Weaver/issues/115)
-- `TASK-054` Attach the weaver tool to the release — [GitHub Issue #116](https://github.com/blcktgr73/Weaver/issues/116)
+- `TASK-043` Create the weaver command-line tool with a JSON contract and list and show — [GitHub Issue #94](https://github.com/ebrAIn-Lab-3B/Weaver/issues/94)
+- `TASK-044` Confirm each write and record it in a local action log — [GitHub Issue #95](https://github.com/ebrAIn-Lab-3B/Weaver/issues/95)
+- `TASK-045` Add existing Issues to the Project from the command line — [GitHub Issue #96](https://github.com/ebrAIn-Lab-3B/Weaver/issues/96)
+- `TASK-046` Create a task with its Issue and Project card in one operation — [GitHub Issue #97](https://github.com/ebrAIn-Lab-3B/Weaver/issues/97)
+- `TASK-047` Move a card and attach evidence from the command line — [GitHub Issue #98](https://github.com/ebrAIn-Lab-3B/Weaver/issues/98)
+- `TASK-048` Reconcile mismatches according to the steward tiers — [GitHub Issue #99](https://github.com/ebrAIn-Lab-3B/Weaver/issues/99)
+- `TASK-049` Write the agent contract for the weaver tool — [GitHub Issue #100](https://github.com/ebrAIn-Lab-3B/Weaver/issues/100)
+- `TASK-051` Keep a requirement tidy when task create adds the first task — [GitHub Issue #113](https://github.com/ebrAIn-Lab-3B/Weaver/issues/113)
+- `TASK-052` Show the errors of the weaver tool in the chosen language — [GitHub Issue #114](https://github.com/ebrAIn-Lab-3B/Weaver/issues/114)
+- `TASK-053` Reconcile the two mismatches that need a file change as pull requests — [GitHub Issue #115](https://github.com/ebrAIn-Lab-3B/Weaver/issues/115)
+- `TASK-054` Attach the weaver tool to the release — [GitHub Issue #116](https://github.com/ebrAIn-Lab-3B/Weaver/issues/116)
 
 The approach for the first version is [DEC-012](../decisions/DEC-012-steward-first-version.md). `TASK-043` and `TASK-044` come first; the write tasks follow `TASK-044`; `TASK-048` needs `TASK-045` to `TASK-047`. Scheduled runs and batch approval have no task until they are decided.
 

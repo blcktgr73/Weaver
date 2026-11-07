@@ -5,7 +5,7 @@ title: Teams describe their own development process and adopt it step by step
 status: draft
 owner: PALab
 story_ids: [US-022, US-037, US-042]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -31,13 +31,13 @@ A repository describes its process in a file kept in Git. Weaver follows it, beh
 
 ## Tasks
 
-- `TASK-023` Decide the process configuration format — [GitHub Issue #53](https://github.com/blcktgr73/Weaver/issues/53)
-- `TASK-024` Read the configuration and keep today's behavior as the default — [GitHub Issue #54](https://github.com/blcktgr73/Weaver/issues/54)
-- `TASK-025` Drive columns and label mapping from the configuration — [GitHub Issue #55](https://github.com/blcktgr73/Weaver/issues/55)
-- `TASK-026` Drive evidence and verification rules from the configuration — [GitHub Issue #56](https://github.com/blcktgr73/Weaver/issues/56)
-- `TASK-027` Show which parts of the process are configured and which are defaults — [GitHub Issue #57](https://github.com/blcktgr73/Weaver/issues/57)
-- `TASK-028` Write the migration guide with this repository as the example — [GitHub Issue #58](https://github.com/blcktgr73/Weaver/issues/58)
-- `TASK-064` Read the lane used last first — [GitHub Issue #155](https://github.com/blcktgr73/Weaver/issues/155)
+- `TASK-023` Decide the process configuration format — [GitHub Issue #53](https://github.com/ebrAIn-Lab-3B/Weaver/issues/53)
+- `TASK-024` Read the configuration and keep today's behavior as the default — [GitHub Issue #54](https://github.com/ebrAIn-Lab-3B/Weaver/issues/54)
+- `TASK-025` Drive columns and label mapping from the configuration — [GitHub Issue #55](https://github.com/ebrAIn-Lab-3B/Weaver/issues/55)
+- `TASK-026` Drive evidence and verification rules from the configuration — [GitHub Issue #56](https://github.com/ebrAIn-Lab-3B/Weaver/issues/56)
+- `TASK-027` Show which parts of the process are configured and which are defaults — [GitHub Issue #57](https://github.com/ebrAIn-Lab-3B/Weaver/issues/57)
+- `TASK-028` Write the migration guide with this repository as the example — [GitHub Issue #58](https://github.com/ebrAIn-Lab-3B/Weaver/issues/58)
+- `TASK-064` Read the lane used last first — [GitHub Issue #155](https://github.com/ebrAIn-Lab-3B/Weaver/issues/155)
 
 The file format is decided in `TASK-023` before any code reads it. The first code step (`TASK-024`) must not change behavior.
 

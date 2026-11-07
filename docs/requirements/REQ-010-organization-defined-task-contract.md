@@ -5,7 +5,7 @@ title: An organization defines its own task contract
 status: draft
 owner: PALab
 story_ids: [US-043]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -36,12 +36,12 @@ An organization declares the fields its tasks must carry, and where each field l
 
 ## Tasks
 
-- `TASK-065` Decide the task section of the process file and state the independence principle — [GitHub Issue #163](https://github.com/blcktgr73/Weaver/issues/163)
-- `TASK-066` Read the task section and fill it in on task create — [GitHub Issue #164](https://github.com/blcktgr73/Weaver/issues/164)
-- `TASK-067` Reconcile declared fields and allow light cards — [GitHub Issue #165](https://github.com/blcktgr73/Weaver/issues/165)
-- `TASK-068` Add messages and a worked example for the task contract — [GitHub Issue #166](https://github.com/blcktgr73/Weaver/issues/166)
+- `TASK-065` Decide the task section of the process file and state the independence principle — [GitHub Issue #163](https://github.com/ebrAIn-Lab-3B/Weaver/issues/163)
+- `TASK-066` Read the task section and fill it in on task create — [GitHub Issue #164](https://github.com/ebrAIn-Lab-3B/Weaver/issues/164)
+- `TASK-067` Reconcile declared fields and allow light cards — [GitHub Issue #165](https://github.com/ebrAIn-Lab-3B/Weaver/issues/165)
+- `TASK-068` Add messages and a worked example for the task contract — [GitHub Issue #166](https://github.com/ebrAIn-Lab-3B/Weaver/issues/166)
 
-Origin: proposal [#160](https://github.com/blcktgr73/Weaver/issues/160). The shape is decided in the first task of each requirement before any code follows it.
+Origin: proposal [#160](https://github.com/ebrAIn-Lab-3B/Weaver/issues/160). The shape is decided in the first task of each requirement before any code follows it.
 
 ## Evidence policy
 

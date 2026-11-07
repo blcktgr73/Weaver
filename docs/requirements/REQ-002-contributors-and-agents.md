@@ -5,7 +5,7 @@ title: Humans and agents work on tasks through Weaver
 status: draft
 owner: PALab
 story_ids: [US-016, US-017, US-018, US-019]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -30,10 +30,10 @@ A maintainer can assign a task to a human or an agent, hand it over with its con
 
 ## Tasks
 
-- `TASK-013` Assign a task owner from the Requirement view — [GitHub Issue #36](https://github.com/blcktgr73/Weaver/issues/36)
-- `TASK-014` Define the contributor roster and pick owners from it — [GitHub Issue #37](https://github.com/blcktgr73/Weaver/issues/37)
-- `TASK-015` Record reviewers and human approval of agent work — [GitHub Issue #38](https://github.com/blcktgr73/Weaver/issues/38)
-- `TASK-016` Decide the agent handoff contract — [GitHub Issue #39](https://github.com/blcktgr73/Weaver/issues/39)
+- `TASK-013` Assign a task owner from the Requirement view — [GitHub Issue #36](https://github.com/ebrAIn-Lab-3B/Weaver/issues/36)
+- `TASK-014` Define the contributor roster and pick owners from it — [GitHub Issue #37](https://github.com/ebrAIn-Lab-3B/Weaver/issues/37)
+- `TASK-015` Record reviewers and human approval of agent work — [GitHub Issue #38](https://github.com/ebrAIn-Lab-3B/Weaver/issues/38)
+- `TASK-016` Decide the agent handoff contract — [GitHub Issue #39](https://github.com/ebrAIn-Lab-3B/Weaver/issues/39)
 
 Tasks that implement the handoff are added after `TASK-016` records the contract decision. `TASK-016` is deferred, so `AC-005` and `AC-006` stay open while `TASK-013` to `TASK-015` go first.
 

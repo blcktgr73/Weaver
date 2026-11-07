@@ -3,8 +3,8 @@ id: TASK-058
 type: task
 title: Discover the Projects of a user and the repositories on a Project
 requirement: REQ-006
-issue: https://github.com/blcktgr73/Weaver/issues/123
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/123
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-001]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-058 Discover the Projects of a user and the repositories on a Project
 
-Tracked in [Issue #123](https://github.com/blcktgr73/Weaver/issues/123). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-014](../decisions/DEC-014-user-configuration.md).
+Tracked in [Issue #123](https://github.com/ebrAIn-Lab-3B/Weaver/issues/123). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-014](../decisions/DEC-014-user-configuration.md).
 
 Setup needs two reads from GitHub: the Projects a person can see (their own and those of their organizations), and the repositories that have cards on a chosen Project with the number of cards, plus the assignees found on those cards for the roster. Put them in `packages/github` with an injectable fetch.
 

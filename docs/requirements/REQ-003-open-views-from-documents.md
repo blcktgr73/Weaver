@@ -5,7 +5,7 @@ title: Weaver views open from the documents themselves
 status: draft
 owner: PALab
 story_ids: [US-015, US-020]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -28,9 +28,9 @@ Opening a requirement file shows its Weaver view, and other Weaver documents off
 
 ## Tasks
 
-- `TASK-017` Open requirement files in a Weaver editor — [GitHub Issue #40](https://github.com/blcktgr73/Weaver/issues/40)
-- `TASK-018` Show the title-bar button only on Weaver documents — [GitHub Issue #41](https://github.com/blcktgr73/Weaver/issues/41)
-- `TASK-019` Open the requirement view from a task file, focused on the task — [GitHub Issue #42](https://github.com/blcktgr73/Weaver/issues/42)
+- `TASK-017` Open requirement files in a Weaver editor — [GitHub Issue #40](https://github.com/ebrAIn-Lab-3B/Weaver/issues/40)
+- `TASK-018` Show the title-bar button only on Weaver documents — [GitHub Issue #41](https://github.com/ebrAIn-Lab-3B/Weaver/issues/41)
+- `TASK-019` Open the requirement view from a task file, focused on the task — [GitHub Issue #42](https://github.com/ebrAIn-Lab-3B/Weaver/issues/42)
 
 Decision and user-story maps have no view yet, so they get no button until a view exists.
 

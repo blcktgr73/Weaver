@@ -5,7 +5,7 @@ title: Weaver manages its own development flow
 status: in-progress
 owner: PALab
 story_ids: [US-001, US-004, US-007, US-010, US-012]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -30,19 +30,19 @@ PALab contributors can move from a Weaver requirement to an assigned task, imple
 
 ## Tasks
 
-- `TASK-001` Define and validate the repository-native requirement/task shape — [GitHub Issue #1](https://github.com/blcktgr73/Weaver/issues/1)
-- `TASK-002` Implement the VS Code workspace scan and requirement opener — [GitHub Issue #2](https://github.com/blcktgr73/Weaver/issues/2)
-- `TASK-003` Design the Requirement Canvas and Task Rail interaction — [GitHub Issue #3](https://github.com/blcktgr73/Weaver/issues/3)
-- `TASK-004` Link implementation and test evidence back to a task — [GitHub Issue #4](https://github.com/blcktgr73/Weaver/issues/4)
-- `TASK-005` Build the first VS Code Kanban projection — [GitHub Issue #5](https://github.com/blcktgr73/Weaver/issues/5)
-- `TASK-006` Minimal read-only Requirement view — [GitHub Issue #8](https://github.com/blcktgr73/Weaver/issues/8)
-- `TASK-007` Move a task between Kanban columns with explicit confirmation — [GitHub Issue #12](https://github.com/blcktgr73/Weaver/issues/12)
-- `TASK-008` Show and record who owns each task (human or agent) — [GitHub Issue #23](https://github.com/blcktgr73/Weaver/issues/23)
-- `TASK-009` Map acceptance criteria to tasks and evidence — [GitHub Issue #24](https://github.com/blcktgr73/Weaver/issues/24)
-- `TASK-010` Show label, board Status, and closing-PR mismatches as gaps — [GitHub Issue #25](https://github.com/blcktgr73/Weaver/issues/25)
-- `TASK-011` Record blockers, human decisions, and acceptance — [GitHub Issue #26](https://github.com/blcktgr73/Weaver/issues/26)
-- `TASK-012` Package the extension and write a getting-started guide — [GitHub Issue #27](https://github.com/blcktgr73/Weaver/issues/27)
-- `TASK-056` Prepare the first dogfooding round with a feedback intake and a checklist — [GitHub Issue #118](https://github.com/blcktgr73/Weaver/issues/118)
+- `TASK-001` Define and validate the repository-native requirement/task shape — [GitHub Issue #1](https://github.com/ebrAIn-Lab-3B/Weaver/issues/1)
+- `TASK-002` Implement the VS Code workspace scan and requirement opener — [GitHub Issue #2](https://github.com/ebrAIn-Lab-3B/Weaver/issues/2)
+- `TASK-003` Design the Requirement Canvas and Task Rail interaction — [GitHub Issue #3](https://github.com/ebrAIn-Lab-3B/Weaver/issues/3)
+- `TASK-004` Link implementation and test evidence back to a task — [GitHub Issue #4](https://github.com/ebrAIn-Lab-3B/Weaver/issues/4)
+- `TASK-005` Build the first VS Code Kanban projection — [GitHub Issue #5](https://github.com/ebrAIn-Lab-3B/Weaver/issues/5)
+- `TASK-006` Minimal read-only Requirement view — [GitHub Issue #8](https://github.com/ebrAIn-Lab-3B/Weaver/issues/8)
+- `TASK-007` Move a task between Kanban columns with explicit confirmation — [GitHub Issue #12](https://github.com/ebrAIn-Lab-3B/Weaver/issues/12)
+- `TASK-008` Show and record who owns each task (human or agent) — [GitHub Issue #23](https://github.com/ebrAIn-Lab-3B/Weaver/issues/23)
+- `TASK-009` Map acceptance criteria to tasks and evidence — [GitHub Issue #24](https://github.com/ebrAIn-Lab-3B/Weaver/issues/24)
+- `TASK-010` Show label, board Status, and closing-PR mismatches as gaps — [GitHub Issue #25](https://github.com/ebrAIn-Lab-3B/Weaver/issues/25)
+- `TASK-011` Record blockers, human decisions, and acceptance — [GitHub Issue #26](https://github.com/ebrAIn-Lab-3B/Weaver/issues/26)
+- `TASK-012` Package the extension and write a getting-started guide — [GitHub Issue #27](https://github.com/ebrAIn-Lab-3B/Weaver/issues/27)
+- `TASK-056` Prepare the first dogfooding round with a feedback intake and a checklist — [GitHub Issue #118](https://github.com/ebrAIn-Lab-3B/Weaver/issues/118)
 
 `TASK-005` was split from `TASK-002`; see [DEC-002](../decisions/DEC-002-split-task-002.md).
 

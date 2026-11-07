@@ -5,7 +5,7 @@ title: Everything the steward does can also be done by hand in the editor, and e
 status: draft
 owner: PALab
 story_ids: [US-038, US-039, US-040, US-041]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 

@@ -3,8 +3,8 @@ id: TASK-057
 type: task
 title: Read the user configuration and keep the workspace file as an optional shared one
 requirement: REQ-006
-issue: https://github.com/blcktgr73/Weaver/issues/122
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/122
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-001]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-057 Read the user configuration and keep the workspace file as an optional shared one
 
-Tracked in [Issue #122](https://github.com/blcktgr73/Weaver/issues/122). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-014](../decisions/DEC-014-user-configuration.md).
+Tracked in [Issue #122](https://github.com/ebrAIn-Lab-3B/Weaver/issues/122). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-014](../decisions/DEC-014-user-configuration.md).
 
 Read `~/.weaver/config.yaml` (`WEAVER_HOME` moves the folder) with the fields of [DEC-014](../decisions/DEC-014-user-configuration.md): `project`, optional `repositories`, optional `roster`. A workspace `fabric.yaml` still works and decides `project` and `repositories` for that workspace. The roster always comes from the personal file. The extension and the `weaver` tool use the same reader.
 
