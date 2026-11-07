@@ -108,6 +108,11 @@ Discover intent → Shape requirements → Plan work → Execute work → Verify
 - `US-045` — As a team member, I see who holds a card and who should take it next, and I approve the proposal, so the next assignee is not decided in several places. (Belongs to `REQ-012`.)
 - `US-046` — As a team member, when files of a repository change outside the editor (a `git pull`, a branch switch), the Overview's refresh reads them again, so its warnings match the files on disk. (Defect found on 2026-11-03: after `git pull` added `TASK-064.md`, the warning that Issue #155 had no task file stayed, because the local files are read again only when a document is saved or the view is opened anew. Belongs to `REQ-006`. To be fixed.)
 - `US-047` — As an organization, I keep my people and agents in one roster file with a fixed form, and I add or change an entry from the editor without writing YAML by hand. (Belongs to `REQ-011`.)
+- `US-048` — As a team member, the talk that shaped a story, a requirement, or a task stays attached to it as a short digest with a link to the original, so months later I can tell why it was decided. (Belongs to `REQ-013`.)
+- `US-049` — As a person who works in a personal folder and in an organization's folder, each folder carries its own Project and repositories, so the editor, the terminal, and an agent all know which environment they are in. (Belongs to `REQ-014`.)
+- `US-050` — As an organization with its own operating guideline, I point Weaver at it by reference and a repository with no process file gets a starting one from it, so Weaver follows our guideline without knowing it by name. (Belongs to `REQ-015`.)
+- `US-051` — As a team member, I write and follow user stories on the board and walk from a story to its requirements and tasks, so the story map is not a separate document. (Belongs to `REQ-016`.)
+- `US-052` — As a team member, I drag a card to another column and confirm the move, so the board works as I expect a Kanban to work. (Belongs to `REQ-017`.)
 
 ### PALab project adoption
 
