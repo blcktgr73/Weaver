@@ -44,6 +44,7 @@ Recorded in [DEC-018](../decisions/DEC-018-operating-root-configuration.md): the
 - `TASK-079` Name the file that decided and where each roster entry comes from — [GitHub Issue #202](https://github.com/ebrAIn-Lab-3B/Weaver/issues/202)
 - `TASK-080` Use the root file in the editor and as the clone folder — [GitHub Issue #205](https://github.com/ebrAIn-Lab-3B/Weaver/issues/205)
 - `TASK-081` Write a root file from the tool and the editor setup — [GitHub Issue #208](https://github.com/ebrAIn-Lab-3B/Weaver/issues/208)
+- `TASK-082` Show repositories without cards and keep the repository list — [GitHub Issue #212](https://github.com/ebrAIn-Lab-3B/Weaver/issues/212)
 
 Origin: the maintainer, 2026-11-07, after moving this repository to an organization and keeping a personal and an organization environment side by side. Absorbs proposal [#189](https://github.com/ebrAIn-Lab-3B/Weaver/issues/189).
 
