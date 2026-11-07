@@ -57,6 +57,6 @@ export async function loadSetup(root: string, deps: Pick<Deps, 'env' | 'readText
     }
   }
 
-  const setup = resolveSetup(workspace, user, rootConfig);
+  const setup = resolveSetup(workspace, user, rootConfig, { ...(workspace ? { workspace: workspaceFile } : {}), ...(user ? { user: userFile } : {}) });
   return setup ? { ok: true, setup, warnings } : { ok: false, reason: 'none' };
 }
