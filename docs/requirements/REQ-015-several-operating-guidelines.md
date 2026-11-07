@@ -31,8 +31,7 @@ A guideline is a repository or a folder the organization owns, and a root folder
 
 ## Open decisions
 
-- Whether levels are configurable (see above), or a guideline's own levels stay outside Weaver and only link to its requirements and tasks.
-- How a guideline and a repository's own `process.yaml` combine when both set a value ([DEC-015](../decisions/DEC-015-process-configuration.md) says the repository wins).
+Proposed in [DEC-019](../decisions/DEC-019-operating-guidelines-by-reference.md), for the maintainer to accept: the levels of a guideline stay outside Weaver and are not made configurable now (item 9); a guideline never overrides a repository's own `process.yaml` and only starts a file for a repository that has none (items 5 and 7).
 
 ## Tasks
 
