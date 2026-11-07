@@ -1,4 +1,4 @@
-# PALab Weaver — Artifact Schema v0.1
+# ebrAIn.lab Weaver — Artifact Schema v0.1
 
 This is the single reference for the repository-native Requirement and Task artifacts. The validator in `packages/markdown` implements exactly this document. The schema is versioned with the repository; change it through a pull request.
 

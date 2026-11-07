@@ -1,4 +1,4 @@
-# PALab Weaver Development Onboarding
+# ebrAIn.lab Weaver Development Onboarding
 
 This document is the starting procedure for a human developer or AI agent joining Weaver development.
 

@@ -1,4 +1,4 @@
-# PALab Weaver VS Code Extension
+# ebrAIn.lab Weaver VS Code Extension
 
 This is the first implementation slice of Weaver.
 
