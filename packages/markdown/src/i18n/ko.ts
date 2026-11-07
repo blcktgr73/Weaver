@@ -9,6 +9,7 @@ export const ko: Record<MessageKey, Message> = {
   'validation.invalid-status': '허용되지 않는 상태입니다: "{status}". 사용할 수 있는 값: {allowed}.',
   'validation.invalid-repository': '저장소는 owner/name 형식이어야 합니다: "{repository}"',
   'validation.unknown-field': '알 수 없는 항목입니다(그대로 두고 해석하지 않음): "{field}"',
+  'validation.root-process-section': '"{field}"은(는) 저장소가 일을 진행하는 방식이라 그 저장소의 .weaver/process.yaml에 있어야 합니다. 루트 파일에 있어도 적용하지 않습니다.',
   'validation.story-ids-not-list': '"story_ids"는 목록이어야 합니다.',
   'validation.invalid-story-id': '스토리 ID가 US-### 형식이 아닙니다: "{id}"',
   'validation.no-acceptance-criteria': '"## Acceptance criteria" 아래에 항목이 없습니다.',

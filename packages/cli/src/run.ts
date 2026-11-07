@@ -82,6 +82,7 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
       : fail(EXIT.failed, 'cli.config-invalid', { path: loaded.path, detail: loaded.detail });
   }
   const { setup } = loaded;
+  for (const warning of loaded.warnings) deps.err(`${warning}\n`);
   const token = await deps.token();
   if (!token) return fail(EXIT.failed, 'cli.no-token');
 

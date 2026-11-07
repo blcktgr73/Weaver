@@ -22,5 +22,6 @@ export * from './rosterEdit';
 export { setFrontmatterFields, yamlValue } from './frontmatter';
 export * from './assign';
 export * from './config';
+export * from './rootConfig';
 export * from './process';
 export * from './taskContract';

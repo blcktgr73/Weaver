@@ -1,7 +1,7 @@
 import { parse as parseYaml, parseDocument, stringify as stringifyYaml } from 'yaml';
 import { FabricProject, FabricRegistry, FabricRepository, readFabricProject, readFabricRepositories } from './fabric';
 import type { MessageArgs } from './i18n';
-import { readRoster, Roster } from './roster';
+import { overlayRoster, readRoster, Roster } from './roster';
 import type { ValidationIssue } from './types';
 
 /** A person's own configuration, `~/.weaver/config.yaml` (DEC-014). It is never committed. */
@@ -61,26 +61,56 @@ export function parseProjectRef(text: string): { owner: string; number: number }
   return short ? { owner: short[1], number: Number(short[2]) } : undefined;
 }
 
-/** Where the Project and the repositories came from. */
-export type SetupSource = 'workspace' | 'user';
+/** Where the Project and the repositories came from: the workspace `fabric.yaml`, a root file, or the personal file. */
+export type SetupSource = 'workspace' | 'root' | 'user';
 
-/** What the Overview and the tool work from, after the workspace file and the personal file are weighed. */
+/** A root file that was found (DEC-018): what it says, and where it is. */
+export interface RootConfig {
+  config: UserConfig;
+  path: string;
+}
+
+/** What the Overview and the tool work from, after the workspace file, a root file, and the personal file are weighed. */
 export interface Setup {
   source: SetupSource;
   project: FabricProject;
   /** Absent: show every repository that has cards on the Project. */
   repositories?: FabricRepository[];
   roster?: Roster;
+  /** The root file that decided, when `source` is `root`; the Overview and the tool name it (DEC-018 item 9). */
+  rootFile?: string;
+}
+
+/**
+ * The roster of the files: the root file's contributors laid under the personal file's, so an id in both
+ * takes the personal fields (DEC-018 item 6). The reference (`roster.from`) is the first one declared,
+ * the root file's before the personal file's (item 5). With no root roster, the personal one is kept as it is.
+ * Returns the object to spread into a `Setup`.
+ */
+function stackRoster(root: Roster | undefined, personal: Roster | undefined): { roster?: Roster } {
+  if (!root) return personal ? { roster: personal } : {};
+  const stacked = overlayRoster(root, personal)?.roster;
+  if (!stacked) return {};
+  const from = root.from ?? personal?.from;
+  return { roster: { contributors: stacked.contributors, ...(from ? { from } : {}) } };
 }
 
 /**
  * The workspace `fabric.yaml`, when there is one, decides the Project and the repositories for that
- * workspace; otherwise the personal file does. The roster always comes from the personal file,
- * because who a person works with is not something a shared file should say (DEC-014).
+ * workspace; otherwise the nearest root file does, and otherwise the personal file (DEC-014 item 4,
+ * amended by DEC-018 item 4). The winning file decides both as a whole: a file with no
+ * `repositories` shows every repository of its Project and does not borrow another file's list.
+ * The roster is the root file's laid under the personal file's (DEC-018 item 6); a workspace
+ * file never says who a person works with (DEC-014).
  */
-export function resolveSetup(workspace: FabricRegistry | undefined, user: UserConfig | undefined): Setup | undefined {
-  if (workspace) return { source: 'workspace', project: workspace.project, repositories: workspace.repositories, ...(user?.roster ? { roster: user.roster } : {}) };
-  if (user) return { source: 'user', project: user.project, ...(user.repositories ? { repositories: user.repositories } : {}), ...(user.roster ? { roster: user.roster } : {}) };
+export function resolveSetup(workspace: FabricRegistry | undefined, user: UserConfig | undefined, root?: RootConfig): Setup | undefined {
+  const roster = stackRoster(root?.config.roster, user?.roster);
+  if (workspace) return { source: 'workspace', project: workspace.project, repositories: workspace.repositories, ...roster };
+  if (root) {
+    const { project, repositories } = root.config;
+    return { source: 'root', project, ...(repositories ? { repositories } : {}), ...roster, rootFile: root.path };
+  }
+  if (user) return { source: 'user', project: user.project, ...(user.repositories ? { repositories: user.repositories } : {}), ...roster };
   return undefined;
 }
 

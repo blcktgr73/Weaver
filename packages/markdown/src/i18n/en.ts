@@ -10,6 +10,7 @@ export const en = {
   'validation.invalid-status': 'Status "{status}" is not allowed. Use one of: {allowed}.',
   'validation.invalid-repository': 'Repository "{repository}" must look like owner/name.',
   'validation.unknown-field': 'Unknown field "{field}" is kept but not interpreted.',
+  'validation.root-process-section': '"{field}" describes how a repository tracks its work, so it belongs in that repository\'s .weaver/process.yaml. It is not applied from a root file.',
   'validation.story-ids-not-list': '"story_ids" must be a list.',
   'validation.invalid-story-id': 'Story ID "{id}" does not match US-###.',
   'validation.no-acceptance-criteria': 'No items under "## Acceptance criteria".',
