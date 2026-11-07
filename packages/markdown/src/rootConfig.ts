@@ -1,5 +1,6 @@
 import * as path from 'path';
-import { ConfigParseResult, parseConfig } from './config';
+import { ConfigParseResult, parseConfig, type UserConfig } from './config';
+import type { ValidationIssue } from './types';
 
 /** The folder and the file name of a root file: `<folder>/.weaver/config.yaml` (DEC-018 item 1). */
 export const ROOT_CONFIG_FOLDER = '.weaver';
@@ -25,6 +26,28 @@ export function parseRootConfig(filePath: string, text: string): ConfigParseResu
         : issue,
     ),
   };
+}
+
+/** What looking for a root file found (DEC-018 item 2). */
+export type RootConfigFound =
+  | { kind: 'none' }
+  /** The nearest file exists but cannot be read: reported, not skipped, so a typo does not quietly fall back to another file. */
+  | { kind: 'invalid'; path: string; issues: ValidationIssue[] }
+  | { kind: 'ok'; path: string; config: UserConfig; /** Warnings of the file, for example a process section. */ issues: ValidationIssue[] };
+
+/**
+ * Looks for the nearest root file from `start` and reads it. `readText` returns the text of a file, or
+ * `undefined` when there is none; an empty file counts as none and the walk goes on. The editor and the
+ * tool both call this, so they find the same file.
+ */
+export async function findRootConfig(start: string, personalFile: string, readText: (file: string) => Promise<string | undefined>): Promise<RootConfigFound> {
+  for (const file of rootConfigCandidates(start, personalFile)) {
+    const text = await readText(file);
+    if (text === undefined || text.trim() === '') continue;
+    const parsed = parseRootConfig(file, text);
+    return parsed.config ? { kind: 'ok', path: file, config: parsed.config, issues: parsed.issues } : { kind: 'invalid', path: file, issues: parsed.issues };
+  }
+  return { kind: 'none' };
 }
 
 /** Whether two paths name the same place: resolved, and without regard to case on Windows. */

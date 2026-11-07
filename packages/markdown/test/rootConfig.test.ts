@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { formatNotice, parseConfig, parseFabric, parseRoster, parseRootConfig, resolveSetup, rootConfigCandidates, stackRosters, type Roster, type RootConfig, type UserConfig } from '../src';
+import { findRootConfig, formatNotice, parseConfig, parseFabric, parseRoster, parseRootConfig, resolveSetup, rootConfigCandidates, stackRosters, type Roster, type RootConfig, type UserConfig } from '../src';
 
 const PROJECT = 'project: {owner: team, number: 9}\n';
 const user = (text: string): UserConfig => {
@@ -195,5 +195,36 @@ describe('resolveSetup names the files', () => {
     const shared = parseFabric('fabric.yaml', 'project: {owner: shared, number: 5}\nrepositories:\n  - shared/app\n').registry;
     expect(resolveSetup(shared, personal, undefined, { workspace: '/work/fabric.yaml' })?.decidedBy).toBe('/work/fabric.yaml');
     expect(resolveSetup(shared, personal)?.decidedBy).toBeUndefined();
+  });
+});
+
+describe('findRootConfig', () => {
+  const start = path.resolve('/projects/org/app');
+  const personal = path.resolve('/home/me/.weaver/config.yaml');
+  const at = (folder: string) => path.join(path.resolve(folder), '.weaver', 'config.yaml');
+  const reader = (files: Record<string, string>) => async (file: string) => files[file];
+
+  it('returns the nearest file that has text, and reads it', async () => {
+    const found = await findRootConfig(start, personal, reader({ [at('/projects')]: PROJECT, [at('/projects/org')]: 'project: {owner: near, number: 2}\n' }));
+    expect(found).toMatchObject({ kind: 'ok', path: at('/projects/org'), config: { project: { owner: 'near', number: 2 } } });
+  });
+
+  it('goes on past an empty file, and says none when nothing is found', async () => {
+    const past = await findRootConfig(start, personal, reader({ [at('/projects/org/app')]: '  \n', [at('/projects')]: PROJECT }));
+    expect(past).toMatchObject({ kind: 'ok', path: at('/projects') });
+    expect(await findRootConfig(start, personal, reader({}))).toEqual({ kind: 'none' });
+  });
+
+  it('reports the nearest file when it cannot be read, and does not fall back to a farther one', async () => {
+    const found = await findRootConfig(start, personal, reader({ [at('/projects/org')]: 'project: [', [at('/projects')]: PROJECT }));
+    expect(found.kind).toBe('invalid');
+    expect(found.kind === 'invalid' && found.path).toBe(at('/projects/org'));
+  });
+
+  it('carries the warnings of a file that is read, and never reads the personal file as a root file', async () => {
+    const warned = await findRootConfig(start, personal, reader({ [at('/projects')]: `${PROJECT}columns: {}\n` }));
+    expect(warned.kind === 'ok' && warned.issues.map((i) => i.code)).toEqual(['root-process-section']);
+    const only = await findRootConfig(path.resolve('/home/me/work'), personal, reader({ [personal]: PROJECT }));
+    expect(only).toEqual({ kind: 'none' });
   });
 });

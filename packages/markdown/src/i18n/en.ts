@@ -71,6 +71,7 @@ export const en = {
   // Overview Kanban
   'ui.overview.title': 'Overview',
   'ui.overview.project': 'Project: {title}',
+  'ui.overview.config': 'The Project and the repositories come from {file}.',
   'ui.overview.cards': { one: '{count} card', other: '{count} cards' },
   'ui.overview.blocked': '{count} blocked',
   'ui.overview.no-cards': 'no cards',
@@ -302,6 +303,8 @@ export const en = {
   'ui.sidebar.clone': 'Clone the missing repositories',
   'ui.repos.from-workspace': 'The repositories come from the fabric.yaml of this workspace, so change that file instead.',
   'ui.repos.open-fabric': 'Open fabric.yaml',
+  'ui.repos.from-root': 'The repositories come from {file}, a root file above this folder, so change that file instead.',
+  'ui.repos.open-root': 'Open the root file',
   'ui.repos.no-config': 'Weaver: there is no personal configuration yet. Run the setup first.',
   'ui.repos.invalid-config': 'Weaver: the personal configuration has errors. Fix {path} first.',
   'ui.repos.open-config': 'Open the file',
