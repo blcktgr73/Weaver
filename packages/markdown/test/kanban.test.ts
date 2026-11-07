@@ -44,11 +44,11 @@ describe('groupByColumn', () => {
 
 describe('parseIssueUrl', () => {
   it('parses GitHub issue URLs only', () => {
-    expect(parseIssueUrl('https://github.com/blcktgr73/Weaver/issues/5')).toEqual({
-      owner: 'blcktgr73', repo: 'Weaver', number: 5,
+    expect(parseIssueUrl('https://github.com/ebrAIn-Lab-3B/Weaver/issues/5')).toEqual({
+      owner: 'ebrAIn-Lab-3B', repo: 'Weaver', number: 5,
     });
-    expect(parseIssueUrl('https://github.com/blcktgr73/Weaver/pull/5')).toBeUndefined();
-    expect(parseIssueUrl('https://evil.example/blcktgr73/Weaver/issues/5')).toBeUndefined();
+    expect(parseIssueUrl('https://github.com/ebrAIn-Lab-3B/Weaver/pull/5')).toBeUndefined();
+    expect(parseIssueUrl('https://evil.example/ebrAIn-Lab-3B/Weaver/issues/5')).toBeUndefined();
   });
 });
 

@@ -74,7 +74,7 @@ describe('closesIssue', () => {
   it('accepts GitHub closing keywords for the same Issue', () => {
     expect(closesIssue('Closes #5', 5)).toBe(true);
     expect(closesIssue('fixed #5 and more', 5)).toBe(true);
-    expect(closesIssue('Resolves: blcktgr73/Weaver#5', 5)).toBe(true);
+    expect(closesIssue('Resolves: ebrAIn-Lab-3B/Weaver#5', 5)).toBe(true);
   });
   it('treats a bare reference or another Issue as a mention', () => {
     expect(closesIssue('See #5 for context', 5)).toBe(false);

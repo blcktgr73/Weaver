@@ -13,7 +13,7 @@ Repository folder / clone
   → Weaver Requirement Canvas + Kanban + Verification
 ```
 
-The existing [PALab Ops Kanban](https://github.com/users/blcktgr73/projects/1) is the initial shared board. Weaver reads its fields and projects the relevant cards inside its own UX.
+The existing [ebrAIn.lab Kanban](https://github.com/orgs/ebrAIn-Lab-3B/projects/1) is the initial shared board. Weaver reads its fields and projects the relevant cards inside its own UX.
 
 ## 1. Repository connection
 
@@ -56,7 +56,7 @@ id: REQ-001
 type: requirement
 title: Weaver manages its own development flow
 story_ids: [US-001, US-004, US-007, US-010, US-012]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 ```
@@ -65,7 +65,7 @@ Task references remain inspectable in Markdown:
 
 ```markdown
 - `TASK-005` Build the first VS Code Kanban projection
-  - Issue: https://github.com/blcktgr73/Weaver/issues/5
+  - Issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/5
   - Status: backlog
   - Owner: Unassigned
   - Evidence: pending

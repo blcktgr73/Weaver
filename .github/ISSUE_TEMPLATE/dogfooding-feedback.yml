@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for trying Weaver. A report here is read as a small requirement: what you were doing, what you expected, and what happened. The maintainer turns it into a story in the [user story map](https://github.com/blcktgr73/Weaver/blob/main/docs/product/user-story-map.md) and, when it needs work, into a task. Nothing needs to be polished.
+        Thank you for trying Weaver. A report here is read as a small requirement: what you were doing, what you expected, and what happened. The maintainer turns it into a story in the [user story map](https://github.com/ebrAIn-Lab-3B/Weaver/blob/main/docs/product/user-story-map.md) and, when it needs work, into a task. Nothing needs to be polished.
   - type: textarea
     id: doing
     attributes:

@@ -2,7 +2,7 @@
 
 - Status: proposed on 2026-11-05; it becomes accepted when the maintainer merges the pull request that adds it
 - Date: 2026-11-05
-- Related: `REQ-011`, `TASK-069`, `TASK-070`, proposal [#161](https://github.com/blcktgr73/Weaver/issues/161), amends [DEC-013](./DEC-013-contributor-roster.md), builds on [DEC-014](./DEC-014-user-configuration.md) and [DEC-015](./DEC-015-process-configuration.md), keeps [DEC-007](./DEC-007-central-project-is-configuration.md) and [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md)
+- Related: `REQ-011`, `TASK-069`, `TASK-070`, proposal [#161](https://github.com/ebrAIn-Lab-3B/Weaver/issues/161), amends [DEC-013](./DEC-013-contributor-roster.md), builds on [DEC-014](./DEC-014-user-configuration.md) and [DEC-015](./DEC-015-process-configuration.md), keeps [DEC-007](./DEC-007-central-project-is-configuration.md) and [DEC-008](./DEC-008-agent-identity-and-write-confirmation.md)
 
 ## Context
 

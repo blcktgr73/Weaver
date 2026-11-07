@@ -7,10 +7,10 @@ const parse = (text: string) => parseFabric('fabric.yaml', text);
 const codes = (text: string) => parse(text).issues.map((issue) => issue.code);
 
 const VALID = `project:
-  owner: blcktgr73
+  owner: ebrAIn-Lab-3B
   number: 1
 repositories:
-  - blcktgr73/Weaver
+  - ebrAIn-Lab-3B/Weaver
   - repository: blcktgr73/HowMuchToday
     title: How much today
 `;
@@ -20,8 +20,8 @@ describe('parseFabric', () => {
     const { registry, issues } = parse(VALID);
     expect(issues).toEqual([]);
     expect(registry).toEqual({
-      project: { owner: 'blcktgr73', number: 1 },
-      repositories: [{ repository: 'blcktgr73/Weaver' }, { repository: 'blcktgr73/HowMuchToday', title: 'How much today' }],
+      project: { owner: 'ebrAIn-Lab-3B', number: 1 },
+      repositories: [{ repository: 'ebrAIn-Lab-3B/Weaver' }, { repository: 'blcktgr73/HowMuchToday', title: 'How much today' }],
     });
   });
 

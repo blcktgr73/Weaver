@@ -14,7 +14,7 @@ Tick each line as you go. If a line does not work, stop there and report it (see
 
 **1. Install**
 
-- [ ] Download `weaver-<version>.vsix` from the [latest Release](https://github.com/blcktgr73/Weaver/releases).
+- [ ] Download `weaver-<version>.vsix` from the [latest Release](https://github.com/ebrAIn-Lab-3B/Weaver/releases).
 - [ ] In VS Code: Extensions view, `…`, **Install from VSIX…**, and pick the file. (Or `code --install-extension <path to the file>`.)
 - [ ] The extension `palab.weaver` is listed, and a **Weaver** icon is in the Activity Bar (the bar on the left).
 
@@ -46,7 +46,7 @@ It does not change your cards unless you press a button that says what it will c
 
 ### Report friction
 
-Open [a feedback report](https://github.com/blcktgr73/Weaver/issues/new?template=dogfooding-feedback.yml). It asks four things: what you were trying to do, what you expected, what happened, and how much it got in the way. A screenshot helps. Short is fine.
+Open [a feedback report](https://github.com/ebrAIn-Lab-3B/Weaver/issues/new?template=dogfooding-feedback.yml). It asks four things: what you were trying to do, what you expected, what happened, and how much it got in the way. A screenshot helps. Short is fine.
 
 ## For the maintainer: from a report to a story and a task
 

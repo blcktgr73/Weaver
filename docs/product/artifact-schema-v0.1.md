@@ -16,7 +16,7 @@ This is the single reference for the repository-native Requirement and Task arti
 | Requirement | `REQ-` + 3 or more digits | `REQ-001` |
 | Task | `TASK-` + 3 or more digits | `TASK-005` |
 | User story | `US-` + 3 or more digits | `US-013` |
-| Repository | `owner/name` | `blcktgr73/Weaver` |
+| Repository | `owner/name` | `ebrAIn-Lab-3B/Weaver` |
 
 IDs are unique within a workspace and are never reused.
 
@@ -108,10 +108,10 @@ A workspace may keep a `fabric.yaml` for a team that wants everyone to see the s
 
 ```yaml
 project:
-  owner: blcktgr73        # a user or an organization login
+  owner: ebrAIn-Lab-3B        # a user or an organization login
   number: 1
 repositories:
-  - blcktgr73/Weaver
+  - ebrAIn-Lab-3B/Weaver
   - repository: blcktgr73/HowMuchToday
     title: How much today # optional label for the lane
 ```
@@ -134,10 +134,10 @@ The order of `repositories` is the default lane order. Rules:
 
 ```yaml
 project:
-  owner: blcktgr73
+  owner: ebrAIn-Lab-3B
   number: 1
 repositories:            # optional; without it, every repository with cards on the Project is shown
-  - blcktgr73/Weaver
+  - ebrAIn-Lab-3B/Weaver
   - repository: blcktgr73/HowMuchToday
     title: How much today
 roster:                  # optional; see "Contributor roster" for the entries

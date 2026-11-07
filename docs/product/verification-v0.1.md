@@ -24,7 +24,7 @@ acceptance_criteria:
       - path: docs/requirements/REQ-001-weaver-self-hosting.md
 tasks:
   - id: TASK-001
-    issue: https://github.com/blcktgr73/Weaver/issues/1
+    issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/1
     owner: human-or-agent
     status: in-progress
     evidence:
