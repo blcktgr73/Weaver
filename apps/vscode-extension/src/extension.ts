@@ -5,7 +5,7 @@ import { REQUIREMENT_EDITOR, RequirementEditorProvider } from './requirementEdit
 import { cloneRegistered, openFabricRoot, setFabricRoot } from './fabricRoot';
 import { hasWorkspaceRegistry, OverviewView, readRegistry } from './overviewView';
 import { setUp } from './setupWizard';
-import { chooseRepositories, openConfigFile } from './chooseRepositories';
+import { chooseRepositories, openConfigFile, refreshRepositoryListCommand } from './chooseRepositories';
 import { editContributors } from './editContributors';
 import { SidebarProvider } from './sidebar';
 import { processStore } from './processStore';
@@ -112,6 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (await chooseRepositories()) await overview.reload();
   });
   const openConfig = vscode.commands.registerCommand('weaver.openConfigFile', () => openConfigFile());
+  const refreshRepos = vscode.commands.registerCommand('weaver.refreshRepositoryList', () => refreshRepositoryListCommand());
   // A change to the personal roster moves the warnings about owners, so the workspace is read again (TASK-075).
   const editRoster = vscode.commands.registerCommand('weaver.editContributors', async () => {
     if (await editContributors()) await overview.reload();
@@ -206,7 +207,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
-  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, openConfig, editRoster, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, ...watchers, { dispose: () => pending && clearTimeout(pending) }, onActiveEditor, onLanguage);
+  context.subscriptions.push(diagnostics, sidebarView, chooseRepos, refreshRepos, openConfig, editRoster, refreshOverview, setUpCommand, editor, openSource, openView, openOverview, showOnOverview, setRoot, cloneAll, openRoot, scanWorkspace, onSave, ...watchers, { dispose: () => pending && clearTimeout(pending) }, onActiveEditor, onLanguage);
   void refresh().then(async (loaded) => {
     // Only a workspace with its own `fabric.yaml` opens the Overview by itself (REQ-006, DEC-014).
     if (await hasWorkspaceRegistry()) {

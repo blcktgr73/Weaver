@@ -61,6 +61,11 @@
         "icon": "$(checklist)"
       },
       {
+        "command": "weaver.refreshRepositoryList",
+        "title": "%weaver.command.refreshRepositoryList.title%",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "weaver.openConfigFile",
         "title": "%weaver.command.openConfigFile.title%"
       },

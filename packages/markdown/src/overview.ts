@@ -62,6 +62,8 @@ export interface Lane<T> {
   total: number;
   blocked: number;
   columns: Record<KanbanColumn, T[]>;
+  /** `clone`: the repository is a clone on this computer that no list names and the Project has no card of (DEC-018 item 11). */
+  note?: 'clone';
 }
 
 /**

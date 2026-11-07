@@ -16,6 +16,7 @@
   "weaver.config.staleDays.description": "Days without a change after which a card in Ready, In progress, Blocked, or Review is marked idle on the Overview.",
   "weaver.command.showOnOverview.title": "Weaver: Show on the Overview",
   "weaver.command.chooseRepositories.title": "Weaver: Choose Repositories to Show",
+  "weaver.command.refreshRepositoryList.title": "Weaver: Refresh the Repository List",
   "weaver.command.openConfigFile.title": "Weaver: Open Configuration File",
   "weaver.command.editContributors.title": "Weaver: Add or Change Contributors",
   "weaver.command.refreshOverview.title": "Weaver: Refresh Overview",
