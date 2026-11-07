@@ -12,6 +12,7 @@ import {
   MessageKey,
   effectiveRepositories,
   planTaskFields,
+  Setup,
   taskIdsOfPull,
   t,
 } from '@palab/weaver-markdown';
@@ -283,9 +284,11 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     const cards = all.filter((c) => (!repository || c.repository.toLowerCase() === repository) && (!column || c.column.toLowerCase() === column));
     if (wantsText) {
       deps.out(cards.map(textLine).join('\n') + (cards.length ? '\n' : ''));
+      // A file outside the folder that changes which Project is read is never silent (DEC-018 item 9).
+      if (setup.source !== 'user' && setup.decidedBy) deps.err(`${formatNotice({ code: 'cli.config-decided', args: { file: setup.decidedBy, source: setup.source } }, locale)}\n`);
     } else {
       const project = { owner: setup.project.owner, number: setup.project.number, title: read.read.title };
-      deps.out(`${JSON.stringify({ schema: SCHEMA, project, cards, skipped: read.read.skipped })}\n`);
+      deps.out(`${JSON.stringify({ schema: SCHEMA, project, config: configOf(setup), cards, skipped: read.read.skipped })}\n`);
     }
     return EXIT.ok;
   }
@@ -332,6 +335,19 @@ export async function run(argv: readonly string[], deps: Deps): Promise<number> 
     deps.out(`${JSON.stringify(detail)}\n`);
   }
   return EXIT.ok;
+}
+
+/**
+ * Where the Project and the repositories came from, and which files gave the roster (DEC-018 item 9).
+ * `contributors` lists, for each person or agent, the layers it comes from, lowest first.
+ */
+function configOf(setup: Setup): { source: string; file: string | null; roster: { layer: string; file: string | null }[]; contributors: { id: string; layers: string[] }[] } {
+  return {
+    source: setup.source,
+    file: setup.decidedBy ?? null,
+    roster: setup.rosterFiles.map((r) => ({ layer: r.layer, file: r.file ?? null })),
+    contributors: (setup.roster?.contributors ?? []).map((c) => ({ id: c.id, layers: setup.rosterOrigins.get(c.id.toLowerCase()) ?? [] })),
+  };
 }
 
 function textLine(card: CliCard): string {

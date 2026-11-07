@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as path from 'path';
-import { Locale, parseConfig, parseFabric, parseRootConfig, resolveSetup, rootConfigCandidates, Setup, t, ValidationIssue, validationKey, type FabricRegistry, type RootConfig, type UserConfig } from '@palab/weaver-markdown';
+import { findRootConfig, Locale, parseConfig, parseFabric, resolveSetup, Setup, t, ValidationIssue, validationKey, type FabricRegistry, type RootConfig, type UserConfig } from '@palab/weaver-markdown';
 import type { Deps } from './contract';
 
 /** `~/.weaver/config.yaml`, or under `WEAVER_HOME`. Never inside a repository (DEC-014). */
@@ -34,15 +34,12 @@ export async function loadSetup(root: string, deps: Pick<Deps, 'env' | 'readText
   const userFile = configPath(deps.env);
   const warnings: string[] = [];
   let rootConfig: RootConfig | undefined;
-  for (const file of rootConfigCandidates(root, userFile)) {
-    const text = await deps.readText(file);
-    if (text === undefined || text.trim() === '') continue;
-    const parsed = parseRootConfig(file, text);
-    for (const issue of parsed.issues) if (issue.severity === 'warning') warnings.push(`${file}: ${t(validationKey(issue.code), locale, issue.args)}`);
+  const found = await findRootConfig(root, userFile, deps.readText);
+  if (found.kind !== 'none') {
+    for (const issue of found.issues) if (issue.severity === 'warning') warnings.push(`${found.path}: ${t(validationKey(issue.code), locale, issue.args)}`);
     // A broken root file only matters when the workspace file does not decide everything.
-    if (!parsed.config && !workspace) return { ok: false, reason: 'invalid', path: file, detail: firstError(parsed.issues, locale) };
-    if (parsed.config) rootConfig = { config: parsed.config, path: file };
-    break;
+    if (found.kind === 'invalid' && !workspace) return { ok: false, reason: 'invalid', path: found.path, detail: firstError(found.issues, locale) };
+    if (found.kind === 'ok') rootConfig = { config: found.config, path: found.path };
   }
 
   const userText = await deps.readText(userFile);
@@ -57,6 +54,6 @@ export async function loadSetup(root: string, deps: Pick<Deps, 'env' | 'readText
     }
   }
 
-  const setup = resolveSetup(workspace, user, rootConfig);
+  const setup = resolveSetup(workspace, user, rootConfig, { ...(workspace ? { workspace: workspaceFile } : {}), ...(user ? { user: userFile } : {}) });
   return setup ? { ok: true, setup, warnings } : { ok: false, reason: 'none' };
 }

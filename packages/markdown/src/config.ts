@@ -1,7 +1,7 @@
 import { parse as parseYaml, parseDocument, stringify as stringifyYaml } from 'yaml';
 import { FabricProject, FabricRegistry, FabricRepository, readFabricProject, readFabricRepositories } from './fabric';
 import type { MessageArgs } from './i18n';
-import { overlayRoster, readRoster, Roster } from './roster';
+import { readRoster, Roster, RosterLayerName, stackRosters } from './roster';
 import type { ValidationIssue } from './types';
 
 /** A person's own configuration, `~/.weaver/config.yaml` (DEC-014). It is never committed. */
@@ -77,22 +77,36 @@ export interface Setup {
   /** Absent: show every repository that has cards on the Project. */
   repositories?: FabricRepository[];
   roster?: Roster;
-  /** The root file that decided, when `source` is `root`; the Overview and the tool name it (DEC-018 item 9). */
+  /** The root file that decided, when `source` is `root`. */
   rootFile?: string;
+  /** The path of the file that decided `project` and `repositories`, when the caller knew it (DEC-018 item 9). */
+  decidedBy?: string;
+  /** The files that gave the roster, lowest layer first (DEC-018 item 9). */
+  rosterFiles: { layer: 'root' | 'personal'; file?: string }[];
+  /** For each contributor id (lower case), the layers it comes from, lowest first (DEC-018 items 6 and 9). */
+  rosterOrigins: Map<string, RosterLayerName[]>;
+}
+
+/** The paths of the files that were read, for naming the one that decided (DEC-018 item 9). */
+export interface SetupFiles {
+  workspace?: string;
+  user?: string;
 }
 
 /**
  * The roster of the files: the root file's contributors laid under the personal file's, so an id in both
  * takes the personal fields (DEC-018 item 6). The reference (`roster.from`) is the first one declared,
  * the root file's before the personal file's (item 5). With no root roster, the personal one is kept as it is.
- * Returns the object to spread into a `Setup`.
  */
-function stackRoster(root: Roster | undefined, personal: Roster | undefined): { roster?: Roster } {
-  if (!root) return personal ? { roster: personal } : {};
-  const stacked = overlayRoster(root, personal)?.roster;
-  if (!stacked) return {};
-  const from = root.from ?? personal?.from;
-  return { roster: { contributors: stacked.contributors, ...(from ? { from } : {}) } };
+function stackRoster(root: Roster | undefined, personal: Roster | undefined): { roster?: Roster; origins: Map<string, RosterLayerName[]> } {
+  const stacked = stackRosters([
+    { name: 'root', roster: root },
+    { name: 'personal', roster: personal },
+  ]);
+  if (!stacked) return { origins: new Map() };
+  const from = root?.from ?? personal?.from;
+  const roster = root ? { contributors: stacked.roster.contributors, ...(from ? { from } : {}) } : stacked.roster;
+  return { roster, origins: stacked.origins };
 }
 
 /**
@@ -101,16 +115,24 @@ function stackRoster(root: Roster | undefined, personal: Roster | undefined): { 
  * amended by DEC-018 item 4). The winning file decides both as a whole: a file with no
  * `repositories` shows every repository of its Project and does not borrow another file's list.
  * The roster is the root file's laid under the personal file's (DEC-018 item 6); a workspace
- * file never says who a person works with (DEC-014).
+ * file never says who a person works with (DEC-014). `files` names the paths that were read, so the
+ * result can say which file decided and which files gave the roster.
  */
-export function resolveSetup(workspace: FabricRegistry | undefined, user: UserConfig | undefined, root?: RootConfig): Setup | undefined {
-  const roster = stackRoster(root?.config.roster, user?.roster);
-  if (workspace) return { source: 'workspace', project: workspace.project, repositories: workspace.repositories, ...roster };
+export function resolveSetup(workspace: FabricRegistry | undefined, user: UserConfig | undefined, root?: RootConfig, files: SetupFiles = {}): Setup | undefined {
+  const { roster, origins } = stackRoster(root?.config.roster, user?.roster);
+  const rosterFiles: Setup['rosterFiles'] = [
+    ...(root?.config.roster ? [{ layer: 'root' as const, file: root.path }] : []),
+    ...(user?.roster ? [{ layer: 'personal' as const, ...(files.user ? { file: files.user } : {}) }] : []),
+  ];
+  const common = { ...(roster ? { roster } : {}), rosterFiles, rosterOrigins: origins };
+  if (workspace) return { source: 'workspace', project: workspace.project, repositories: workspace.repositories, ...(files.workspace ? { decidedBy: files.workspace } : {}), ...common };
   if (root) {
     const { project, repositories } = root.config;
-    return { source: 'root', project, ...(repositories ? { repositories } : {}), ...roster, rootFile: root.path };
+    return { source: 'root', project, ...(repositories ? { repositories } : {}), rootFile: root.path, decidedBy: root.path, ...common };
   }
-  if (user) return { source: 'user', project: user.project, ...(user.repositories ? { repositories: user.repositories } : {}), ...roster };
+  if (user) {
+    return { source: 'user', project: user.project, ...(user.repositories ? { repositories: user.repositories } : {}), ...(files.user ? { decidedBy: files.user } : {}), ...common };
+  }
   return undefined;
 }
 

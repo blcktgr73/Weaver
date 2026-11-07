@@ -306,3 +306,36 @@ export function overlayRoster(shared: Roster | undefined, personal: Roster | und
   }
   return { roster: { contributors: [...byId.values()] }, origins };
 }
+
+/** The layers of a roster, lowest first: the referenced one, a root file's, the personal file's (DEC-018 item 6). */
+export type RosterLayerName = 'shared' | 'root' | 'personal';
+
+export interface RosterStack {
+  roster: Roster;
+  /** For each contributor id (lower case), the layers that gave it, lowest first. A difference between layers is shown, not hidden. */
+  origins: Map<string, RosterLayerName[]>;
+}
+
+/**
+ * Lays the rosters over each other, lowest layer first, the way `overlayRoster` lays the personal
+ * one over the shared one: an id in several layers (without regard to case) takes the fields of the
+ * highest layer that sets them and keeps the rest; `roles` and `reach` of a higher layer replace the
+ * lower ones as a whole; a layer never removes a contributor of a lower one. A layer left out
+ * (`undefined`) is skipped. One layer alone is returned as it is.
+ */
+export function stackRosters(layers: readonly { name: RosterLayerName; roster: Roster | undefined }[]): RosterStack | undefined {
+  const present = layers.filter((layer): layer is { name: RosterLayerName; roster: Roster } => layer.roster !== undefined);
+  if (present.length === 0) return undefined;
+  const origins = new Map<string, RosterLayerName[]>();
+  const byId = new Map<string, Contributor>();
+  for (const { name, roster } of present) {
+    for (const c of roster.contributors) {
+      const key = c.id.toLowerCase();
+      const base = byId.get(key);
+      byId.set(key, base ? { ...base, ...c, id: base.id } : { ...c });
+      origins.set(key, [...(origins.get(key) ?? []), name]);
+    }
+  }
+  const roster = present.length === 1 ? present[0].roster : { contributors: [...byId.values()] };
+  return { roster, origins };
+}

@@ -50,6 +50,12 @@ This page is the contract. Every JSON example below is checked by a test against
     "number": 1,
     "title": "Board"
   },
+  "config": {
+    "source": "workspace",
+    "file": "/work/fabric.yaml",
+    "roster": [],
+    "contributors": []
+  },
   "cards": [
     {
       "repository": "me/Weaver",
@@ -82,6 +88,8 @@ This page is the contract. Every JSON example below is checked by a test against
   "skipped": 0
 }
 ```
+
+`config` says where the Project and the repositories came from ([DEC-018](../decisions/DEC-018-operating-root-configuration.md) item 9): `source` is `workspace` (a `fabric.yaml`), `root` (a `.weaver/config.yaml` found in a folder above the one the tool runs in), or `user` (`~/.weaver/config.yaml`), and `file` is its path. `roster` lists the files that gave the roster, lowest layer first (`layer` is `root` or `personal`), and `contributors` gives, for each person or agent, the `layers` it comes from, for example `["root", "personal"]`. With `--text`, a note on standard error names the file when it is not the personal one. A Project that changes because a file in a parent folder says so is therefore never silent.
 
 `weaver show <card>` prints one card with its task file, requirement, and the merged pull requests that close it or name its task. `<card>` is `owner/name#number`, an Issue address, or `TASK-###`.
 

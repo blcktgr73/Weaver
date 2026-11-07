@@ -7,14 +7,18 @@ import { readProject, readRepositorySizes } from '@palab/weaver-github';
 import { getGitHubToken } from './github';
 import { message } from './locale';
 import { readRegistry } from './overviewView';
+import { detectedRootFolder } from './rootConfig';
 
 /** The key inside the `weaver` section, as in `getConfiguration('weaver')`. */
 const SETTING = 'fabricRoot';
 
-/** The local folder that holds the clones. It is a machine setting, never written to the repository. */
+/**
+ * The local folder that holds the clones. The `weaver.fabricRoot` setting wins; without it, the folder of
+ * the root file that decided (DEC-018 item 8). It is a machine setting, never written to the repository.
+ */
 export function fabricRoot(): string | undefined {
   const value = vscode.workspace.getConfiguration('weaver').get<string>('fabricRoot')?.trim();
-  return value ? value : undefined;
+  return value ? value : detectedRootFolder();
 }
 
 export async function setFabricRoot(): Promise<string | undefined> {
@@ -176,6 +180,7 @@ export async function cloneRegistered(): Promise<void> {
 }
 
 export async function openFabricRoot(): Promise<void> {
+  await readRegistry();
   const root = fabricRoot();
   if (!root) {
     void vscode.window.showInformationMessage(message('ui.fabric.root-missing'));
