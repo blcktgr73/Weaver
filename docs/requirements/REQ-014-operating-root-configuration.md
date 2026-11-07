@@ -41,6 +41,8 @@ A folder that holds projects (an operating root, such as `prj` or `ebr_prj`) may
 
 ## Tasks
 
+- `TASK-077` Decide the operating root configuration — [GitHub Issue #196](https://github.com/ebrAIn-Lab-3B/Weaver/issues/196)
+
 Tasks are listed here once the open decisions are recorded.
 
 Origin: the maintainer, 2026-11-07, after moving this repository to an organization and keeping a personal and an organization environment side by side. Absorbs proposal [#189](https://github.com/ebrAIn-Lab-3B/Weaver/issues/189).
