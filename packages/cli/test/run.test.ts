@@ -644,6 +644,38 @@ describe('where the configuration comes from', () => {
     expect(parent.asked).toEqual([9]);
   });
 
+  it('names the file that decided and the layers of each contributor in the JSON of list', async () => {
+    const people = 'roster:\n  contributors:\n    - {id: maria, kind: human, name: Maria}\n';
+    const { deps, out } = withFiles({ personal: `${PERSONAL}${people}`, roots: { '/work/.weaver/config.yaml': `${ROOT}roster:\n  contributors:\n    - {id: Maria, kind: human, github: maria-gh}\n    - {id: lee, kind: human}\n` } });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    const config = JSON.parse(out.join('')).config;
+    expect(config.source).toBe('root');
+    expect(config.file.split('\\').join('/')).toMatch(/\/work\/\.weaver\/config\.yaml$/);
+    expect(config.roster.map((r: { layer: string }) => r.layer)).toEqual(['root', 'personal']);
+    expect(config.roster[1].file.split('\\').join('/')).toBe('/home/me/.weaver/config.yaml');
+    expect(config.contributors).toEqual([
+      { id: 'Maria', layers: ['root', 'personal'] },
+      { id: 'lee', layers: ['root'] },
+    ]);
+  });
+
+  it('names the personal file as the source when nothing above decides, and says nothing extra in text', async () => {
+    const { deps, out, err } = withFiles({ personal: PERSONAL });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(JSON.parse(out.join('')).config).toMatchObject({ source: 'user', roster: [], contributors: [] });
+    const text = withFiles({ personal: PERSONAL });
+    expect(await run(['list', '--text'], text.deps)).toBe(EXIT.ok);
+    expect(text.err.join('')).toBe('');
+    expect(err.join('')).toBe('');
+  });
+
+  it('says in text mode, on standard error, which file decided when it is not the personal one', async () => {
+    const { deps, err } = withFiles({ roots: { '/work/.weaver/config.yaml': ROOT } });
+    expect(await run(['list', '--text'], deps)).toBe(EXIT.ok);
+    expect(err.join('')).toContain('config.yaml');
+    expect(err.join('')).toContain('(root)');
+  });
+
   it('prefers the workspace fabric.yaml over a root file, and a root file over the personal file', async () => {
     const both = withFiles({ workspace: WORKSPACE, personal: PERSONAL, roots: { '/work/.weaver/config.yaml': ROOT } });
     expect(await run(['list'], both.deps)).toBe(EXIT.ok);

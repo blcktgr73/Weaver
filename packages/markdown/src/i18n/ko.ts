@@ -234,6 +234,7 @@ export const ko: Record<MessageKey, Message> = {
   'cli.reconcile.relabel-reason': 'Issue가 닫혔고 닫힌 태스크 Issue는 Verified인데(DEC-003), 이전 상태 라벨이 남아 있습니다.',
   'cli.no-setup': 'Weaver 설정을 찾지 못했습니다. "weaver init"을 실행하거나 {root}에 fabric.yaml을 두세요.',
   'cli.config-invalid': '설정 {path}에 문제가 있습니다: {detail}',
+  'cli.config-decided': 'Project와 저장소는 {file}에서 왔습니다({source}).',
   'init.not-interactive': 'weaver init은 질문을 하므로 터미널이 필요합니다. 터미널에서 실행하거나 ~/.weaver/config.yaml을 직접 쓰세요(docs/product/artifact-schema-v0.1.md 참고).',
   'init.failed': '설정을 멈췄습니다: {detail}',
   'init.projects-title': '읽을 수 있는 Project:',

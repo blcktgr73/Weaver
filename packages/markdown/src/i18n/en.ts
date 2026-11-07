@@ -235,6 +235,7 @@ export const en = {
   'cli.reconcile.relabel-reason': 'The Issue is closed, and a closed task Issue is Verified (DEC-003), but it kept an older status label.',
   'cli.no-setup': 'No Weaver configuration was found. Run "weaver init", or put a fabric.yaml in {root}.',
   'cli.config-invalid': 'The configuration {path} has a problem: {detail}',
+  'cli.config-decided': 'The Project and the repositories come from {file} ({source}).',
   'init.not-interactive': 'weaver init asks questions, so it needs a terminal. Run it in a terminal, or write ~/.weaver/config.yaml by hand (see docs/product/artifact-schema-v0.1.md).',
   'init.failed': 'Setup stopped: {detail}',
   'init.projects-title': 'Projects you can read:',

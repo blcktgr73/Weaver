@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { formatNotice, parseConfig, parseFabric, parseRootConfig, resolveSetup, rootConfigCandidates, type RootConfig, type UserConfig } from '../src';
+import { formatNotice, parseConfig, parseFabric, parseRoster, parseRootConfig, resolveSetup, rootConfigCandidates, stackRosters, type Roster, type RootConfig, type UserConfig } from '../src';
 
 const PROJECT = 'project: {owner: team, number: 9}\n';
 const user = (text: string): UserConfig => {
@@ -123,5 +123,77 @@ describe('resolveSetup with a root file', () => {
 
   it('keeps the personal roster exactly as before when there is no root file', () => {
     expect(resolveSetup(undefined, personal)?.roster).toBe(personal.roster);
+  });
+});
+
+describe('stackRosters', () => {
+  const roster = (text: string): Roster => {
+    const parsed = parseRoster('r.yaml', text).roster;
+    if (!parsed) throw new Error('bad roster');
+    return parsed;
+  };
+  const shared = roster('contributors:\n  - {id: maria, kind: human, name: Org Maria}\n  - {id: bot, kind: agent, tool: Claude, model: opus, reach: [{type: label, value: "owner:bot"}]}\n');
+  const rootLayer = roster('contributors:\n  - {id: Maria, kind: human, github: maria-gh}\n  - {id: lee, kind: human}\n');
+  const personal = roster('contributors:\n  - {id: bot, kind: agent, tool: Claude, model: sonnet}\n  - {id: MARIA, kind: human, name: Maria}\n');
+
+  it('lays each layer over the one below, and says which layers gave each contributor', () => {
+    const stacked = stackRosters([
+      { name: 'shared', roster: shared },
+      { name: 'root', roster: rootLayer },
+      { name: 'personal', roster: personal },
+    ]);
+    const byId = Object.fromEntries((stacked?.roster.contributors ?? []).map((c) => [c.id.toLowerCase(), c]));
+    expect(Object.keys(byId).sort()).toEqual(['bot', 'lee', 'maria']);
+    expect(byId.maria).toMatchObject({ id: 'maria', name: 'Maria', github: 'maria-gh' });
+    expect(byId.bot).toMatchObject({ model: 'sonnet', tool: 'Claude' });
+    expect(stacked?.origins.get('maria')).toEqual(['shared', 'root', 'personal']);
+    expect(stacked?.origins.get('bot')).toEqual(['shared', 'personal']);
+    expect(stacked?.origins.get('lee')).toEqual(['root']);
+  });
+
+  it('never removes a contributor of a lower layer, and replaces roles and reach as a whole', () => {
+    const lower = roster('contributors:\n  - {id: bot, kind: agent, tool: A, model: m, roles: [build, review], reach: [{type: label, value: "owner:bot"}]}\n');
+    const higher = roster('contributors:\n  - {id: bot, kind: agent, tool: A, model: m, roles: [review]}\n');
+    const stacked = stackRosters([{ name: 'shared', roster: lower }, { name: 'personal', roster: higher }]);
+    expect(stacked?.roster.contributors).toHaveLength(1);
+    expect(stacked?.roster.contributors[0].roles).toEqual(['review']);
+    expect(stacked?.roster.contributors[0].reach).toBeDefined();
+  });
+
+  it('skips a layer that is left out, returns one layer as it is, and nothing for none', () => {
+    expect(stackRosters([{ name: 'root', roster: undefined }, { name: 'personal', roster: personal }])?.roster).toBe(personal);
+    expect(stackRosters([{ name: 'root', roster: undefined }])).toBeUndefined();
+  });
+});
+
+describe('resolveSetup names the files', () => {
+  const personal = user('project: {owner: me, number: 1}\nroster:\n  contributors:\n    - {id: maria, kind: human, name: Maria}\n');
+
+  it('names the personal file as the one that decided, and the layers of each contributor', () => {
+    const setup = resolveSetup(undefined, personal, undefined, { user: '/home/me/.weaver/config.yaml' });
+    expect(setup?.decidedBy).toBe('/home/me/.weaver/config.yaml');
+    expect(setup?.rosterFiles).toEqual([{ layer: 'personal', file: '/home/me/.weaver/config.yaml' }]);
+    expect(setup?.rosterOrigins.get('maria')).toEqual(['personal']);
+  });
+
+  it('names the root file that decided, and both files that gave the roster', () => {
+    const setup = resolveSetup(
+      undefined,
+      personal,
+      root(`${PROJECT}roster:\n  contributors:\n    - {id: maria, kind: human, github: maria-gh}\n`),
+      { user: '/home/me/.weaver/config.yaml' },
+    );
+    expect(setup?.decidedBy).toBe('/projects/.weaver/config.yaml');
+    expect(setup?.rosterFiles).toEqual([
+      { layer: 'root', file: '/projects/.weaver/config.yaml' },
+      { layer: 'personal', file: '/home/me/.weaver/config.yaml' },
+    ]);
+    expect(setup?.rosterOrigins.get('maria')).toEqual(['root', 'personal']);
+  });
+
+  it('names the workspace file when it decides, and says nothing when no path was given', () => {
+    const shared = parseFabric('fabric.yaml', 'project: {owner: shared, number: 5}\nrepositories:\n  - shared/app\n').registry;
+    expect(resolveSetup(shared, personal, undefined, { workspace: '/work/fabric.yaml' })?.decidedBy).toBe('/work/fabric.yaml');
+    expect(resolveSetup(shared, personal)?.decidedBy).toBeUndefined();
   });
 });
