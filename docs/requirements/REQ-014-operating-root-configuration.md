@@ -35,9 +35,7 @@ A folder that holds projects (an operating root, such as `prj` or `ebr_prj`) may
 
 ## Open decisions
 
-- How long a saved repository list stays fresh, and whether a refresh is silent.
-- Whether the root file may live in a folder that is itself a Git repository, and what Weaver says then.
-- The warning shown when a root file outside the opened folder changes which Project is read.
+Recorded in [DEC-018](../decisions/DEC-018-operating-root-configuration.md): the saved list is fresh for 24 hours and is read again in the background after that (item 12); a root folder may be a Git repository and Weaver says once that the file is personal (item 13); the file that decided is always shown (item 9). Still open there: whether the background refresh is silent in the first version.
 
 ## Tasks
 
