@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
+  clonesWithoutCards,
   effectiveRepositories,
   applyLaneOrder,
   buildLanes,
@@ -36,6 +37,7 @@ import { currentLocale, message as text } from './locale';
 import { OverviewCard, OverviewState, renderOverviewHtml } from './overviewHtml';
 import { processStore } from './processStore';
 import { rosterStore } from './rosterStore';
+import { saveRepositoryList, scanClones } from './repositoryStore';
 import { readRootConfig, rememberRootFile } from './rootConfig';
 import { readUserConfig } from './userConfig';
 import { isOpenableUrl } from './requirementHtml';
@@ -119,6 +121,8 @@ export class OverviewView {
   private order: string[];
   /** Finished cards (Verified, or a closed Issue) are folded unless the user asked to see them. Not kept: each time the Overview opens, they are folded. */
   private showFinished = false;
+  /** Clones on this computer that no list names and the Project has no card of, shown as lanes with a note (DEC-018 item 11). */
+  private cloneOnly = new Set<string>();
 
   constructor(
     private readonly store: vscode.Memento,
@@ -419,6 +423,21 @@ export class OverviewView {
       this.registry = { ...this.registry, registry };
       repositories = registry.repositories.map((r) => r.repository);
     }
+    this.cloneOnly = new Set();
+    if (result.ok) {
+      // Keep the repositories of the Project for the picker, so it opens at once (DEC-018 item 12).
+      void saveRepositoryList(registry.project, result.read.cards.map((card) => card.repository));
+      // Without a list, a clone under the clone folder that the Project has no card of would be missing without a word.
+      // With a list, cards of unlisted repositories are not read, so nothing can be said about them.
+      const root = derived ? fabricRoot() : undefined;
+      const extra = root ? clonesWithoutCards(await scanClones(root), registry.repositories.map((r) => r.repository), result.read.cards.map((card) => card.repository)) : [];
+      if (extra.length > 0) {
+        registry = { ...registry, repositories: [...registry.repositories, ...extra.map((repository) => ({ repository }))] };
+        this.registry = { ...this.registry, registry };
+        repositories = registry.repositories.map((r) => r.repository);
+        this.cloneOnly = new Set(extra.map((name) => name.toLowerCase()));
+      }
+    }
     if (result.ok) {
       // A few at a time: with many repositories, all at once is slow and meets GitHub's rate limits.
       const pulls = await mapLimit(registry.repositories, PULL_LIMIT, (r) => readMergedPulls(token, r.repository));
@@ -579,7 +598,9 @@ export class OverviewView {
         ),
       };
     });
-    const ordered = applyLaneOrder(buildLanes(this.registry.registry, cards), this.order);
+    const ordered = applyLaneOrder(buildLanes(this.registry.registry, cards), this.order).map((lane) =>
+      this.cloneOnly.has(lane.repository.toLowerCase()) ? { ...lane, note: 'clone' as const } : lane,
+    );
     const folds = ordered.map((lane) => ({ repository: lane.repository, ...foldFinished(lane) }));
     return {
       kind: 'ready',

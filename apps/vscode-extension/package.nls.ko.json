@@ -16,6 +16,7 @@
   "weaver.config.staleDays.description": "준비됨, 진행 중, 막힘, 검토 열의 카드가 며칠 동안 변동이 없으면 전체 보기에서 정체로 표시할지 정하는 기준 일수입니다.",
   "weaver.command.showOnOverview.title": "Weaver: 전체 보기에서 보기",
   "weaver.command.chooseRepositories.title": "Weaver: 보여 줄 저장소 고르기",
+  "weaver.command.refreshRepositoryList.title": "Weaver: 저장소 목록 새로 읽기",
   "weaver.command.openConfigFile.title": "Weaver: 설정 파일 열기",
   "weaver.command.editContributors.title": "Weaver: 기여자 추가·수정",
   "weaver.command.refreshOverview.title": "Weaver: 전체 보기 새로 고침",
