@@ -13,7 +13,7 @@ node packages/cli/dist/bin.js list --root .
 node packages/cli/dist/bin.js show TASK-043
 ```
 
-It reads the Project to work on from a `fabric.yaml` in the folder it runs in (or `--root <folder>`) when there is one, and otherwise from `~/.weaver/config.yaml` ([DEC-014](../../docs/decisions/DEC-014-user-configuration.md); `WEAVER_HOME` moves the folder). The personal file needs only `project: {owner, number}`; without a `repositories` list every repository on the Project is read. It reads every Markdown file under that folder except `node_modules`, `.git`, `dist`, `out`, and `examples` (sample workspaces are not the repository's own work, and their task numbers would otherwise take part in numbering). Run `weaver --help` for every option.
+It reads the Project to work on from a `fabric.yaml` in the folder it runs in (or `--root <folder>`) when there is one, then from the nearest `.weaver/config.yaml` found by walking up from that folder (a *root file*, [DEC-018](../../docs/decisions/DEC-018-operating-root-configuration.md); `weaver list` prints which file decided as `config`), and otherwise from `~/.weaver/config.yaml` ([DEC-014](../../docs/decisions/DEC-014-user-configuration.md); `WEAVER_HOME` moves the folder). The personal file needs only `project: {owner, number}`; without a `repositories` list every repository on the Project is read. It reads every Markdown file under that folder except `node_modules`, `.git`, `dist`, `out`, and `examples` (sample workspaces are not the repository's own work, and their task numbers would otherwise take part in numbering). Run `weaver --help` for every option.
 
 | Command | Prints |
 | --- | --- |

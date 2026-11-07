@@ -71,6 +71,51 @@ An earlier version of this repository kept a `fabric.yaml` at its root for the m
 3. If you had a `roster.yaml`, its people and agents go into the roster step of the setup.
 4. Delete the old file from your clone once the Overview works without it.
 
+### One setup for each folder of projects (a root file)
+
+Some people keep their projects in more than one folder: a personal one and one for an organization, each with its own Project. Give each folder its own file, `<folder>/.weaver/config.yaml`, called a *root file* ([DEC-018](../decisions/DEC-018-operating-root-configuration.md)). [`examples/operating-root/.weaver/config.yaml`](../../examples/operating-root/.weaver/config.yaml) is a commented example to copy.
+
+```text
+C:\work\                      ← the folder of your projects
+├── .weaver\config.yaml       ← the root file: Project, repositories, roster
+├── app\                      ← a clone; it shows the Project above
+└── docs\                     ← another clone
+```
+
+How it works:
+
+1. The editor and the `weaver` tool start from the folder they run in (the first workspace folder in the editor, `--root` or the current folder in the terminal) and walk up through the parent folders. The nearest `.weaver/config.yaml` wins.
+2. The order is: a `fabric.yaml` in the workspace, then the root file, then your personal `~/.weaver/config.yaml`. Outside any folder with a root file, your personal file applies as before. Your personal file itself is never taken for a root file.
+3. The file that wins decides the Project and the repositories **as a whole**. A root file with no `repositories` shows every repository of its Project; it does not borrow the list of another file.
+4. The roster is stacked: your personal roster is laid over the root file's, so an id in both takes the fields your personal file sets, and nothing is removed.
+5. The folder that holds `.weaver` is where the clones go (**Weaver: Clone Registered Repositories**). There is nothing to set. The `weaver.fabricRoot` setting, if you have one, still wins.
+6. The Overview says which file decided when it is not your personal file, and `weaver list` prints it as `config` (and, with `--text`, as a note on standard error). A file in a parent folder that changes which Project you read is never silent.
+
+What does not belong in a root file: how a repository tracks its work (`columns`, `evidence`, `stale`, `task`). That is written in the repository's own `.weaver/process.yaml`. Those sections are reported in a root file and are not applied.
+
+The file is for you and this computer. Do not commit it. If the folder that holds it is a Git repository, add `.weaver/` to its ignore list.
+
+Writing the file is by hand for now: copy the example, change the Project and the repositories, and press **Refresh** in the Overview. A command that writes it is not available yet.
+
+#### Writing an agent in the roster: `reach`
+
+An agent says which tool it is (`tool`) and how work reaches it (`reach`). A roster entry of an agent without either is accepted with a warning. `reach` has three forms:
+
+| Form | Example | What Weaver does |
+| --- | --- | --- |
+| A sentence | `reach: assigned as the Issue assignee` | Shows it to people. Never acts on it. |
+| A label | `reach: [{type: label, value: "owner:build-agent"}]` | Adds the label to the Issue when work is given to the agent. The agent's own router picks it up. `label` is the only type Weaver acts on. |
+| Several entries | a label entry and `{type: text, value: "runs on the office machine"}` | `text` is a sentence for people. A type Weaver does not know is kept and shown, never acted on. |
+
+Never write node addresses, chat channel ids, tokens, or passwords in the roster. They are not part of it, Weaver never reads them, and a field it does not know is reported.
+
+#### The repository list
+
+Without a `repositories` list, the Overview shows every repository the Project has cards of. Two things help when that is not enough ([DEC-018](../decisions/DEC-018-operating-root-configuration.md) items 11 and 12):
+
+- A clone under the clone folder (one level down, with a GitHub `origin`) that the Project has no card of gets its own lane with the note *cloned on this computer, but the Project has no card of it*. This applies only when there is no `repositories` list; with a list, the listed lanes already say "no cards".
+- The repositories of the Project are saved with the time they were read, in `repositories.json` next to your personal file (never in a repository). **Weaver: Choose Repositories to Show** opens from that list at once and shows its age. A list older than a day is read again in the background. **Weaver: Refresh the Repository List** reads it again whenever you like.
+
 ## 3. Put the Issues on the Project
 
 The Overview shows only what is on the Project. A new Issue is not added to a Project by itself unless you set that up. Either add Issues with the command line:
@@ -97,7 +142,7 @@ Without the `project` scope Weaver cannot read the Project and says so.
 
 ## 5. Clone the repositories and open them together
 
-Run **Weaver: Set Fabric Root Folder**, then **Weaver: Clone Registered Repositories**, and open the root folder. The steps are in the [clone section of Getting started](getting-started.md#clone-the-registered-repositories). With the clones in one workspace, cards also link to their requirements and task files. Without a repository list in your configuration, the clone command offers every repository the Project has cards of.
+Run **Weaver: Set Fabric Root Folder** (not needed when a [root file](#one-setup-for-each-folder-of-projects-a-root-file) is above your workspace: its folder is used), then **Weaver: Clone Registered Repositories**, and open the root folder. The steps are in the [clone section of Getting started](getting-started.md#clone-the-registered-repositories). With the clones in one workspace, cards also link to their requirements and task files. Without a repository list in your configuration, the clone command offers every repository the Project has cards of.
 
 ## When something is wrong
 
