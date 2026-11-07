@@ -592,11 +592,20 @@ describe('where the configuration comes from', () => {
   const PERSONAL = 'project: {owner: me, number: 7}\n';
   const WORKSPACE = 'project: {owner: me, number: 1}\nrepositories:\n  - me/Weaver\n';
 
+  /** The personal file is at `WEAVER_HOME`; a root file is at `<folder>/.weaver/config.yaml` above `/work`. */
+  const PERSONAL_FILE = '/home/me/.weaver/config.yaml';
+
   /** Files by name, and the Project number each Project query asked for. */
-  function withFiles(files: { workspace?: string; personal?: string }) {
+  function withFiles(files: { workspace?: string; personal?: string; roots?: Record<string, string> }) {
     const s = setup();
     const asked: number[] = [];
-    s.deps.readText = async (file) => (file.endsWith('fabric.yaml') ? files.workspace : file.endsWith('config.yaml') ? files.personal : undefined);
+    s.deps.env = { WEAVER_HOME: '/home/me/.weaver' };
+    s.deps.readText = async (file) => {
+      const name = file.split('\\').join('/').replace(/^[A-Za-z]:/, '');
+      if (name.endsWith('/fabric.yaml')) return files.workspace;
+      if (name === PERSONAL_FILE) return files.personal;
+      return files.roots?.[name];
+    };
     const original = s.deps.fetch as Fetch;
     s.deps.fetch = async (url, init) => {
       const body = init?.body ? JSON.parse(init.body) : undefined;
@@ -622,6 +631,49 @@ describe('where the configuration comes from', () => {
   it('does not let a broken personal file get in the way of a workspace fabric.yaml', async () => {
     const { deps } = withFiles({ workspace: WORKSPACE, personal: 'project: [' });
     expect(await run(['list'], deps)).toBe(EXIT.ok);
+  });
+
+  const ROOT = 'project: {owner: team, number: 9}\nrepositories:\n  - team/app\n';
+
+  it('walks up from the folder it runs in and uses the nearest root file over the personal file', async () => {
+    const { deps, asked } = withFiles({ personal: PERSONAL, roots: { '/.weaver/config.yaml': 'project: {owner: far, number: 3}\n', '/work/.weaver/config.yaml': ROOT } });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(asked).toEqual([9]);
+    const parent = withFiles({ personal: PERSONAL, roots: { '/.weaver/config.yaml': ROOT } });
+    expect(await run(['list'], parent.deps)).toBe(EXIT.ok);
+    expect(parent.asked).toEqual([9]);
+  });
+
+  it('prefers the workspace fabric.yaml over a root file, and a root file over the personal file', async () => {
+    const both = withFiles({ workspace: WORKSPACE, personal: PERSONAL, roots: { '/work/.weaver/config.yaml': ROOT } });
+    expect(await run(['list'], both.deps)).toBe(EXIT.ok);
+    expect(both.asked).toEqual([1]);
+  });
+
+  it('does not take the personal file for a root file, even when it sits above the folder', async () => {
+    const { deps, asked, err } = withFiles({ personal: PERSONAL });
+    deps.env = { WEAVER_HOME: '/work/.weaver' };
+    deps.readText = async (file) => (file.split('\\').join('/').endsWith('/work/.weaver/config.yaml') ? PERSONAL : undefined);
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(asked).toEqual([7]);
+    expect(err.join('')).toBe('');
+  });
+
+  it('reports a process section of a root file as a warning and does not apply it', async () => {
+    const { deps, err, asked } = withFiles({ roots: { '/work/.weaver/config.yaml': `${ROOT}columns:\n  source: board-status\n` } });
+    expect(await run(['list'], deps)).toBe(EXIT.ok);
+    expect(asked).toEqual([9]);
+    expect(err.join('')).toContain('.weaver/process.yaml');
+    expect(err.join('')).toContain('"columns"');
+  });
+
+  it('reports a broken root file instead of falling back, but not when the workspace file decides', async () => {
+    const broken = withFiles({ personal: PERSONAL, roots: { '/work/.weaver/config.yaml': 'project: [' } });
+    expect(await run(['list'], broken.deps)).toBe(EXIT.failed);
+    expect(JSON.parse(broken.out.join('')).error).toMatchObject({ code: 'cli.config-invalid' });
+    expect(JSON.parse(broken.out.join('')).error.message).toContain('config.yaml');
+    const shared = withFiles({ workspace: WORKSPACE, roots: { '/work/.weaver/config.yaml': 'project: [' } });
+    expect(await run(['list'], shared.deps)).toBe(EXIT.ok);
   });
 
   it('says how to set up when there is no configuration at all', async () => {
