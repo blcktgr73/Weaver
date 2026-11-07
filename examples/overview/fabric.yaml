@@ -4,9 +4,9 @@
 # The development host cannot open the repository root while it is already open in another VS Code window,
 # so this folder holds the registry the development workspace uses.
 project:
-  owner: blcktgr73
+  owner: ebrAIn-Lab-3B
   number: 1
 
 repositories:
-  - blcktgr73/Weaver
+  - ebrAIn-Lab-3B/Weaver
   - blcktgr73/HowMuchToday

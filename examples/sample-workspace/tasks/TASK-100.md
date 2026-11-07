@@ -3,7 +3,7 @@ id: TASK-100
 type: task
 title: Task that has an Issue link
 requirement: REQ-100
-issue: https://github.com/blcktgr73/Weaver/issues/1
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/1
 criteria: [AC-001, AC-002]
 assignee_type: human
 assignee: sample-user

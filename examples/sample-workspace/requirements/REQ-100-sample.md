@@ -5,7 +5,7 @@ title: Sample requirement for trying Weaver
 status: in-progress
 owner: PALab
 story_ids: [US-001, US-005]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 ---
 
 # Sample requirement for trying Weaver
@@ -18,5 +18,5 @@ repository: blcktgr73/Weaver
 
 ## Tasks
 
-- `TASK-100` Task that has an Issue link — [GitHub Issue #1](https://github.com/blcktgr73/Weaver/issues/1)
+- `TASK-100` Task that has an Issue link — [GitHub Issue #1](https://github.com/ebrAIn-Lab-3B/Weaver/issues/1)
 - `TASK-101` Task that has no Issue link yet
