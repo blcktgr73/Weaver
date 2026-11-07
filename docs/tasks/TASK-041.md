@@ -3,8 +3,8 @@ id: TASK-041
 type: task
 title: Show the cards of a requirement or task on the Overview
 requirement: REQ-006
-issue: https://github.com/blcktgr73/Weaver/issues/82
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/82
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-012]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-041 Show the cards of a requirement or task on the Overview
 
-Tracked in [Issue #82](https://github.com/blcktgr73/Weaver/issues/82). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
+Tracked in [Issue #82](https://github.com/ebrAIn-Lab-3B/Weaver/issues/82). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Add a Show on the Overview action to the requirement view and to a task file. It opens the Overview, turns the project on and unfolds its lane if needed, and highlights the cards of that requirement, or of that task from a task file.
 

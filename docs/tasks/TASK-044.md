@@ -3,8 +3,8 @@ id: TASK-044
 type: task
 title: Confirm each write and record it in a local action log
 requirement: REQ-007
-issue: https://github.com/blcktgr73/Weaver/issues/95
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/95
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-003, AC-004]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-044 Confirm each write and record it in a local action log
 
-Tracked in [Issue #95](https://github.com/blcktgr73/Weaver/issues/95). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-012](../decisions/DEC-012-steward-first-version.md).
+Tracked in [Issue #95](https://github.com/ebrAIn-Lab-3B/Weaver/issues/95). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)). The approach is [DEC-012](../decisions/DEC-012-steward-first-version.md).
 
 Give every write one path: build a plan that names the exact change, show it, run it only after the user approves that one action ([DEC-008](../decisions/DEC-008-agent-identity-and-write-confirmation.md)), then append who or what did it and why to a local action log outside the repository. A `--yes` flag is not part of the first version.
 

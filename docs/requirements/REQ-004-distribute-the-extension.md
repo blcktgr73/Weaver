@@ -5,7 +5,7 @@ title: People can install Weaver without building it
 status: draft
 owner: PALab
 story_ids: [US-021]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -28,9 +28,9 @@ A new user installs a released Weaver build from a GitHub Release or a registry,
 
 ## Tasks
 
-- `TASK-020` Choose and add a license — [GitHub Issue #43](https://github.com/blcktgr73/Weaver/issues/43)
-- `TASK-021` Attach the VSIX to a GitHub Release from CI — [GitHub Issue #44](https://github.com/blcktgr73/Weaver/issues/44)
-- `TASK-022` Publish to a registry — [GitHub Issue #45](https://github.com/blcktgr73/Weaver/issues/45)
+- `TASK-020` Choose and add a license — [GitHub Issue #43](https://github.com/ebrAIn-Lab-3B/Weaver/issues/43)
+- `TASK-021` Attach the VSIX to a GitHub Release from CI — [GitHub Issue #44](https://github.com/ebrAIn-Lab-3B/Weaver/issues/44)
+- `TASK-022` Publish to a registry — [GitHub Issue #45](https://github.com/ebrAIn-Lab-3B/Weaver/issues/45)
 
 Installing the VSIX in a normal window is still open under `TASK-012`.
 

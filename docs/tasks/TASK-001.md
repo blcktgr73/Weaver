@@ -3,8 +3,8 @@ id: TASK-001
 type: task
 title: Define and validate the repository-native requirement/task shape
 requirement: REQ-001
-issue: https://github.com/blcktgr73/Weaver/issues/1
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/1
+repository: ebrAIn-Lab-3B/Weaver
 evidence_exception: Delivered before the closing-PR rule and CI existed (DEC-006); verified by hand on 2026-10-30.
 assignee_type: agent
 criteria: [AC-001, AC-002]
@@ -13,4 +13,4 @@ assignee: claude-code
 
 # TASK-001 Define and validate the repository-native requirement/task shape
 
-Tracked in [Issue #1](https://github.com/blcktgr73/Weaver/issues/1). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
+Tracked in [Issue #1](https://github.com/ebrAIn-Lab-3B/Weaver/issues/1). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).

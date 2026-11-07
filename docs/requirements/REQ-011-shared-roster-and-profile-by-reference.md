@@ -5,7 +5,7 @@ title: A shared roster and process profile are read from a reference
 status: draft
 owner: PALab
 story_ids: [US-044, US-047]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -32,12 +32,12 @@ An organization keeps the roster and the process profile in its own repository. 
 
 ## Tasks
 
-- `TASK-069` Decide the roster schema and the reference mechanism — [GitHub Issue #167](https://github.com/blcktgr73/Weaver/issues/167)
-- `TASK-070` Read the roster and the profile from a reference with a cache — [GitHub Issue #168](https://github.com/blcktgr73/Weaver/issues/168)
-- `TASK-074` Fix the form of the roster file and add a sample — [GitHub Issue #177](https://github.com/blcktgr73/Weaver/issues/177)
-- `TASK-075` Add and edit contributors from the editor — [GitHub Issue #178](https://github.com/blcktgr73/Weaver/issues/178)
+- `TASK-069` Decide the roster schema and the reference mechanism — [GitHub Issue #167](https://github.com/ebrAIn-Lab-3B/Weaver/issues/167)
+- `TASK-070` Read the roster and the profile from a reference with a cache — [GitHub Issue #168](https://github.com/ebrAIn-Lab-3B/Weaver/issues/168)
+- `TASK-074` Fix the form of the roster file and add a sample — [GitHub Issue #177](https://github.com/ebrAIn-Lab-3B/Weaver/issues/177)
+- `TASK-075` Add and edit contributors from the editor — [GitHub Issue #178](https://github.com/ebrAIn-Lab-3B/Weaver/issues/178)
 
-Origin: proposal [#161](https://github.com/blcktgr73/Weaver/issues/161). The shape is decided in the first task of each requirement before any code follows it.
+Origin: proposal [#161](https://github.com/ebrAIn-Lab-3B/Weaver/issues/161). The shape is decided in the first task of each requirement before any code follows it.
 
 ## Evidence policy
 

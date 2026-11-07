@@ -5,7 +5,7 @@ title: Teams can draft and follow requirements in Notion while the repository st
 status: draft
 owner: PALab
 story_ids: [US-032, US-033, US-034]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 

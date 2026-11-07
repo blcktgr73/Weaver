@@ -5,7 +5,7 @@ title: Weaver proposes who takes a card next
 status: draft
 owner: PALab
 story_ids: [US-045]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -29,10 +29,10 @@ Each state has one declared decider. Weaver shows who holds a card and who shoul
 
 ## Tasks
 
-- `TASK-071` Show the decider and propose the next assignee — [GitHub Issue #169](https://github.com/blcktgr73/Weaver/issues/169)
-- `TASK-072` Settle the prerequisites for automatic assignment — [GitHub Issue #170](https://github.com/blcktgr73/Weaver/issues/170)
+- `TASK-071` Show the decider and propose the next assignee — [GitHub Issue #169](https://github.com/ebrAIn-Lab-3B/Weaver/issues/169)
+- `TASK-072` Settle the prerequisites for automatic assignment — [GitHub Issue #170](https://github.com/ebrAIn-Lab-3B/Weaver/issues/170)
 
-Origin: proposal [#162](https://github.com/blcktgr73/Weaver/issues/162). The shape is decided in the first task of each requirement before any code follows it.
+Origin: proposal [#162](https://github.com/ebrAIn-Lab-3B/Weaver/issues/162). The shape is decided in the first task of each requirement before any code follows it.
 
 ## Evidence policy
 

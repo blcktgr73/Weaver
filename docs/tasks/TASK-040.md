@@ -3,8 +3,8 @@ id: TASK-040
 type: task
 title: Replace the requirement board with a stage summary
 requirement: REQ-006
-issue: https://github.com/blcktgr73/Weaver/issues/81
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/81
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-011]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-040 Replace the requirement board with a stage summary
 
-Tracked in [Issue #81](https://github.com/blcktgr73/Weaver/issues/81). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
+Tracked in [Issue #81](https://github.com/ebrAIn-Lab-3B/Weaver/issues/81). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Remove the second Kanban board from the requirement view. Show one line of stage counts (for example Backlog 3, In progress 1, Verified 2) next to the task table, whose Status column keeps moving a card. The Overview is the single board.
 

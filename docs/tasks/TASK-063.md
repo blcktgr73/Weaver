@@ -3,8 +3,8 @@ id: TASK-063
 type: task
 title: Reach the Overview and its settings from the Activity Bar and the Overview tab
 requirement: REQ-006
-issue: https://github.com/blcktgr73/Weaver/issues/152
-repository: blcktgr73/Weaver
+issue: https://github.com/ebrAIn-Lab-3B/Weaver/issues/152
+repository: ebrAIn-Lab-3B/Weaver
 assignee_type: agent
 criteria: [AC-015]
 assignee: claude-code
@@ -12,7 +12,7 @@ assignee: claude-code
 
 # TASK-063 Reach the Overview and its settings from the Activity Bar and the Overview tab
 
-Tracked in [Issue #152](https://github.com/blcktgr73/Weaver/issues/152). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
+Tracked in [Issue #152](https://github.com/ebrAIn-Lab-3B/Weaver/issues/152). Ownership is recorded here; the Kanban column comes from the Issue ([DEC-003](../decisions/DEC-003-board-status-mapping.md), [DEC-005](../decisions/DEC-005-task-files.md)).
 
 Every command of Weaver is reached through the command palette, which is hard to find. The Overview gets an entry in the Activity Bar and a menu on its tab, and a person can choose which repositories to show without editing `~/.weaver/config.yaml` by hand.
 

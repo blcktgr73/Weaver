@@ -5,7 +5,7 @@ title: One Overview Kanban shows all registered repositories and starts every ex
 status: draft
 owner: PALab
 story_ids: [US-025, US-026, US-029, US-030, US-035, US-036, US-046]
-repository: blcktgr73/Weaver
+repository: ebrAIn-Lab-3B/Weaver
 github_project: PALab Ops Kanban
 ---
 
@@ -88,32 +88,32 @@ The editor behaviors in the right column cannot be driven by the test suite; the
 
 ## Tasks
 
-- `TASK-029` Verify Project read access and record the registry decision — [GitHub Issue #61](https://github.com/blcktgr73/Weaver/issues/61)
-- `TASK-030` Define and validate the fabric registry — [GitHub Issue #62](https://github.com/blcktgr73/Weaver/issues/62)
-- `TASK-031` Read all items of the central Project — [GitHub Issue #63](https://github.com/blcktgr73/Weaver/issues/63)
-- `TASK-032` Show the Overview Kanban — [GitHub Issue #64](https://github.com/blcktgr73/Weaver/issues/64)
-- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card — [GitHub Issue #65](https://github.com/blcktgr73/Weaver/issues/65)
-- `TASK-034` Set a fabric root folder and clone the missing repositories — [GitHub Issue #66](https://github.com/blcktgr73/Weaver/issues/66)
-- `TASK-035` List mismatches between files, Issues, and the Project — [GitHub Issue #67](https://github.com/blcktgr73/Weaver/issues/67)
-- `TASK-036` Mark stale cards — [GitHub Issue #68](https://github.com/blcktgr73/Weaver/issues/68)
-- `TASK-037` Show a read-only board when GitHub is unreachable — [GitHub Issue #69](https://github.com/blcktgr73/Weaver/issues/69)
-- `TASK-038` Write the guide for registering your own Project — [GitHub Issue #70](https://github.com/blcktgr73/Weaver/issues/70)
-- `TASK-039` Reorder, collapse, hide, and filter lanes — [GitHub Issue #73](https://github.com/blcktgr73/Weaver/issues/73)
-- `TASK-040` Replace the requirement board with a stage summary — [GitHub Issue #81](https://github.com/blcktgr73/Weaver/issues/81)
-- `TASK-041` Show the cards of a requirement or task on the Overview — [GitHub Issue #82](https://github.com/blcktgr73/Weaver/issues/82)
+- `TASK-029` Verify Project read access and record the registry decision — [GitHub Issue #61](https://github.com/ebrAIn-Lab-3B/Weaver/issues/61)
+- `TASK-030` Define and validate the fabric registry — [GitHub Issue #62](https://github.com/ebrAIn-Lab-3B/Weaver/issues/62)
+- `TASK-031` Read all items of the central Project — [GitHub Issue #63](https://github.com/ebrAIn-Lab-3B/Weaver/issues/63)
+- `TASK-032` Show the Overview Kanban — [GitHub Issue #64](https://github.com/ebrAIn-Lab-3B/Weaver/issues/64)
+- `TASK-033` Open the task, requirement, Issue, pull request, and repository from a card — [GitHub Issue #65](https://github.com/ebrAIn-Lab-3B/Weaver/issues/65)
+- `TASK-034` Set a fabric root folder and clone the missing repositories — [GitHub Issue #66](https://github.com/ebrAIn-Lab-3B/Weaver/issues/66)
+- `TASK-035` List mismatches between files, Issues, and the Project — [GitHub Issue #67](https://github.com/ebrAIn-Lab-3B/Weaver/issues/67)
+- `TASK-036` Mark stale cards — [GitHub Issue #68](https://github.com/ebrAIn-Lab-3B/Weaver/issues/68)
+- `TASK-037` Show a read-only board when GitHub is unreachable — [GitHub Issue #69](https://github.com/ebrAIn-Lab-3B/Weaver/issues/69)
+- `TASK-038` Write the guide for registering your own Project — [GitHub Issue #70](https://github.com/ebrAIn-Lab-3B/Weaver/issues/70)
+- `TASK-039` Reorder, collapse, hide, and filter lanes — [GitHub Issue #73](https://github.com/ebrAIn-Lab-3B/Weaver/issues/73)
+- `TASK-040` Replace the requirement board with a stage summary — [GitHub Issue #81](https://github.com/ebrAIn-Lab-3B/Weaver/issues/81)
+- `TASK-041` Show the cards of a requirement or task on the Overview — [GitHub Issue #82](https://github.com/ebrAIn-Lab-3B/Weaver/issues/82)
 
-- `TASK-042` Show the last read board when GitHub is unreachable — [GitHub Issue #92](https://github.com/blcktgr73/Weaver/issues/92)
-- `TASK-050` Open the views a card leads to as new tabs instead of a split — [GitHub Issue #102](https://github.com/blcktgr73/Weaver/issues/102)
-- `TASK-055` Show the maintainer's other projects on the Overview — [GitHub Issue #117](https://github.com/blcktgr73/Weaver/issues/117)
-- `TASK-057` Read the user configuration and keep the workspace file as an optional shared one — [GitHub Issue #122](https://github.com/blcktgr73/Weaver/issues/122)
-- `TASK-058` Discover the Projects of a user and the repositories on a Project — [GitHub Issue #123](https://github.com/blcktgr73/Weaver/issues/123)
-- `TASK-059` Set up the configuration from the terminal with weaver init — [GitHub Issue #124](https://github.com/blcktgr73/Weaver/issues/124)
-- `TASK-060` Set up the configuration from the editor and show every repository of the Project — [GitHub Issue #125](https://github.com/blcktgr73/Weaver/issues/125)
-- `TASK-061` Move the committed registry and roster out of the repository and write the migration note — [GitHub Issue #126](https://github.com/blcktgr73/Weaver/issues/126)
-- `TASK-062` Fold the finished cards of the Overview by default — [GitHub Issue #149](https://github.com/blcktgr73/Weaver/issues/149)
-- `TASK-063` Reach the Overview and its settings from the Activity Bar and the Overview tab — [GitHub Issue #152](https://github.com/blcktgr73/Weaver/issues/152)
-- `TASK-073` Read the workspace files on refresh and when files change on disk — [GitHub Issue #172](https://github.com/blcktgr73/Weaver/issues/172)
-- `TASK-076` Skip agent worktrees and sample folders when reading the workspace — [GitHub Issue #185](https://github.com/blcktgr73/Weaver/issues/185)
+- `TASK-042` Show the last read board when GitHub is unreachable — [GitHub Issue #92](https://github.com/ebrAIn-Lab-3B/Weaver/issues/92)
+- `TASK-050` Open the views a card leads to as new tabs instead of a split — [GitHub Issue #102](https://github.com/ebrAIn-Lab-3B/Weaver/issues/102)
+- `TASK-055` Show the maintainer's other projects on the Overview — [GitHub Issue #117](https://github.com/ebrAIn-Lab-3B/Weaver/issues/117)
+- `TASK-057` Read the user configuration and keep the workspace file as an optional shared one — [GitHub Issue #122](https://github.com/ebrAIn-Lab-3B/Weaver/issues/122)
+- `TASK-058` Discover the Projects of a user and the repositories on a Project — [GitHub Issue #123](https://github.com/ebrAIn-Lab-3B/Weaver/issues/123)
+- `TASK-059` Set up the configuration from the terminal with weaver init — [GitHub Issue #124](https://github.com/ebrAIn-Lab-3B/Weaver/issues/124)
+- `TASK-060` Set up the configuration from the editor and show every repository of the Project — [GitHub Issue #125](https://github.com/ebrAIn-Lab-3B/Weaver/issues/125)
+- `TASK-061` Move the committed registry and roster out of the repository and write the migration note — [GitHub Issue #126](https://github.com/ebrAIn-Lab-3B/Weaver/issues/126)
+- `TASK-062` Fold the finished cards of the Overview by default — [GitHub Issue #149](https://github.com/ebrAIn-Lab-3B/Weaver/issues/149)
+- `TASK-063` Reach the Overview and its settings from the Activity Bar and the Overview tab — [GitHub Issue #152](https://github.com/ebrAIn-Lab-3B/Weaver/issues/152)
+- `TASK-073` Read the workspace files on refresh and when files change on disk — [GitHub Issue #172](https://github.com/ebrAIn-Lab-3B/Weaver/issues/172)
+- `TASK-076` Skip agent worktrees and sample folders when reading the workspace — [GitHub Issue #185](https://github.com/ebrAIn-Lab-3B/Weaver/issues/185)
 
 `TASK-029` and `TASK-030` come first, then `TASK-031` and `TASK-032` give the first end-to-end board. `TASK-034` needs only `TASK-030`. The rest follow the board.
 
