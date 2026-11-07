@@ -36,6 +36,8 @@ A guideline is a repository or a folder the organization owns, and a root folder
 
 ## Tasks
 
+- `TASK-084` Decide how an operating guideline is referenced and offered — [GitHub Issue #218](https://github.com/ebrAIn-Lab-3B/Weaver/issues/218)
+
 Tasks are listed here once the open decisions are recorded.
 
 Origin: the maintainer, 2026-11-07: ebrAIn.lab keeps its operating guideline in `agentic-base`, and Weaver should handle several guidelines. Absorbs proposal [#173](https://github.com/ebrAIn-Lab-3B/Weaver/issues/173).
