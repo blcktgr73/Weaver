@@ -40,6 +40,7 @@ Recorded in [DEC-018](../decisions/DEC-018-operating-root-configuration.md): the
 ## Tasks
 
 - `TASK-077` Decide the operating root configuration — [GitHub Issue #196](https://github.com/ebrAIn-Lab-3B/Weaver/issues/196)
+- `TASK-078` Read the operating root configuration — [GitHub Issue #199](https://github.com/ebrAIn-Lab-3B/Weaver/issues/199)
 
 Tasks are listed here once the open decisions are recorded.
 
