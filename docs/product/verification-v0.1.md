@@ -1,4 +1,4 @@
-# PALab Weaver — Verification v0.1
+# ebrAIn.lab Weaver — Verification v0.1
 
 ## Purpose
 

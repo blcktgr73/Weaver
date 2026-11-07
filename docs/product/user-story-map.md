@@ -1,4 +1,4 @@
-# PALab Weaver — User Story Map
+# ebrAIn.lab Weaver — User Story Map
 
 ## Product goal
 

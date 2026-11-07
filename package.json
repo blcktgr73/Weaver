@@ -1,7 +1,7 @@
 {
   "name": "weaver",
   "private": true,
-  "description": "PALab Weaver monorepo. Workspace-level scripts only.",
+  "description": "ebrAIn.lab Weaver monorepo. Workspace-level scripts only.",
   "workspaces": [
     "apps/*",
     "packages/*"

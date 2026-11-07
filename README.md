@@ -1,10 +1,10 @@
-# PALab Weaver
+# ebrAIn.lab Weaver
 
 **Repo-native requirements and agent execution system**
 
-> Working name: **PALab Weaver** (`Weaver`)
+> Working name: **ebrAIn.lab Weaver** (`Weaver`)
 
-PALab Weaver connects requirements, projects, tasks, people, AI agents, code, pull requests, and tests across the repositories that make up a company.
+ebrAIn.lab Weaver connects requirements, projects, tasks, people, AI agents, code, pull requests, and tests across the repositories that make up a company.
 
 The core idea is simple:
 

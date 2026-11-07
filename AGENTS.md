@@ -1,4 +1,4 @@
-# AGENTS.md — PALab Weaver
+# AGENTS.md — ebrAIn.lab Weaver
 
 ## Mission
 
@@ -52,7 +52,7 @@ When adopting another PALab project, connect it first as an external repository 
 
 ## Naming
 
-- Product: PALab Weaver
+- Product: ebrAIn.lab Weaver
 - Short name: Weaver
 - Requirement: `REQ-###`
 - Task: `TASK-###`

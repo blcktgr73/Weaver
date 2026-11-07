@@ -1,8 +1,8 @@
-# PALab Weaver — Product Requirements v0.1
+# ebrAIn.lab Weaver — Product Requirements v0.1
 
 ## Product statement
 
-PALab Weaver connects the requirements and tasks of multiple company repositories and traces human and AI execution through code, pull requests, and tests.
+ebrAIn.lab Weaver connects the requirements and tasks of multiple company repositories and traces human and AI execution through code, pull requests, and tests.
 
 ## Core requirements
 
